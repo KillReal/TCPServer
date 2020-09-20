@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Server
 {
     class Utils
     {
+        //
+        // TODO: increase func's speed and usability
+        //
+
         public static byte[] AddCommandLength(byte[] commandBytes)
         {
             return ConcatByteArrays(BitConverter.GetBytes(commandBytes.Length), commandBytes);

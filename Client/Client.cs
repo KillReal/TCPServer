@@ -4,12 +4,16 @@ using System.Net;
 using System.Net.Sockets;
 using Server.Pockets;
 using Server;
+using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace Client
 {
     class Client
     {
         static string clientName = "unnamed";
+        static Thread _listenThread;
+        static Thread _readThread;
         static void SendToServer(Socket server, BasePocket pocket, PocketEnum typeEnum)
         {
             var headerPocket = new HeaderPocket
@@ -23,6 +27,9 @@ namespace Client
         }
         static void Main(string[] args)
         {
+            PocketHandler.OnMessageAccepted += PocketListener_OnAcception;
+            PocketHandler.OnStringPocket += PocketListener_OnString;
+
             Console.Write("Enter client name: ");
             clientName = Console.ReadLine();
             try
@@ -39,57 +46,65 @@ namespace Client
             }
         }
 
+        private static void ListenForCommands(object server)
+        {
+            PocketHandler.HandleClientMessage((Socket)server);
+        }
+
+        private static void Reader(object Tserver)
+        {
+            Socket server = (Socket)Tserver;
+            while (server.Connected)
+            {
+                if (Console.KeyAvailable)
+                {
+                    Console.Write("[CLIENT] ---> [Message]: ");
+                    string message = Console.ReadLine();
+                    StringPocket pocket = new StringPocket
+                    {
+                        StringField = message
+                    };
+                    SendToServer(server, pocket, PocketEnum.String);
+                }
+            }
+        }
+
         static void SendMessageFromSocket(int port)
         {
-            // Буфер для входящих данных
-            byte[] bytes = new byte[1024];
-
-            // Соединяемся с удаленным устройством
-
-            // Устанавливаем удаленную точку для сокета
             IPHostEntry ipHost = Dns.GetHostEntry("localhost");
             IPAddress ipAddr = ipHost.AddressList[0];
             IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, port);
-
             Socket server = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
             server.Connect(ipEndPoint);
-
-            // Соединяем сокет с удаленной точкой
-
-            Console.Write("Msg: ");
-            string message = Console.ReadLine();
-
-            Console.WriteLine("Connecting with {0} ...", server.RemoteEndPoint.ToString());
+            Console.WriteLine("[INFO]: Connecting with {0} ...", server.RemoteEndPoint.ToString());
 
             ConnectionPocket connectPocket = new ConnectionPocket
             {
-                Message = message,
+                Message = "",
                 Name = clientName
             };
 
             SendToServer(server, connectPocket, PocketEnum.Connection);
-
-            // Получаем ответ от сервера
-            int bytesRec = server.Receive(bytes);
-
-            Console.WriteLine("[SERVER]: {0}", Encoding.UTF8.GetString(bytes, 0, bytesRec));
+            _listenThread = new Thread(ListenForCommands);
+            _listenThread.Start(server);
+            var cts = new CancellationTokenSource();
+            _readThread = new Thread(Reader);
+            _readThread.Start(server);
             while (server.Connected)
-            {
-                Console.Write("Msg: ");
-                message = Console.ReadLine();
-                StringPocket pocket = new StringPocket
-                {
-                    StringField = message
-                };
-                SendToServer(server, pocket, PocketEnum.String);
-                bytesRec = server.Receive(bytes);
-                Console.WriteLine("[SERVER]: {0}", Encoding.UTF8.GetString(bytes, 0, bytesRec));
-            }
-
-            // Освобождаем сокет
+                Thread.Sleep(500);
+            _listenThread.Interrupt();
+            _readThread.Interrupt();
             server.Shutdown(SocketShutdown.Both);
             server.Close();
+        }
+
+        private static void PocketListener_OnAcception()
+        {
+            Console.WriteLine("[CLIENT] <--- [Accepted]");
+        }
+        private static void PocketListener_OnString(StringPocket pocket)
+        {
+            Console.WriteLine("[CLIENT] <--- [Message]: {0}", pocket.StringField);
         }
     }
 }

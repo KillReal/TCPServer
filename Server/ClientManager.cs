@@ -8,32 +8,48 @@ namespace Server
 {
     public class ClientManager
     {
-        private int id;
+        private int _id;
 
-        private struct MyClient
+        public struct MyClient
         {
             public int id;
             public string name;
             public Socket client;
-            public byte[] buffer;
         };
-        private ConcurrentDictionary<long, MyClient> clients = new ConcurrentDictionary<long, MyClient>();
+        public ConcurrentDictionary<long, MyClient> clients = new ConcurrentDictionary<long, MyClient>();
 
+        public int GetNextID()
+        {
+            return _id;
+        }
+
+        public Socket GetSocket(long key)
+        {
+            clients.TryGetValue(key, out MyClient tmp);
+            return tmp.client;
+        }
         public void AddClient(Socket client, string name)
         {
             MyClient newClient = new MyClient
             {
-                id = id,
+                id = _id,
                 name = name,
                 client = client
             };
-            clients.TryAdd(id, newClient);
-            id++;
+            clients.TryAdd(_id, newClient);
+            _id++;
         }
 
         public void DeleteClient(Socket client)
         {
             clients.TryRemove(FindClient(client), out _);
+            _id--;
+        }
+
+        public void DeleteClient(int id)
+        {
+            clients.TryRemove(id, out _);
+            _id--;
         }
 
         public long FindClient(Socket client)
@@ -49,6 +65,12 @@ namespace Server
         public string GetClientName(Socket client)
         {
             clients.TryGetValue(FindClient(client), out MyClient tmp);
+            return tmp.name;
+        }
+
+        public string GetClientName(int id)
+        {
+            clients.TryGetValue(id, out MyClient tmp);
             return tmp.name;
         }
     }
