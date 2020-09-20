@@ -72,11 +72,8 @@ namespace Server
                             StringField = "test"
                         };
                         byte[] data = Utils.ConcatByteArrays(header.ToBytes(), str.ToBytes());
-                        foreach (var TClient in clientManager.clients)
-                        {
-                            TClient.Value.client.Send(data);
-                            Console.WriteLine("[SERVER] ---> [Client]: {1} [Message]: {0}", str.StringField, TClient.Value.name);
-                        }
+                        Console.WriteLine("[SERVER] ---> [All Clients]: [Message]: {0}", str.StringField);
+                        clientManager.SendPocketToAll(data);
                     }
                     Thread.Sleep(100);
                 }
@@ -99,6 +96,11 @@ namespace Server
         {
             Console.WriteLine("[SERVER] <--- [Client]: {0} [Message]: {1}", clientManager.GetClientName(id),  pocket.StringField);
             PocketSender.SendAcceptedToClient(clientManager.GetSocket(id));
+
+            /// Resend example (like chat message)
+
+            byte[] data = ChatMessagePocket.Construct(clientManager.GetClientName(id), pocket.StringField);
+            clientManager.SendPocketToAllExcept(data, id);
         }
     }
 }

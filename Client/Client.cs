@@ -29,6 +29,7 @@ namespace Client
         {
             PocketHandler.OnMessageAccepted += PocketListener_OnAcception;
             PocketHandler.OnStringPocket += PocketListener_OnString;
+            PocketHandler.OnChatMessagePocket += PocketListener_OnChatMessage;
 
             Console.Write("Enter client name: ");
             clientName = Console.ReadLine();
@@ -100,11 +101,17 @@ namespace Client
 
         private static void PocketListener_OnAcception()
         {
-            Console.WriteLine("[CLIENT] <--- [Accepted]");
+            Console.Write(" <--- [Accepted]\n");
         }
         private static void PocketListener_OnString(StringPocket pocket)
         {
             Console.WriteLine("[CLIENT] <--- [Message]: {0}", pocket.StringField);
         }
+
+        private static void PocketListener_OnChatMessage(ChatMessagePocket pocket)
+        {
+            Console.WriteLine("[CLIENT] <--- [Client]: {0} [Message]: {1}", pocket.Name, pocket.Message);
+        }
+
     }
 }

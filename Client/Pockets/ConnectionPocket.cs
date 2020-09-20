@@ -17,9 +17,7 @@ namespace Server.Pockets
             NameLenght = nameBytes.Length;
             byte[] messageBytes = Utils.GetBytes(Message);
             MessageLenght = messageBytes.Length;
-
             int messageLenght = sizeof(int) * 2 + NameLenght + MessageLenght;
-
             var messageData = new byte[messageLenght];
             using (var stream = new MemoryStream(messageData))
             {

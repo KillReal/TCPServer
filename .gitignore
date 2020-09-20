@@ -1,0 +1,7 @@
+Client/bin/
+Client/obj/
+Client/.vs/
+Server/bin/
+Server/obj/
+Server/.vs/
+*.csproj.nuget.dgspec.json

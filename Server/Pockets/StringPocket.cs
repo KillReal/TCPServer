@@ -26,10 +26,10 @@ namespace Server.Pockets
         {
             using var ms = new MemoryStream(bytes);
             var br = new BinaryReader(ms);
-            var command = new StringPocket();
-            command.StringFieldLenght = br.ReadInt32();
-            command.StringField = Utils.GetString(br.ReadBytes(command.StringFieldLenght));
-            return command;
+            var pocket = new StringPocket();
+            pocket.StringFieldLenght = br.ReadInt32();
+            pocket.StringField = Utils.GetString(br.ReadBytes(pocket.StringFieldLenght));
+            return pocket;
         }
     }
 }

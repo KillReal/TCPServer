@@ -12,7 +12,8 @@ namespace Server
 
         public static Action<ConnectionPocket, Socket> OnConnectionPocket;
         public static Action<StringPocket> OnStringPocket;
-        public static Action<Socket> onClientDisconnect;
+        public static Action<ChatMessagePocket> OnChatMessagePocket;
+        public static Action onClientDisconnect;
         public static Action OnMessageAccepted;
 
         private delegate BasePocket DeselialiseBytesToCommand(byte[] bytes);
@@ -27,6 +28,7 @@ namespace Server
         {
             BytesToCommands.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
             BytesToCommands.Add(PocketEnum.String, StringPocket.FromBytes);
+            BytesToCommands.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
         }
 
         public static void HandleClientMessage(Socket client)
@@ -44,18 +46,17 @@ namespace Server
 
                 }
             } while (client.Connected);
-            onClientDisconnect?.Invoke(client);
+            onClientDisconnect?.Invoke();
             client.Shutdown(SocketShutdown.Both);
             client.Close();
         }
 
-        private static void ParsePocket(byte[] bytes, Socket client)
+        private static void ParsePocket(byte[] data, Socket client)
         {
-            if (bytes.Length >= HeaderPocket.GetLenght())
+            if (data.Length >= HeaderPocket.GetLenght())
             {
-                HeaderPocket pocketHeader = HeaderPocket.FromBytes(bytes);
-                IEnumerable<byte> nextCommandBytes = bytes.Skip(HeaderPocket.GetLenght());
-
+                HeaderPocket pocketHeader = HeaderPocket.FromBytes(data);
+                IEnumerable<byte> nextCommandBytes = data.Skip(HeaderPocket.GetLenght());
                 var typeEnum = (PocketEnum)pocketHeader.Type;
                 if (typeEnum == PocketEnum.MessageAccepted)
                     OnMessageAccepted?.Invoke();
@@ -69,6 +70,9 @@ namespace Server
                             break;
                         case PocketEnum.String:
                             OnStringPocket?.Invoke((StringPocket)basePocket);
+                            break;
+                        case PocketEnum.ChatMessage:
+                            OnChatMessagePocket?.Invoke((ChatMessagePocket)basePocket);
                             break;
                     }
                 }

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\rtimo\\Desktop\\TCP\\Server\\Server.csproj": {}
+    "C:\\Users\\rtimo\\Desktop\\TCPServer\\Server\\Server.csproj": {}
   },
   "projects": {
-    "C:\\Users\\rtimo\\Desktop\\TCP\\Server\\Server.csproj": {
+    "C:\\Users\\rtimo\\Desktop\\TCPServer\\Server\\Server.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\rtimo\\Desktop\\TCP\\Server\\Server.csproj",
+        "projectUniqueName": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Server\\Server.csproj",
         "projectName": "Server",
-        "projectPath": "C:\\Users\\rtimo\\Desktop\\TCP\\Server\\Server.csproj",
+        "projectPath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Server\\Server.csproj",
         "packagesPath": "C:\\Users\\rtimo\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\rtimo\\Desktop\\TCP\\Server\\obj\\",
+        "outputPath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Server\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\rtimo\\AppData\\Roaming\\NuGet\\NuGet.Config",

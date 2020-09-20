@@ -9,11 +9,6 @@ namespace Server
 {
     public class PocketSender
     {
-        readonly Settings _settings;
-        PocketSender(Settings settings)
-        {
-            _settings = settings;
-        }
         public static void SendAcceptedToClient(Socket client)
         {
             try

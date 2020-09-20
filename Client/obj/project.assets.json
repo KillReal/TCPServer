@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\rtimo\\Desktop\\TCP\\Client\\Client.csproj",
+      "projectUniqueName": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Client\\Client.csproj",
       "projectName": "Client",
-      "projectPath": "C:\\Users\\rtimo\\Desktop\\TCP\\Client\\Client.csproj",
+      "projectPath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Client\\Client.csproj",
       "packagesPath": "C:\\Users\\rtimo\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\rtimo\\Desktop\\TCP\\Client\\obj\\",
+      "outputPath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Client\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\rtimo\\AppData\\Roaming\\NuGet\\NuGet.Config",

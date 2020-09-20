@@ -16,7 +16,7 @@ namespace Server
             public string name;
             public Socket client;
         };
-        public ConcurrentDictionary<long, MyClient> clients = new ConcurrentDictionary<long, MyClient>();
+        public ConcurrentDictionary<long, MyClient> _clients = new ConcurrentDictionary<long, MyClient>();
 
         public int GetNextID()
         {
@@ -25,7 +25,7 @@ namespace Server
 
         public Socket GetSocket(long key)
         {
-            clients.TryGetValue(key, out MyClient tmp);
+            _clients.TryGetValue(key, out MyClient tmp);
             return tmp.client;
         }
         public void AddClient(Socket client, string name)
@@ -36,25 +36,24 @@ namespace Server
                 name = name,
                 client = client
             };
-            clients.TryAdd(_id, newClient);
+            _clients.TryAdd(_id, newClient);
             _id++;
         }
 
         public void DeleteClient(Socket client)
         {
-            clients.TryRemove(FindClient(client), out _);
-            _id--;
+            DeleteClient((int)FindClient(client));
         }
 
         public void DeleteClient(int id)
         {
-            clients.TryRemove(id, out _);
+            _clients.TryRemove(id, out _);
             _id--;
         }
 
         public long FindClient(Socket client)
         {
-            foreach (var existClient in clients)
+            foreach (var existClient in _clients)
             {
                 if (existClient.Value.client == client)
                     return existClient.Key;
@@ -64,14 +63,31 @@ namespace Server
 
         public string GetClientName(Socket client)
         {
-            clients.TryGetValue(FindClient(client), out MyClient tmp);
-            return tmp.name;
+            return GetClientName((int)FindClient(client));
         }
 
         public string GetClientName(int id)
         {
-            clients.TryGetValue(id, out MyClient tmp);
+            _clients.TryGetValue(id, out MyClient tmp);
             return tmp.name;
+        }
+
+        public void SendPocketToAll(byte[] pocket)
+        {
+            for (int i = 0; i < _id; i++)
+                    _clients[i].client.Send(pocket);
+        }
+
+        public void SendPocketToAllExcept(byte[] pocket, Socket excepted_client)
+        {
+            SendPocketToAllExcept(pocket, (int)FindClient(excepted_client));
+        }
+
+        public void SendPocketToAllExcept(byte[] pocket, int excepted_id)
+        {
+            for (int i = 0; i < _id; i++)
+                if (i != excepted_id)
+                    _clients[i].client.Send(pocket);
         }
     }
 }
