@@ -14,12 +14,14 @@ namespace Client
         static string clientName = "unnamed";
         static Thread _listenThread;
         static Thread _readThread;
+
         static void SendToServer(Socket server, BasePocket pocket, PocketEnum typeEnum)
         {
             var headerPocket = new HeaderPocket
             {
                 Count = 1,
-                Type = (int)typeEnum
+                Type = (int)typeEnum,
+                NeedAccept = true
             };
 
             byte[] msg = Utils.ConcatByteArrays(headerPocket.ToBytes(), pocket.ToBytes());
@@ -101,7 +103,7 @@ namespace Client
 
         private static void PocketListener_OnAcception()
         {
-            Console.Write(" <--- [Accepted]\n");
+            Console.Write("[ClIENT] <--- [Accepted]\n");
         }
         private static void PocketListener_OnString(StringPocket pocket)
         {

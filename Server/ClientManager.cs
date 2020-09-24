@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Server.Enums;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Sockets;
@@ -14,35 +15,64 @@ namespace Server
         {
             public int id;
             public string name;
-            public Socket client;
+            public Socket socket;
+            public byte[] send_buffer;
+            public byte[] recieve_buffer;
+            public int state;
         };
         public ConcurrentDictionary<long, MyClient> _clients = new ConcurrentDictionary<long, MyClient>();
 
-        public int GetNextID()
+        public int GetAvailibleID()
         {
             return _id;
+        }
+
+        private MyClient GetClient(int id)
+        {
+            _clients.TryGetValue(id, out MyClient tmp);
+            return tmp;
+        }
+
+        public void SetAcceptState(int id, bool accept)
+        {
+            MyClient tmp = GetClient(id);
+            if (accept)
+                tmp.state = (int)ClientStateEnum.AskedForAccept;
+            else
+                tmp.state = (int)ClientStateEnum.Idle;
+        }
+
+        public void Send(int id, byte[] data)
+        {
+            MyClient tmp = GetClient(id);
+            tmp.send_buffer = data;
+            if (tmp.socket != null)
+                tmp.socket.Send(data);
+        }
+
+        public void Recieve(int id, ref byte[] data)
+        {
+            MyClient tmp = GetClient(id);
+            tmp.socket.Receive(data);
+            tmp.recieve_buffer = data;
         }
 
         public Socket GetSocket(long key)
         {
             _clients.TryGetValue(key, out MyClient tmp);
-            return tmp.client;
+            return tmp.socket;
         }
-        public void AddClient(Socket client, string name)
+
+        public void AddClient(Socket socket, string name)
         {
             MyClient newClient = new MyClient
             {
                 id = _id,
                 name = name,
-                client = client
+                socket = socket
             };
             _clients.TryAdd(_id, newClient);
             _id++;
-        }
-
-        public void DeleteClient(Socket client)
-        {
-            DeleteClient((int)FindClient(client));
         }
 
         public void DeleteClient(int id)
@@ -55,39 +85,16 @@ namespace Server
         {
             foreach (var existClient in _clients)
             {
-                if (existClient.Value.client == client)
+                if (existClient.Value.socket == client)
                     return existClient.Key;
             }
             return -1;
-        }
-
-        public string GetClientName(Socket client)
-        {
-            return GetClientName((int)FindClient(client));
         }
 
         public string GetClientName(int id)
         {
             _clients.TryGetValue(id, out MyClient tmp);
             return tmp.name;
-        }
-
-        public void SendPocketToAll(byte[] pocket)
-        {
-            for (int i = 0; i < _id; i++)
-                    _clients[i].client.Send(pocket);
-        }
-
-        public void SendPocketToAllExcept(byte[] pocket, Socket excepted_client)
-        {
-            SendPocketToAllExcept(pocket, (int)FindClient(excepted_client));
-        }
-
-        public void SendPocketToAllExcept(byte[] pocket, int excepted_id)
-        {
-            for (int i = 0; i < _id; i++)
-                if (i != excepted_id)
-                    _clients[i].client.Send(pocket);
         }
     }
 }

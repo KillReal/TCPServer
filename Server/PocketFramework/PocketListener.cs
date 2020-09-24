@@ -55,7 +55,7 @@ namespace Server
 
         private void HandleClientPocket(object client)
         {
-            int id = _clientManager.GetNextID();
+            int id = _clientManager.GetAvailibleID();
             PocketHandler.HandleClientMessage((Socket)client, id);
         }
 

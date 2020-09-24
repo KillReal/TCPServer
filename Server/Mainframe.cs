@@ -12,29 +12,18 @@ namespace Server
 {
     class Program
     {
-        static ClientManager clientManager = new ClientManager();
-        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
-        public static extern IntPtr GetForegroundWindow();
-        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
-        public static extern short GetAsyncKeyState(int vKey);
-        [DllImport("kernel32.dll")]
-        static extern IntPtr GetConsoleWindow();
-        static private bool IsKeyPressed(int result)
-        {
-            if (GetConsoleWindow() != GetForegroundWindow())
-                return false;
-            if (result < 0 && (result & 0x01) == 0x01)
-                return true;
-            return false;
-        }
+        static ClientManager _clientManager = new ClientManager();
         static void Main(string[] args)
         {
+            PocketHandler.OnMessageAccepted += PocketListener_OnAccept;
             PocketHandler.OnConnectionPocket += PocketListener_OnConnect;
             PocketHandler.OnStringPocket += PocketListener_OnString;
             PocketHandler.onClientDisconnect += PocketListener_OnDisconnect;
 
             Settings settings = new Settings();
-            PocketListener pocketListener = new PocketListener(clientManager, settings);
+            PocketListener pocketListener = new PocketListener(_clientManager, settings);
+            PocketSender.SetClientManager(_clientManager);
+            PocketHandler.SetClientManager(_clientManager);
             Console.WriteLine("[INFO]:  Server is starting...");
             try
             {
@@ -50,7 +39,7 @@ namespace Server
                 while (true)
                 {
                     //exit
-                    if (IsKeyPressed(GetAsyncKeyState('Q')))
+                    if (Utils.IsKeyPressed('Q'))
                     {
                         Console.WriteLine("[INFO]:  Server is stopping...");
                         pocketListener.Stop();
@@ -60,12 +49,13 @@ namespace Server
                         Environment.Exit(0);
                     }
                     // TEST messages to all clients
-                    if (IsKeyPressed(GetAsyncKeyState('T')))
+                    if (Utils.IsKeyPressed('T'))
                     {
                         HeaderPocket header = new HeaderPocket
                         {
                             Count = 1,
-                            Type = (int)PocketEnum.String
+                            Type = (int)PocketEnum.String,
+                            NeedAccept = true
                         };
                         StringPocket str = new StringPocket
                         {
@@ -73,34 +63,38 @@ namespace Server
                         };
                         byte[] data = Utils.ConcatByteArrays(header.ToBytes(), str.ToBytes());
                         Console.WriteLine("[SERVER] ---> [All Clients]: [Message]: {0}", str.StringField);
-                        clientManager.SendPocketToAll(data);
+                        PocketSender.SendPocketToAll(data);
                     }
                     Thread.Sleep(100);
                 }
             }
+
+            static void PocketListener_OnAccept(int id)
+            {
+                Console.WriteLine("[SERVER] <--- [Accepted] from [Client]: {0}", _clientManager.GetClientName(id));
+            }
+
+            static void PocketListener_OnConnect(ConnectionPocket pocket, Socket client, int id)
+            {
+                Console.WriteLine("[SERVER] <--- [Client]: {0} connected", pocket.Name, pocket.Message);
+                _clientManager.AddClient(client, pocket.Name);
+            }
+
+            static void PocketListener_OnDisconnect(int id)
+            {
+                Console.WriteLine("[SERVER] <--- [Client]: {0} disconnected", _clientManager.GetClientName(id));
+                _clientManager.DeleteClient(id);
+            }
+            static void PocketListener_OnString(StringPocket pocket, int id)
+            {
+                Console.WriteLine("[SERVER] <--- [Client]: {0} [Message]: {1}", _clientManager.GetClientName(id), pocket.StringField);
+
+                /// Resend example (like chat message)
+
+                byte[] data = ChatMessagePocket.Construct(_clientManager.GetClientName(id), pocket.StringField);
+                PocketSender.SendPocketToAllExcept(data, id, true);
+            }
         }
 
-        private static void PocketListener_OnConnect(ConnectionPocket pocket, Socket client)
-        {
-            Console.WriteLine("[SERVER] <--- [Client]: {0} connected", pocket.Name, pocket.Message);
-            clientManager.AddClient(client, pocket.Name);
-            PocketSender.SendAcceptedToClient(client);
-        }
-        private static void PocketListener_OnDisconnect(int id)
-        {
-            Console.WriteLine("[SERVER] <--- [Client]: {0} disconnected", clientManager.GetClientName(id));
-            clientManager.DeleteClient(id);
-            PocketSender.SendAcceptedToClient(clientManager.GetSocket(id));
-        }
-        private static void PocketListener_OnString(StringPocket pocket, int id)
-        {
-            Console.WriteLine("[SERVER] <--- [Client]: {0} [Message]: {1}", clientManager.GetClientName(id),  pocket.StringField);
-            PocketSender.SendAcceptedToClient(clientManager.GetSocket(id));
-
-            /// Resend example (like chat message)
-
-            byte[] data = ChatMessagePocket.Construct(clientManager.GetClientName(id), pocket.StringField);
-            clientManager.SendPocketToAllExcept(data, id);
-        }
     }
 }

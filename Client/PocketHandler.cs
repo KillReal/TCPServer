@@ -58,6 +58,7 @@ namespace Server
                 HeaderPocket pocketHeader = HeaderPocket.FromBytes(data);
                 IEnumerable<byte> nextCommandBytes = data.Skip(HeaderPocket.GetLenght());
                 var typeEnum = (PocketEnum)pocketHeader.Type;
+                bool needAccept = pocketHeader.NeedAccept;
                 if (typeEnum == PocketEnum.MessageAccepted)
                     OnMessageAccepted?.Invoke();
                 else
@@ -75,6 +76,16 @@ namespace Server
                             OnChatMessagePocket?.Invoke((ChatMessagePocket)basePocket);
                             break;
                     }
+                }
+                if (needAccept)
+                {
+                    var headerPocket = new HeaderPocket
+                    {
+                        Count = 1,
+                        Type = (int)PocketEnum.MessageAccepted,
+                        NeedAccept = false
+                    };
+                    client.Send(headerPocket.ToBytes());
                 }
             }
         }

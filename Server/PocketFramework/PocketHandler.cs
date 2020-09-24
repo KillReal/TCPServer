@@ -9,12 +9,13 @@ namespace Server
 {
     class PocketHandler
     {
+        private static ClientManager _clientManager;
 
-        public static Action<ConnectionPocket, Socket> OnConnectionPocket;
+        public static Action<ConnectionPocket, Socket, int> OnConnectionPocket;
         public static Action<StringPocket, int> OnStringPocket;
         public static Action<ChatMessagePocket, int> OnChatMessagePocket;
         public static Action<int> onClientDisconnect;
-        public static Action OnMessageAccepted;
+        public static Action<int> OnMessageAccepted;
 
         private delegate BasePocket DeselialiseBytesToCommand(byte[] bytes);
         private static readonly Dictionary<PocketEnum, DeselialiseBytesToCommand> BytesToCommands = new Dictionary<PocketEnum, DeselialiseBytesToCommand>();
@@ -22,6 +23,11 @@ namespace Server
         static PocketHandler()
         {
             FillBytesToCommandsDictionary();
+        }
+
+        public static void SetClientManager(ClientManager clientManager)
+        {
+            _clientManager = clientManager;
         }
 
         private static void FillBytesToCommandsDictionary()
@@ -38,7 +44,10 @@ namespace Server
                 try
                 {
                     byte[] data = new byte[1024];
-                    client.Receive(data);
+                    if (_clientManager.FindClient(client) == -1)
+                        client.Receive(data);
+                    else
+                        _clientManager.Recieve(client_id, ref data);
                     ParsePocket(data, client, client_id);
                 }
                 catch
@@ -58,16 +67,16 @@ namespace Server
                 HeaderPocket pocketHeader = HeaderPocket.FromBytes(data);
                 IEnumerable<byte> nextCommandBytes = data.Skip(HeaderPocket.GetLenght());
                 var typeEnum = (PocketEnum)pocketHeader.Type;
+                bool needAccept = pocketHeader.NeedAccept;
                 if (typeEnum == PocketEnum.MessageAccepted)
-                    OnMessageAccepted?.Invoke();
+                    OnMessageAccepted?.Invoke(client_id);
                 else
                 {
-                    Pockets.BasePocket basePocket = BytesToCommands[typeEnum].Invoke(nextCommandBytes.ToArray());
-
+                    BasePocket basePocket = BytesToCommands[typeEnum].Invoke(nextCommandBytes.ToArray());
                     switch (typeEnum)
                     {
                         case PocketEnum.Connection:
-                            OnConnectionPocket?.Invoke((ConnectionPocket)basePocket, client);
+                            OnConnectionPocket?.Invoke((ConnectionPocket)basePocket, client, client_id);
                             break;
                         case PocketEnum.String:
                             OnStringPocket?.Invoke((StringPocket)basePocket, client_id);
@@ -76,6 +85,9 @@ namespace Server
                             break;
                     }
                 }
+                if (needAccept)
+                    PocketSender.SendAcceptedToClient(client_id);
+                _clientManager.SetAcceptState(client_id, false);
             }
         }
     }

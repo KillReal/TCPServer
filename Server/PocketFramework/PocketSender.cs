@@ -9,17 +9,22 @@ namespace Server
 {
     public class PocketSender
     {
-        public static void SendAcceptedToClient(Socket client)
+        private static ClientManager _clientManager;
+        public static void SetClientManager(ClientManager clientManager)
+        {
+            _clientManager = clientManager;
+        }
+        public static void SendAcceptedToClient(int id)
         {
             try
             {
                 var headerPocket = new HeaderPocket
                 {
                     Count = 1,
-                    Type = (int)PocketEnum.MessageAccepted
+                    Type = (int)PocketEnum.MessageAccepted,
+                    NeedAccept = false
                 };
-                if (client != null)
-                    client.Send(headerPocket.ToBytes());
+                _clientManager.Send(id, headerPocket.ToBytes());
             }
             catch (SocketException exception)
             {
@@ -27,23 +32,36 @@ namespace Server
             }
         }
 
-        public static void SendPocketToClient(Socket client, BasePocket pocket, PocketEnum typeEnum)
+        public static void SendPocketToClient(int id, BasePocket pocket, PocketEnum typeEnum)
         {
             try
             {
                 var pocketHeader = new HeaderPocket
                 {
                     Count = 1,
-                    Type = (int)typeEnum
+                    Type = (int)typeEnum,
+                    NeedAccept = true
                 };
                 byte[] data = Utils.ConcatByteArrays(pocketHeader.ToBytes(), pocket.ToBytes());
-                if (client != null)
-                    client.Send(data);
+                _clientManager.Send(id, data);
             }
             catch (SocketException exception)
             {
                 Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
             }
+        }
+
+        static public void SendPocketToAll(byte[] data, bool accept = false)
+        {
+            for (int i = 0; i < _clientManager.GetAvailibleID(); i++)
+                _clientManager.Send(i, data);
+        }
+
+        static public void SendPocketToAllExcept(byte[] data, int excepted_id, bool accept = false)
+        {
+            for (int i = 0; i < _clientManager.GetAvailibleID() - 1; i++)
+                if (i != excepted_id)
+                    _clientManager.Send(i, data);
         }
     }
 }
