@@ -29,9 +29,9 @@ namespace Server
             {
                 pocketListener.Start();
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                //Console.WriteLine("[ERROR]: " + ex.ToString());
+                Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
             }
             finally
             {

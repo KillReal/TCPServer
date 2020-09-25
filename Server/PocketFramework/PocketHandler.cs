@@ -50,9 +50,9 @@ namespace Server
                         _clientManager.Recieve(client_id, ref data);
                     ParsePocket(data, client, client_id);
                 }
-                catch
+                catch (Exception exception)
                 {
-
+                    Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
                 }
             } while (client.Connected);
             onClientDisconnect?.Invoke(client_id);

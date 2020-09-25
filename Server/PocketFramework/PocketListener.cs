@@ -45,9 +45,9 @@ namespace Server
                     var clientThread = new Thread(HandleClientPocket);
                     clientThread.Start(handler);
                 }
-                catch (Exception ex)
+                catch (Exception exception)
                 {
-                    //Console.WriteLine("[ERROR]: " + ex.Message);
+                    Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
                 }
             }
             _listener.Close();
