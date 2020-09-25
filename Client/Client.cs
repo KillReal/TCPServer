@@ -83,6 +83,19 @@ namespace Client
                     };
                     byte[] data = Utils.ConcatByteArrays(header.ToBytes(), pocket.ToBytes());
                     data = Utils.ConcatByteArrays(data, pocket2.ToBytes());
+                    HeaderPocket header2 = new HeaderPocket
+                    {
+                        Count = 1,
+                        Type = (int)PocketEnum.ChatMessage,
+                        NeedAccept = true
+                    };
+                    ChatMessagePocket pocket3 = new ChatMessagePocket
+                    {
+                        Name = "vasya",
+                        Message = "1337"
+                    };
+                    data = Utils.ConcatByteArrays(data, header2.ToBytes());
+                    data = Utils.ConcatByteArrays(data, pocket3.ToBytes());
                     SendToServer(server, data);
                 }
             }

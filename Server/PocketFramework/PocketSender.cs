@@ -26,7 +26,7 @@ namespace Server
                 };
                 _clientManager.Send(id, headerPocket.ToBytes());
             }
-            catch (SocketException exception)
+            catch (Exception exception)
             {
                 Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
             }
@@ -45,7 +45,7 @@ namespace Server
                 byte[] data = Utils.ConcatByteArrays(pocketHeader.ToBytes(), pocket.ToBytes());
                 _clientManager.Send(id, data);
             }
-            catch (SocketException exception)
+            catch (Exception exception)
             {
                 Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
             }
@@ -59,7 +59,7 @@ namespace Server
 
         static public void SendPocketToAllExcept(byte[] data, int excepted_id, bool accept = false)
         {
-            for (int i = 0; i < _clientManager.GetAvailibleID() - 1; i++)
+            for (int i = 0; i < _clientManager.GetAvailibleID(); i++)
                 if (i != excepted_id)
                     _clientManager.Send(i, data);
         }

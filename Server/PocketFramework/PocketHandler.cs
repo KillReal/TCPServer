@@ -71,12 +71,13 @@ namespace Server
                 bool need_accept = false;
                 while (data.Length > skip_size)
                 {
-                    HeaderPocket header = HeaderPocket.FromBytes(data);
+                    IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
+                    HeaderPocket header = HeaderPocket.FromBytes(nextPocketBytes.ToArray());
                     need_accept = header.NeedAccept;
                     skip_size += HeaderPocket.GetLenght();
                     for (int i = 0; i < header.Count; i++)
                     {
-                        IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
+                        nextPocketBytes = data.Skip(skip_size);
                         var typeEnum = (PocketEnum)header.Type;
                         if (typeEnum == PocketEnum.MessageAccepted)
                             OnMessageAccepted?.Invoke(client_id);
