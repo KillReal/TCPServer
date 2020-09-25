@@ -26,8 +26,12 @@ namespace Server
 
         public static byte[] GetBytes(string str)
         {
-            var bytes = new byte[str.Length * sizeof(char)];
-            Buffer.BlockCopy(str.ToCharArray(), 0, bytes, 0, bytes.Length);
+            if (str == null)
+                return null;
+            byte[] str_bytes = Encoding.Default.GetBytes(str);
+            string encoded_str = Encoding.UTF8.GetString(str_bytes);
+            var bytes = new byte[encoded_str.Length * sizeof(char)];
+            Buffer.BlockCopy(encoded_str.ToCharArray(), 0, bytes, 0, bytes.Length);
             return bytes;
         }
 

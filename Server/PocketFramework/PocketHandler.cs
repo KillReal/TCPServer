@@ -18,7 +18,7 @@ namespace Server
         public static Action<int> OnMessageAccepted;
 
         private delegate BasePocket DeselialiseBytesToCommand(byte[] bytes);
-        private static readonly Dictionary<PocketEnum, DeselialiseBytesToCommand> BytesToCommands = new Dictionary<PocketEnum, DeselialiseBytesToCommand>();
+        private static readonly Dictionary<PocketEnum, DeselialiseBytesToCommand> BytesToPockets = new Dictionary<PocketEnum, DeselialiseBytesToCommand>();
 
         static PocketHandler()
         {
@@ -32,9 +32,9 @@ namespace Server
 
         private static void FillBytesToCommandsDictionary()
         {
-            BytesToCommands.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
-            BytesToCommands.Add(PocketEnum.String, StringPocket.FromBytes);
-            BytesToCommands.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
+            BytesToPockets.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
+            BytesToPockets.Add(PocketEnum.String, StringPocket.FromBytes);
+            BytesToPockets.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
         }
 
         public static void HandleClientMessage(Socket client, int client_id)
@@ -43,11 +43,14 @@ namespace Server
             {
                 try
                 {
-                    byte[] data = new byte[1024];
+                    byte[] buffer = new byte[1024];
+                    int size = 0;
                     if (_clientManager.FindClient(client) == -1)
-                        client.Receive(data);
+                        size = client.Receive(buffer);
                     else
-                        _clientManager.Recieve(client_id, ref data);
+                        size = _clientManager.Recieve(client_id, ref buffer);
+                    byte[] data = new byte[size];
+                    Buffer.BlockCopy(buffer, 0, data, 0, size);
                     ParsePocket(data, client, client_id);
                 }
                 catch (Exception exception)
@@ -64,30 +67,39 @@ namespace Server
         {
             if (data.Length >= HeaderPocket.GetLenght())
             {
-                HeaderPocket pocketHeader = HeaderPocket.FromBytes(data);
-                IEnumerable<byte> nextCommandBytes = data.Skip(HeaderPocket.GetLenght());
-                var typeEnum = (PocketEnum)pocketHeader.Type;
-                bool needAccept = pocketHeader.NeedAccept;
-                if (typeEnum == PocketEnum.MessageAccepted)
-                    OnMessageAccepted?.Invoke(client_id);
-                else
+                int skip_size = 0;
+                bool need_accept = false;
+                while (data.Length > skip_size)
                 {
-                    BasePocket basePocket = BytesToCommands[typeEnum].Invoke(nextCommandBytes.ToArray());
-                    switch (typeEnum)
+                    HeaderPocket header = HeaderPocket.FromBytes(data);
+                    need_accept = header.NeedAccept;
+                    skip_size += HeaderPocket.GetLenght();
+                    for (int i = 0; i < header.Count; i++)
                     {
-                        case PocketEnum.Connection:
-                            OnConnectionPocket?.Invoke((ConnectionPocket)basePocket, client, client_id);
-                            break;
-                        case PocketEnum.String:
-                            OnStringPocket?.Invoke((StringPocket)basePocket, client_id);
-                            break;
-                        case PocketEnum.ChatMessage:
-                            break;
+                        IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
+                        var typeEnum = (PocketEnum)header.Type;
+                        if (typeEnum == PocketEnum.MessageAccepted)
+                            OnMessageAccepted?.Invoke(client_id);
+                        else
+                        {
+                            BasePocket basePocket = BytesToPockets[typeEnum].Invoke(nextPocketBytes.ToArray());
+                            skip_size += basePocket.ToBytes().Length;
+                            switch (typeEnum)
+                            {
+                                case PocketEnum.Connection:
+                                    OnConnectionPocket?.Invoke((ConnectionPocket)basePocket, client, client_id);
+                                    break;
+                                case PocketEnum.String:
+                                    OnStringPocket?.Invoke((StringPocket)basePocket, client_id);
+                                    break;
+                                case PocketEnum.ChatMessage:
+                                    break;
+                            }
+                        }
                     }
                 }
-                if (needAccept)
+                if (need_accept)
                     PocketSender.SendAcceptedToClient(client_id);
-                _clientManager.SetAcceptState(client_id, false);
             }
         }
     }

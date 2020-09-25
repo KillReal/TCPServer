@@ -15,7 +15,6 @@ namespace Server.Pockets
             byte[] stringFieldBytes = Utils.GetBytes(StringField);
             StringFieldLenght = stringFieldBytes.Length;
             int messageLenght = sizeof(int) + StringFieldLenght;
-
             var messageData = new byte[messageLenght];
             using (var stream = new MemoryStream(messageData))
             {

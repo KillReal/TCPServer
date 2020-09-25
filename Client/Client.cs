@@ -27,6 +27,10 @@ namespace Client
             byte[] msg = Utils.ConcatByteArrays(headerPocket.ToBytes(), pocket.ToBytes());
             int bytesSent = server.Send(msg);
         }
+        static void SendToServer(Socket server, byte[] data)
+        {
+            server.Send(data);
+        }
         static void Main(string[] args)
         {
             PocketHandler.OnMessageAccepted += PocketListener_OnAcception;
@@ -63,11 +67,23 @@ namespace Client
                 {
                     Console.Write("[CLIENT] ---> [Message]: ");
                     string message = Console.ReadLine();
+                    HeaderPocket header = new HeaderPocket
+                    {
+                        Count = 2,
+                        Type = (int)PocketEnum.String,
+                        NeedAccept = true
+                    };
                     StringPocket pocket = new StringPocket
                     {
                         StringField = message
                     };
-                    SendToServer(server, pocket, PocketEnum.String);
+                    StringPocket pocket2 = new StringPocket
+                    {
+                        StringField = "test pocket 2"
+                    };
+                    byte[] data = Utils.ConcatByteArrays(header.ToBytes(), pocket.ToBytes());
+                    data = Utils.ConcatByteArrays(data, pocket2.ToBytes());
+                    SendToServer(server, data);
                 }
             }
         }

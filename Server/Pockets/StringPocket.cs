@@ -9,6 +9,7 @@ namespace Server.Pockets
     {
         private int StringFieldLenght { get; set; }
         public string StringField { get; set; }
+
         public override byte[] ToBytes()
         {
             byte[] stringFieldBytes = Utils.GetBytes(StringField);

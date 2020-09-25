@@ -50,11 +50,12 @@ namespace Server
                 tmp.socket.Send(data);
         }
 
-        public void Recieve(int id, ref byte[] data)
+        public int Recieve(int id, ref byte[] data)
         {
             MyClient tmp = GetClient(id);
-            tmp.socket.Receive(data);
+            int size = tmp.socket.Receive(data);
             tmp.recieve_buffer = data;
+            return size;
         }
 
         public Socket GetSocket(long key)
