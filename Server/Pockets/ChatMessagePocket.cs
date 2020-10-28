@@ -40,13 +40,12 @@ namespace Server.Pockets
             return pocket;
         }
 
-        public static byte[] Construct(string name, string msg, bool accept = false)
+        public static byte[] Construct(string name, string msg)
         {
             HeaderPocket header = new HeaderPocket
             {
                 Count = 1,
                 Type = (int)PocketEnum.ChatMessage,
-                NeedAccept = accept
             };
             ChatMessagePocket chat_msg = new ChatMessagePocket
             {

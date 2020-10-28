@@ -4,11 +4,15 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Server
 {
     public class ClientManager
     {
+        public static Action<int> onClientLostConnection;
+
         private int _id;
 
         public struct MyClient
@@ -16,52 +20,103 @@ namespace Server
             public int id;
             public string name;
             public Socket socket;
+            public bool callback;
             public byte[] send_buffer;
             public byte[] recieve_buffer;
             public int state;
         };
-        public ConcurrentDictionary<long, MyClient> _clients = new ConcurrentDictionary<long, MyClient>();
+        public static ConcurrentDictionary<long, MyClient> _clients = new ConcurrentDictionary<long, MyClient>();
 
         public int GetAvailibleID()
         {
             return _id;
         }
 
-        private MyClient GetClient(int id)
+        public string GetClientInfo(int id)
         {
-            _clients.TryGetValue(id, out MyClient tmp);
-            return tmp;
+            return "[" + id.ToString() + "] name: " + _clients[id].name + " state: " + Enum.GetName(typeof(ClientStateEnum), _clients[id].state);
         }
 
-        public void SetAcceptState(int id, bool accept)
+        private MyClient GetClient(int id)
         {
-            MyClient tmp = GetClient(id);
-            if (accept)
-                tmp.state = (int)ClientStateEnum.AskedForAccept;
+            _clients.TryGetValue(id, out MyClient client);
+            return client;
+        }
+
+        private void WaitForClientDelete(int id)
+        {
+            MyClient client = GetClient(id);
+            int counter = 0;
+            while (counter < 3)
+            {
+                if (client.callback)
+                    return;
+                counter++;
+                Thread.Sleep(1000);
+            }
+            onClientLostConnection?.Invoke(id);
+        }
+
+        private void WaitForClientAccept(int id)
+        {
+            MyClient client = GetClient(id);
+            int counter = 0;
+            while (counter < 3)
+            {
+                if (client.callback)
+                    return;
+                counter++;
+                Thread.Sleep(1000);
+            }
+            SetConnectionState(id);
+            Task waitTask = new Task(() => WaitForClientDelete(id));
+            waitTask.Start();
+        }
+
+        public void SetConnectionState(int id)
+        {
+            MyClient client = GetClient(id);
+            if (client.state != (int)ClientStateEnum.Disconnected)
+                client.state = (int)ClientStateEnum.Disconnected;
             else
-                tmp.state = (int)ClientStateEnum.Idle;
+                client.state = (int)ClientStateEnum.Connected;
+            _clients[id] = client;
+        }
+
+        public void SetAcceptState(int id, bool accept = false)
+        {
+            MyClient client = GetClient(id);
+            if (!accept)
+            {
+                client.callback = false;
+                SetConnectionState(id);
+                Task waitTask = new Task(() => WaitForClientAccept(id));
+                waitTask.Start();
+            }
+            else
+                client.callback = true;
         }
 
         public void Send(int id, byte[] data)
         {
-            MyClient tmp = GetClient(id);
-            tmp.send_buffer = data;
-            if (tmp.socket != null)
-                tmp.socket.Send(data);
+            MyClient client = GetClient(id);
+            client.send_buffer = data;
+            if (client.socket != null)
+                client.socket.Send(data);
         }
 
         public int Recieve(int id, ref byte[] data)
         {
-            MyClient tmp = GetClient(id);
-            int size = tmp.socket.Receive(data);
-            tmp.recieve_buffer = data;
+            MyClient client = GetClient(id);
+            int size = client.socket.Receive(data);
+            client.recieve_buffer = data;
             return size;
         }
 
-        public Socket GetSocket(long key)
+        public Socket GetSocket(int id)
         {
-            _clients.TryGetValue(key, out MyClient tmp);
-            return tmp.socket;
+            _clients.TryGetValue(id, out MyClient client);
+            return client.socket;  
         }
 
         public void AddClient(Socket socket, string name)
@@ -70,7 +125,8 @@ namespace Server
             {
                 id = _id,
                 name = name,
-                socket = socket
+                socket = socket,
+                state = 1
             };
             _clients.TryAdd(_id, newClient);
             _id++;
@@ -94,8 +150,8 @@ namespace Server
 
         public string GetClientName(int id)
         {
-            _clients.TryGetValue(id, out MyClient tmp);
-            return tmp.name;
+            _clients.TryGetValue(id, out MyClient client);
+            return client.name;
         }
     }
 }

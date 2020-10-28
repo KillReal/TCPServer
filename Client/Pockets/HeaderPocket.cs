@@ -9,10 +9,9 @@ namespace Server
     {
         public int Type { get; set; }
         public int Count { get; set; }
-        public bool NeedAccept { get; set; }
         public static int GetLenght()
         {
-            return sizeof(int) + sizeof(int) + sizeof(bool);
+            return sizeof(int) + sizeof(int);
         }
 
         public static HeaderPocket FromBytes(byte[] bytes)
@@ -22,7 +21,6 @@ namespace Server
             var pocket = new HeaderPocket();
             pocket.Type = br.ReadInt32();
             pocket.Count = br.ReadInt32();
-            pocket.NeedAccept = br.ReadBoolean();
             return pocket;
         }
 
@@ -33,7 +31,6 @@ namespace Server
             var writer = new BinaryWriter(stream);
             writer.Write(Type);
             writer.Write(Count);
-            writer.Write(NeedAccept);
             return data;
 
         }

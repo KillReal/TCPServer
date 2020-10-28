@@ -1,9 +1,11 @@
-﻿using Server.Pockets;
+﻿using Server.Enums;
+using Server.Pockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 
 namespace Server
 {
@@ -58,7 +60,8 @@ namespace Server
                     Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
                 }
             } while (client.Connected);
-            onClientDisconnect?.Invoke(client_id);
+            //onClientDisconnect?.Invoke(client_id);
+            _clientManager.SetAcceptState(client_id, false);
             client.Shutdown(SocketShutdown.Both);
             client.Close();
         }
@@ -68,12 +71,11 @@ namespace Server
             if (data.Length >= HeaderPocket.GetLenght())
             {
                 int skip_size = 0;
-                bool need_accept = false;
+                bool accept = false;
                 while (data.Length > skip_size)
                 {
                     IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
                     HeaderPocket header = HeaderPocket.FromBytes(nextPocketBytes.ToArray());
-                    need_accept = header.NeedAccept;
                     skip_size += HeaderPocket.GetLenght();
                     for (int i = 0; i < header.Count; i++)
                     {
@@ -96,10 +98,11 @@ namespace Server
                                 case PocketEnum.ChatMessage:
                                     break;
                             }
+                            accept = true;
                         }
                     }
                 }
-                if (need_accept)
+                if (accept)
                     PocketSender.SendAcceptedToClient(client_id);
             }
         }

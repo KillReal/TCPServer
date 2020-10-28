@@ -21,7 +21,6 @@ namespace Client
             {
                 Count = 1,
                 Type = (int)typeEnum,
-                NeedAccept = true
             };
 
             byte[] msg = Utils.ConcatByteArrays(headerPocket.ToBytes(), pocket.ToBytes());
@@ -71,7 +70,6 @@ namespace Client
                     {
                         Count = 2,
                         Type = (int)PocketEnum.String,
-                        NeedAccept = true
                     };
                     StringPocket pocket = new StringPocket
                     {
@@ -87,7 +85,6 @@ namespace Client
                     {
                         Count = 1,
                         Type = (int)PocketEnum.ChatMessage,
-                        NeedAccept = true
                     };
                     ChatMessagePocket pocket3 = new ChatMessagePocket
                     {

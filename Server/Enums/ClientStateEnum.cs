@@ -6,8 +6,10 @@ namespace Server.Enums
 {
     public enum ClientStateEnum : int
     {
-        Idle = 1,
-        AskedForAccept = 2,
-        WaitForAccept = 3
+        Disconnected = 0,
+        Connected = 1,
+        Preparing = 2,
+        Ready = 3,
+        Playing = 4
     }
 }

@@ -5,3 +5,4 @@ Server/bin/
 Server/obj/
 Server/.vs/
 *.csproj.nuget.dgspec.json
+*.lnk

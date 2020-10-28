@@ -22,13 +22,12 @@ namespace Server
                 {
                     Count = 1,
                     Type = (int)PocketEnum.MessageAccepted,
-                    NeedAccept = false
                 };
                 _clientManager.Send(id, headerPocket.ToBytes());
             }
             catch (Exception exception)
             {
-                Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
+                Console.WriteLine("[ERROR]:  " + exception.Message + " " + exception.InnerException);
             }
         }
 
@@ -40,14 +39,13 @@ namespace Server
                 {
                     Count = 1,
                     Type = (int)typeEnum,
-                    NeedAccept = true
                 };
                 byte[] data = Utils.ConcatByteArrays(pocketHeader.ToBytes(), pocket.ToBytes());
                 _clientManager.Send(id, data);
             }
             catch (Exception exception)
             {
-                Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
+                Console.WriteLine("[ERROR]:  " + exception.Message + " " + exception.InnerException);
             }
         }
 

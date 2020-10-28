@@ -40,14 +40,14 @@ namespace Server
             {
                 try
                 {
-                    Console.WriteLine("[INFO]: Waiting connection from {0}", _ipEndpoint);
+                    Console.WriteLine("[INFO]:  Waiting connection from {0}", _ipEndpoint);
                     Socket handler = _listener.Accept();
                     var clientThread = new Thread(HandleClientPocket);
                     clientThread.Start(handler);
                 }
                 catch (Exception exception)
                 {
-                    Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
+                    Console.WriteLine("[ERROR]:  " + exception.Message + " " + exception.InnerException);
                 }
             }
             _listener.Close();
