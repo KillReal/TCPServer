@@ -17,7 +17,7 @@ namespace Server
         public static Action OnMessageAccepted;
 
         private delegate BasePocket DeselialiseBytesToCommand(byte[] bytes);
-        private static readonly Dictionary<PocketEnum, DeselialiseBytesToCommand> BytesToCommands = new Dictionary<PocketEnum, DeselialiseBytesToCommand>();
+        private static readonly Dictionary<PocketEnum, DeselialiseBytesToCommand> BytesToTypes = new Dictionary<PocketEnum, DeselialiseBytesToCommand>();
 
         static PocketHandler()
         {
@@ -26,9 +26,9 @@ namespace Server
 
         private static void FillBytesToCommandsDictionary()
         {
-            BytesToCommands.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
-            BytesToCommands.Add(PocketEnum.String, StringPocket.FromBytes);
-            BytesToCommands.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
+            BytesToTypes.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
+            BytesToTypes.Add(PocketEnum.String, StringPocket.FromBytes);
+            BytesToTypes.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
         }
 
         public static void HandleClientMessage(Socket client)
@@ -51,36 +51,58 @@ namespace Server
             client.Close();
         }
 
-        private static void ParsePocket(byte[] data, Socket client)
+        private static void ParsePocket(byte[] data, Socket server)
         {
-            if (data.Length >= HeaderPocket.GetLenght())
+            if (data.Length >= MainHeader.GetLenght())
             {
-                HeaderPocket pocketHeader = HeaderPocket.FromBytes(data);
-                IEnumerable<byte> nextCommandBytes = data.Skip(HeaderPocket.GetLenght());
-                var typeEnum = (PocketEnum)pocketHeader.Type;
-                if (typeEnum == PocketEnum.MessageAccepted)
-                    OnMessageAccepted?.Invoke();
-                else
+                int skip_size = 0;
+                bool accept = false;
+                skip_size += MainHeader.GetLenght();
+                IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
+                MainHeader mainHeader = MainHeader.FromBytes(nextPocketBytes.ToArray());
+                while (data.Length > skip_size)
                 {
-                    BasePocket basePocket = BytesToCommands[typeEnum].Invoke(nextCommandBytes.ToArray());
-                    switch (typeEnum)
+                    nextPocketBytes = data.Skip(skip_size);
+                    HeaderPocket header = HeaderPocket.FromBytes(nextPocketBytes.ToArray());
+                    skip_size += HeaderPocket.GetLenght();
+                    for (int i = 0; i < header.Count; i++)
                     {
-                        case PocketEnum.Connection:
-                            OnConnectionPocket?.Invoke((ConnectionPocket)basePocket, client);
-                            break;
-                        case PocketEnum.String:
-                            OnStringPocket?.Invoke((StringPocket)basePocket);
-                            break;
-                        case PocketEnum.ChatMessage:
-                            OnChatMessagePocket?.Invoke((ChatMessagePocket)basePocket);
-                            break;
+                        nextPocketBytes = data.Skip(skip_size);
+                        var typeEnum = (PocketEnum)header.Type;
+                        if (typeEnum == PocketEnum.MessageAccepted)
+                            OnMessageAccepted?.Invoke();
+                        else
+                        {
+                            BasePocket basePocket = BytesToTypes[typeEnum].Invoke(nextPocketBytes.ToArray());
+                            skip_size += basePocket.ToBytes().Length;
+                            switch (typeEnum)
+                            {
+                                case PocketEnum.Connection:
+                                    OnConnectionPocket?.Invoke((ConnectionPocket)basePocket, server);
+                                    break;
+                                case PocketEnum.String:
+                                    OnStringPocket?.Invoke((StringPocket)basePocket);
+                                    break;
+                                case PocketEnum.ChatMessage:
+                                    break;
+                            }
+                            accept = true;
+                        }
                     }
+                }
+                if (accept)
+                {
+                    var MainHeader = new MainHeader
+                    {
+                        Hash = 332,
+                        Id = (int)DateTime.Now.Ticks
+                    };
                     var headerPocket = new HeaderPocket
                     {
                         Count = 1,
                         Type = (int)PocketEnum.MessageAccepted,
                     };
-                    client.Send(headerPocket.ToBytes());
+                    server.Send(Utils.ConcatByteArrays(mainHeader.ToBytes(), headerPocket.ToBytes()));
                 }
             }
         }

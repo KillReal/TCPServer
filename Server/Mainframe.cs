@@ -7,6 +7,7 @@ using Server.Pockets;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Diagnostics;
+using Server.Enums;
 
 namespace Server
 {
@@ -21,10 +22,11 @@ namespace Server
             PocketHandler.onClientDisconnect += PocketListener_OnDisconnect;
             ClientManager.onClientLostConnection += ClientManager_OnLostConnection;
 
-            Settings settings = new Settings();
-            PocketListener pocketListener = new PocketListener(_clientManager, settings);
+            Settings _settings = new Settings();
+            _clientManager.SetSettings(_settings);
+            PocketListener pocketListener = new PocketListener(_clientManager, _settings);
             PocketSender.SetClientManager(_clientManager);
-            PocketHandler.SetClientManager(_clientManager);
+            PocketHandler.SetClientManager(_clientManager, _settings);
             Console.WriteLine("[INFO]:  Server is starting...");
             try
             {
@@ -62,14 +64,13 @@ namespace Server
                         };
                         byte[] data = Utils.ConcatByteArrays(header.ToBytes(), str.ToBytes());
                         Console.WriteLine("[SERVER] ---> [All Clients]: [Message]: {0}", str.StringField);
-                        PocketSender.SendPocketToAll(data);
+                        PocketSender.SendDataToAll(data);
                     }
                     else if (cmd == "list")
                     {
                         Console.WriteLine("   List of all connected clients");
                         for (int i = 0; i < _clientManager.GetAvailibleID(); i++)
                             Console.WriteLine("   " + _clientManager.GetClientInfo(i));
-                        Console.WriteLine("   ");
                     }
                     Thread.Sleep(100);
                 }
@@ -83,8 +84,17 @@ namespace Server
 
             static void PocketListener_OnConnect(ConnectionPocket pocket, Socket client, int id)
             {
-                Console.WriteLine("[SERVER] <--- [Client]: {0} connected", pocket.Name, pocket.Message);
-                _clientManager.AddClient(client, pocket.Name);
+                int rec_id = (int)_clientManager.FindClient(pocket.Name);
+                if (rec_id > -1 && _clientManager.GetClientState(rec_id) == (int)(ClientStateEnum.Disconnected))
+                {
+                    _clientManager.ReplaceClient(client, rec_id);
+                    Console.WriteLine("[SERVER] <--- [Client]: {0} reconnected", pocket.Name, pocket.Message);
+                }
+                else
+                {
+                    Console.WriteLine("[SERVER] <--- [Client]: {0} connected", pocket.Name, pocket.Message);
+                    _clientManager.AddClient(client, pocket.Name);
+                }
             }
 
             static void PocketListener_OnDisconnect(int id)
@@ -95,7 +105,7 @@ namespace Server
 
             static void ClientManager_OnLostConnection(int id)
             {
-                Console.WriteLine("[SERVER] <--- Lost connection with {0}", _clientManager.GetClientName(id));
+                Console.WriteLine("[SERVER] <--- [Client]: {0} disconnected (Timed out)", _clientManager.GetClientName(id));
                 _clientManager.DeleteClient(id);
             }
 
@@ -106,7 +116,7 @@ namespace Server
                 /// Resend example (like chat message)
 
                 byte[] data = ChatMessagePocket.Construct(_clientManager.GetClientName(id), pocket.StringField);
-                PocketSender.SendPocketToAllExcept(data, id, true);
+                PocketSender.SendDataToAllExcept(data, id);
             }
         }
 

@@ -49,13 +49,13 @@ namespace Server
             }
         }
 
-        static public void SendPocketToAll(byte[] data, bool accept = false)
+        static public void SendDataToAll(byte[] data)
         {
             for (int i = 0; i < _clientManager.GetAvailibleID(); i++)
                 _clientManager.Send(i, data);
         }
 
-        static public void SendPocketToAllExcept(byte[] data, int excepted_id, bool accept = false)
+        static public void SendDataToAllExcept(byte[] data, int excepted_id)
         {
             for (int i = 0; i < _clientManager.GetAvailibleID(); i++)
                 if (i != excepted_id)

@@ -30,14 +30,15 @@ namespace Server
                 return null;
             byte[] str_bytes = Encoding.Default.GetBytes(str);
             string encoded_str = Encoding.UTF8.GetString(str_bytes);
-            var bytes = new byte[encoded_str.Length * sizeof(char)];
+            var bytes = new byte[encoded_str.Length * 2];
+            
             Buffer.BlockCopy(encoded_str.ToCharArray(), 0, bytes, 0, bytes.Length);
             return bytes;
         }
 
         public static string GetString(byte[] bytes)
         {
-            var chars = new char[bytes.Length / sizeof(char)];
+            var chars = new char[bytes.Length / 2];
             Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
             return new string(chars);
         }

@@ -22,12 +22,14 @@ namespace Client
                 Count = 1,
                 Type = (int)typeEnum,
             };
-
             byte[] msg = Utils.ConcatByteArrays(headerPocket.ToBytes(), pocket.ToBytes());
+            msg = Utils.ConcatByteArrays(MainHeader.Construct(332, (int)DateTime.Now.Ticks), msg);
             int bytesSent = server.Send(msg);
         }
         static void SendToServer(Socket server, byte[] data)
         {
+            byte[] header = MainHeader.Construct(332, (int)DateTime.Now.Ticks);
+            data = Utils.ConcatByteArrays(header, data);
             server.Send(data);
         }
         static void Main(string[] args)
@@ -77,22 +79,10 @@ namespace Client
                     };
                     StringPocket pocket2 = new StringPocket
                     {
-                        StringField = "test pocket 2"
+                        StringField = "testing double pocket"
                     };
                     byte[] data = Utils.ConcatByteArrays(header.ToBytes(), pocket.ToBytes());
                     data = Utils.ConcatByteArrays(data, pocket2.ToBytes());
-                    HeaderPocket header2 = new HeaderPocket
-                    {
-                        Count = 1,
-                        Type = (int)PocketEnum.ChatMessage,
-                    };
-                    ChatMessagePocket pocket3 = new ChatMessagePocket
-                    {
-                        Name = "vasya",
-                        Message = "1337"
-                    };
-                    data = Utils.ConcatByteArrays(data, header2.ToBytes());
-                    data = Utils.ConcatByteArrays(data, pocket3.ToBytes());
                     SendToServer(server, data);
                 }
             }
@@ -113,6 +103,7 @@ namespace Client
                 Name = clientName
             };
 
+            SendToServer(server, connectPocket, PocketEnum.MessageAccepted);
             SendToServer(server, connectPocket, PocketEnum.Connection);
             _listenThread = new Thread(ListenForCommands);
             _listenThread.Start(server);

@@ -12,6 +12,7 @@ namespace Server
     class PocketHandler
     {
         private static ClientManager _clientManager;
+        private static Settings _settings;
 
         public static Action<ConnectionPocket, Socket, int> OnConnectionPocket;
         public static Action<StringPocket, int> OnStringPocket;
@@ -27,9 +28,10 @@ namespace Server
             FillBytesToCommandsDictionary();
         }
 
-        public static void SetClientManager(ClientManager clientManager)
+        public static void SetClientManager(ClientManager clientManager, Settings settings)
         {
             _clientManager = clientManager;
+            _settings = settings;
         }
 
         private static void FillBytesToCommandsDictionary()
@@ -39,16 +41,20 @@ namespace Server
             BytesToPockets.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
         }
 
-        public static void HandleClientMessage(Socket client, int client_id)
+        public static void HandleClientMessage(Socket client)
         {
+            int client_id = -1;
             do
             {
                 try
                 {
                     byte[] buffer = new byte[1024];
                     int size = 0;
-                    if (_clientManager.FindClient(client) == -1)
+                    if (client_id == -1)
+                    {
+                        client_id = (int)_clientManager.FindClient(client);
                         size = client.Receive(buffer);
+                    }
                     else
                         size = _clientManager.Recieve(client_id, ref buffer);
                     byte[] data = new byte[size];
@@ -60,7 +66,7 @@ namespace Server
                     Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
                 }
             } while (client.Connected);
-            //onClientDisconnect?.Invoke(client_id);
+            Console.WriteLine("[SERVER] <--- Lost connection with {0}", _clientManager.GetClientName(client_id));
             _clientManager.SetAcceptState(client_id, false);
             client.Shutdown(SocketShutdown.Both);
             client.Close();
@@ -68,10 +74,14 @@ namespace Server
 
         private static void ParsePocket(byte[] data, Socket client, int client_id)
         {
-            if (data.Length >= HeaderPocket.GetLenght())
+            if (data.Length >= MainHeader.GetLenght())
             {
                 int skip_size = 0;
                 bool accept = false;
+                MainHeader mainHeader = MainHeader.FromBytes(data.ToArray());
+                if (mainHeader.Hash != _settings.PocketHash || _clientManager.GetLastBufferID(client_id) == mainHeader.Id)
+                    return;
+                skip_size += MainHeader.GetLenght();
                 while (data.Length > skip_size)
                 {
                     IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
@@ -83,15 +93,14 @@ namespace Server
                         var typeEnum = (PocketEnum)header.Type;
                         if (typeEnum == PocketEnum.MessageAccepted)
                             OnMessageAccepted?.Invoke(client_id);
-                        else
+                        else if (typeEnum == PocketEnum.Connection)
+                            OnConnectionPocket?.Invoke(ConnectionPocket.FromBytes(nextPocketBytes.ToArray()), client, client_id);
+                        else if (client_id > -1)
                         {
                             BasePocket basePocket = BytesToPockets[typeEnum].Invoke(nextPocketBytes.ToArray());
                             skip_size += basePocket.ToBytes().Length;
                             switch (typeEnum)
                             {
-                                case PocketEnum.Connection:
-                                    OnConnectionPocket?.Invoke((ConnectionPocket)basePocket, client, client_id);
-                                    break;
                                 case PocketEnum.String:
                                     OnStringPocket?.Invoke((StringPocket)basePocket, client_id);
                                     break;
@@ -100,6 +109,8 @@ namespace Server
                             }
                             accept = true;
                         }
+                        else
+                            break;
                     }
                 }
                 if (accept)
