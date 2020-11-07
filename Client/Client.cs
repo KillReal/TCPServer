@@ -24,7 +24,7 @@ namespace Client
             };
             byte[] msg = Utils.ConcatByteArrays(headerPocket.ToBytes(), pocket.ToBytes());
             msg = Utils.ConcatByteArrays(MainHeader.Construct(332, (int)DateTime.Now.Ticks), msg);
-            int bytesSent = server.Send(msg);
+            server.Send(msg);
         }
         static void SendToServer(Socket server, byte[] data)
         {
@@ -82,7 +82,7 @@ namespace Client
                         StringField = "testing double pocket"
                     };
                     byte[] data = Utils.ConcatByteArrays(header.ToBytes(), pocket.ToBytes());
-                    data = Utils.ConcatByteArrays(data, pocket2.ToBytes());
+                    //data = Utils.ConcatByteArrays(data, pocket2.ToBytes());
                     SendToServer(server, data);
                 }
             }
@@ -104,6 +104,7 @@ namespace Client
             };
 
             SendToServer(server, connectPocket, PocketEnum.MessageAccepted);
+            Thread.Sleep(1000);
             SendToServer(server, connectPocket, PocketEnum.Connection);
             _listenThread = new Thread(ListenForCommands);
             _listenThread.Start(server);

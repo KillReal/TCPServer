@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Server
 {
@@ -28,7 +29,7 @@ namespace Server
             FillBytesToCommandsDictionary();
         }
 
-        public static void SetClientManager(ClientManager clientManager, Settings settings)
+        public static void Init(ClientManager clientManager, Settings settings)
         {
             _clientManager = clientManager;
             _settings = settings;
@@ -50,29 +51,26 @@ namespace Server
                 {
                     byte[] buffer = new byte[1024];
                     int size = 0;
-                    if (client_id == -1)
-                    {
-                        client_id = (int)_clientManager.FindClient(client);
-                        size = client.Receive(buffer);
-                    }
-                    else
-                        size = _clientManager.Recieve(client_id, ref buffer);
+                    size = client.Receive(buffer);
                     byte[] data = new byte[size];
                     Buffer.BlockCopy(buffer, 0, data, 0, size);
-                    ParsePocket(data, client, client_id);
+                    if (client_id > -1)
+                        _clientManager.SetRecieve(client_id, data);
+                    new Task(() => ParsePocket(data, client, ref client_id)).Start();
                 }
                 catch (Exception exception)
                 {
-                    Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
+                    if (_settings.ExceptionPrint)
+                        Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
                 }
             } while (client.Connected);
-            Console.WriteLine("[SERVER] <--- Lost connection with {0}", _clientManager.GetClientName(client_id));
-            _clientManager.SetAcceptState(client_id, false);
+            Console.WriteLine("[SERVER]: Lost connection with '{0}'", _clientManager.GetClientName(client_id));
+            _clientManager.ToggleConnectionState(client_id);
             client.Shutdown(SocketShutdown.Both);
             client.Close();
         }
 
-        private static void ParsePocket(byte[] data, Socket client, int client_id)
+        private static void ParsePocket(byte[] data, Socket client, ref int client_id)
         {
             if (data.Length >= MainHeader.GetLenght())
             {
@@ -82,20 +80,36 @@ namespace Server
                 if (mainHeader.Hash != _settings.PocketHash || _clientManager.GetLastBufferID(client_id) == mainHeader.Id)
                     return;
                 skip_size += MainHeader.GetLenght();
-                while (data.Length > skip_size)
+                while (data.Length >= skip_size + HeaderPocket.GetLenght())
                 {
                     IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
                     HeaderPocket header = HeaderPocket.FromBytes(nextPocketBytes.ToArray());
                     skip_size += HeaderPocket.GetLenght();
                     for (int i = 0; i < header.Count; i++)
                     {
-                        nextPocketBytes = data.Skip(skip_size);
                         var typeEnum = (PocketEnum)header.Type;
+                        if (typeEnum < 0 || (int)typeEnum > BytesToPockets.Count())
+                            break;
+                        if (skip_size != data.Length)
+                            nextPocketBytes = data.Skip(skip_size);
                         if (typeEnum == PocketEnum.MessageAccepted)
+                        {
                             OnMessageAccepted?.Invoke(client_id);
+                            skip_size = data.Length;
+                            break;
+                        }
                         else if (typeEnum == PocketEnum.Connection)
-                            OnConnectionPocket?.Invoke(ConnectionPocket.FromBytes(nextPocketBytes.ToArray()), client, client_id);
-                        else if (client_id > -1)
+                        {
+                            ConnectionPocket pocket = ConnectionPocket.FromBytes(nextPocketBytes.ToArray());
+                            int rec_id = (int)_clientManager.FindClient(pocket.Name);
+                            client_id = _clientManager.GetAvailibleID();
+                            if (rec_id > -1 && _clientManager.GetClientState(rec_id) == (int)(ClientStateEnum.Disconnected))
+                                client_id = rec_id;
+                            OnConnectionPocket?.Invoke(pocket, client, client_id);
+                            skip_size = data.Length;
+                            break;
+                        }
+                        else if (client_id > -1 && client_id < _clientManager.GetAvailibleID() && skip_size != data.Length)
                         {
                             BasePocket basePocket = BytesToPockets[typeEnum].Invoke(nextPocketBytes.ToArray());
                             skip_size += basePocket.ToBytes().Length;
@@ -114,7 +128,7 @@ namespace Server
                     }
                 }
                 if (accept)
-                    PocketSender.SendAcceptedToClient(client_id);
+                    PocketManager.SendAcceptedToClient(client_id);
             }
         }
     }

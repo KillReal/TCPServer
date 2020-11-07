@@ -34,5 +34,15 @@ namespace Server
             return data;
 
         }
+
+        public static byte[] Construct(int type, int count)
+        {
+            HeaderPocket header = new HeaderPocket
+            {
+                Type = type,
+                Count = count
+            };
+            return header.ToBytes();
+        }
     }
 }

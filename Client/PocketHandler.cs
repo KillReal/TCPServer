@@ -41,9 +41,9 @@ namespace Server
                     client.Receive(data);
                     ParsePocket(data, client);
                 }
-                catch
+                catch (Exception ex)
                 {
-
+                    Console.WriteLine("Error: " + ex);
                 }
             } while (client.Connected);
             onClientDisconnect?.Invoke();
@@ -57,12 +57,11 @@ namespace Server
             {
                 int skip_size = 0;
                 bool accept = false;
+                MainHeader mainHeader = MainHeader.FromBytes(data.ToArray());
                 skip_size += MainHeader.GetLenght();
-                IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
-                MainHeader mainHeader = MainHeader.FromBytes(nextPocketBytes.ToArray());
-                while (data.Length > skip_size)
+                while (data.Length > skip_size + HeaderPocket.GetLenght())
                 {
-                    nextPocketBytes = data.Skip(skip_size);
+                    IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
                     HeaderPocket header = HeaderPocket.FromBytes(nextPocketBytes.ToArray());
                     skip_size += HeaderPocket.GetLenght();
                     for (int i = 0; i < header.Count; i++)
@@ -77,13 +76,11 @@ namespace Server
                             skip_size += basePocket.ToBytes().Length;
                             switch (typeEnum)
                             {
-                                case PocketEnum.Connection:
-                                    OnConnectionPocket?.Invoke((ConnectionPocket)basePocket, server);
-                                    break;
                                 case PocketEnum.String:
                                     OnStringPocket?.Invoke((StringPocket)basePocket);
                                     break;
                                 case PocketEnum.ChatMessage:
+                                    OnChatMessagePocket?.Invoke((ChatMessagePocket)basePocket);
                                     break;
                             }
                             accept = true;
@@ -92,17 +89,8 @@ namespace Server
                 }
                 if (accept)
                 {
-                    var MainHeader = new MainHeader
-                    {
-                        Hash = 332,
-                        Id = (int)DateTime.Now.Ticks
-                    };
-                    var headerPocket = new HeaderPocket
-                    {
-                        Count = 1,
-                        Type = (int)PocketEnum.MessageAccepted,
-                    };
-                    server.Send(Utils.ConcatByteArrays(mainHeader.ToBytes(), headerPocket.ToBytes()));
+                    byte[] accept_data = Utils.ConcatByteArrays(MainHeader.Construct(332, (int)DateTime.Now.Ticks), HeaderPocket.Construct((int)PocketEnum.MessageAccepted, 1));
+                    server.Send(accept_data);
                 }
             }
         }

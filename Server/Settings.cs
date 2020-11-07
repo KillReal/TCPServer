@@ -9,5 +9,7 @@ namespace Server
         public string HostName = "localhost";
         public int Port = 11000;
         public int PocketHash = 332;
+        public int ConnectionTimeOut = 10;
+        public bool ExceptionPrint = false;
     }
 }

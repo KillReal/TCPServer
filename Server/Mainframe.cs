@@ -25,8 +25,8 @@ namespace Server
             Settings _settings = new Settings();
             _clientManager.SetSettings(_settings);
             PocketListener pocketListener = new PocketListener(_clientManager, _settings);
-            PocketSender.SetClientManager(_clientManager);
-            PocketHandler.SetClientManager(_clientManager, _settings);
+            PocketManager.Init(_clientManager, _settings);
+            PocketHandler.Init(_clientManager, _settings);
             Console.WriteLine("[INFO]:  Server is starting...");
             try
             {
@@ -34,7 +34,8 @@ namespace Server
             }
             catch (Exception exception)
             {
-                Console.WriteLine("[ERROR]:  " + exception.Message + " " + exception.InnerException);
+                if (_settings.ExceptionPrint)
+                    Console.WriteLine("[ERROR]:  " + exception.Message + " " + exception.InnerException);
             }
             finally
             {
@@ -64,13 +65,13 @@ namespace Server
                         };
                         byte[] data = Utils.ConcatByteArrays(header.ToBytes(), str.ToBytes());
                         Console.WriteLine("[SERVER] ---> [All Clients]: [Message]: {0}", str.StringField);
-                        PocketSender.SendDataToAll(data);
+                        PocketManager.SendDataToAll(data);
                     }
                     else if (cmd == "list")
                     {
                         Console.WriteLine("   List of all connected clients");
-                        for (int i = 0; i < _clientManager.GetAvailibleID(); i++)
-                            Console.WriteLine("   " + _clientManager.GetClientInfo(i));
+                        for (int i = 0; i < _clientManager.ID_list.Count; i++)
+                            Console.WriteLine("   " + _clientManager.GetClientInfo(_clientManager.ID_list[i]));
                     }
                     Thread.Sleep(100);
                 }
@@ -78,34 +79,33 @@ namespace Server
 
             static void PocketListener_OnAccept(int id)
             {
-                //Console.WriteLine("[SERVER] <--- [Accepted] from [Client]: {0}", _clientManager.GetClientName(id));
-                _clientManager.SetAcceptState(id, true);
+                Console.WriteLine("[SERVER] <--- [Accepted] from [Client]: {0}", _clientManager.GetClientName(id));
+                _clientManager.UpdateAcceptState(id, true);
             }
 
             static void PocketListener_OnConnect(ConnectionPocket pocket, Socket client, int id)
             {
-                int rec_id = (int)_clientManager.FindClient(pocket.Name);
-                if (rec_id > -1 && _clientManager.GetClientState(rec_id) == (int)(ClientStateEnum.Disconnected))
+                if (id > -1 && id < _clientManager.GetAvailibleID())
                 {
-                    _clientManager.ReplaceClient(client, rec_id);
-                    Console.WriteLine("[SERVER] <--- [Client]: {0} reconnected", pocket.Name, pocket.Message);
+                    _clientManager.ReplaceClient(client, id);
+                    Console.WriteLine("[SERVER]: '{0}'  reconnected", pocket.Name, pocket.Message);
                 }
                 else
                 {
-                    Console.WriteLine("[SERVER] <--- [Client]: {0} connected", pocket.Name, pocket.Message);
                     _clientManager.AddClient(client, pocket.Name);
+                    Console.WriteLine("[SERVER]: '{0}' connected", pocket.Name, pocket.Message);
                 }
             }
 
             static void PocketListener_OnDisconnect(int id)
             {
-                Console.WriteLine("[SERVER] <--- [Client]: {0} disconnected", _clientManager.GetClientName(id));
+                Console.WriteLine("[SERVER]: '{0}' disconnected", _clientManager.GetClientName(id));
                 _clientManager.DeleteClient(id);
             }
 
             static void ClientManager_OnLostConnection(int id)
             {
-                Console.WriteLine("[SERVER] <--- [Client]: {0} disconnected (Timed out)", _clientManager.GetClientName(id));
+                Console.WriteLine("[SERVER]: '{0}' disconnected (Timed out)", _clientManager.GetClientName(id));
                 _clientManager.DeleteClient(id);
             }
 
@@ -116,7 +116,7 @@ namespace Server
                 /// Resend example (like chat message)
 
                 byte[] data = ChatMessagePocket.Construct(_clientManager.GetClientName(id), pocket.StringField);
-                PocketSender.SendDataToAllExcept(data, id);
+                PocketManager.SendDataToAllExcept(data, id);
             }
         }
 
