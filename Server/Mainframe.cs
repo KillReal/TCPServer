@@ -88,7 +88,7 @@ namespace Server
                 if (id > -1 && id < _clientManager.GetAvailibleID())
                 {
                     _clientManager.ReplaceClient(client, id);
-                    Console.WriteLine("[SERVER]: '{0}'  reconnected", pocket.Name, pocket.Message);
+                    Console.WriteLine("[SERVER]: '{0}' reconnected", pocket.Name, pocket.Message);
                 }
                 else
                 {

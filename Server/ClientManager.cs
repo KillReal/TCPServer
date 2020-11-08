@@ -64,18 +64,18 @@ namespace Server
 
         private void WaitForClientDelete(int id)
         {
-            for (int i = 0; i < _settings.ConnectionTimeOut * 10; i++)
+            Console.WriteLine("[SERVER]: '{0}' doesn't responding, wait {1} sec reconnect timeout....", GetClientName(id), _settings.ReconnectionTimeOut);
+            for (int i = 0; i < _settings.ReconnectionTimeOut * 10; i++)
             {
                 if (GetClient(id).socket == null)
                     return;
                 if (GetClient(id).callback)
                 {
-                    ToggleConnectionState(id);
+                    ToggleConnectionState(id, true);
                     return;
                 }
                 Thread.Sleep(100);
             }
-            Console.WriteLine("[SERVER]: '{0}' doesn't responding...", GetClientName(id));
             onClientLostConnection?.Invoke(id);
         }
 
@@ -85,12 +85,12 @@ namespace Server
             WaitForClientDelete(id);
         }
 
-        public void ToggleConnectionState(int id)
+        public void ToggleConnectionState(int id, bool forceConnected = false)
         {
             MyClient client = GetClient(id);
             if (client.socket == null)
                 return;
-            if (client.state == (int)ClientStateEnum.Connected)
+            if (client.state == (int)ClientStateEnum.Connected && !forceConnected)
             {
                 client.state = (int)ClientStateEnum.Disconnected;
                 _clients[id] = client;
@@ -112,7 +112,8 @@ namespace Server
             if (!accept)
             {
                 client.callback = false;
-                client.timer = new Timer(new TimerCallback(WaitForClientAccept), id, 500, _settings.ConnectionTimeOut * 1000);
+                if (client.timer == null)
+                    client.timer = new Timer(new TimerCallback(WaitForClientAccept), id, _settings.ConnectionTimeOut * 1000, -1);
                 _clients[id] = client;
             }
             else           
@@ -191,7 +192,7 @@ namespace Server
             _clients.TryGetValue(id, out MyClient client);
             client.socket = socket;
             _clients[id] = client;
-            ToggleConnectionState(id);
+            ToggleConnectionState(id, true);
         }
 
         public void DeleteClient(int id)
