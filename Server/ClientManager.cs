@@ -16,6 +16,7 @@ namespace Server
         public static Action<int> onClientLostConnection;
 
         public List<int> ID_list;
+        public List<TimerCallback> TIMER_list;
 
         private int _id;
 
@@ -34,6 +35,7 @@ namespace Server
             public byte[] send_buffer;
             public byte[] recieve_buffer;
             public int state;
+            public Timer timer;
         };
         public ConcurrentDictionary<long, MyClient> _clients = new ConcurrentDictionary<long, MyClient>();
 
@@ -51,7 +53,7 @@ namespace Server
         public string GetClientInfo(int id)
         {
             MyClient client = GetClient(id);
-            return "[" + id.ToString() + "] name: " + client.name + " state: " + Enum.GetName(typeof(ClientStateEnum), client.state);
+            return "[" + id.ToString() + "] name: " + client.name + " state: " + Enum.GetName(typeof(ClientStateEnum), client.state) + " callback: " + client.callback;
         }
 
         private MyClient GetClient(int id)
@@ -62,28 +64,25 @@ namespace Server
 
         private void WaitForClientDelete(int id)
         {
-            Console.WriteLine("[SERVER]: '{0}' doesn't responding...", GetClientName(id));
-            for (int i = 0; i < _settings.ConnectionTimeOut; i++)
+            for (int i = 0; i < _settings.ConnectionTimeOut * 10; i++)
             {
+                if (GetClient(id).socket == null)
+                    return;
                 if (GetClient(id).callback)
                 {
                     ToggleConnectionState(id);
                     return;
                 }
-                Thread.Sleep(1000);
+                Thread.Sleep(100);
             }
+            Console.WriteLine("[SERVER]: '{0}' doesn't responding...", GetClientName(id));
             onClientLostConnection?.Invoke(id);
         }
 
-        private void WaitForClientAccept(int id)
+        private void WaitForClientAccept(object obj)
         {
-            for (int i = 0; i < _settings.ConnectionTimeOut; i++)
-            {
-                if (GetClient(id).callback)
-                    return;
-                Thread.Sleep(1000);
-            }
-            (new Task(() => WaitForClientDelete(id))).Start();
+            int id = (int)obj;
+            WaitForClientDelete(id);
         }
 
         public void ToggleConnectionState(int id)
@@ -113,12 +112,17 @@ namespace Server
             if (!accept)
             {
                 client.callback = false;
+                client.timer = new Timer(new TimerCallback(WaitForClientAccept), id, 500, _settings.ConnectionTimeOut * 1000);
                 _clients[id] = client;
-                (new Task(() => WaitForClientAccept(id))).Start();
             }
             else           
             {
                 client.callback = true;
+                if (client.timer != null)
+                {
+                    client.timer.Dispose();
+                    client.timer = null;
+                }
                 _clients[id] = client;
             }
         }
@@ -132,13 +136,16 @@ namespace Server
                 {
                     client.send_buffer = data;
                     client.buffer_id = data_id;
-                    client.socket.Send(data);
                     _clients[id] = client;
                     if (wait_accept)
+                    {
+                        Console.WriteLine("[SERVER] ---> [CLIENT]: sended data to '{0}'", GetClientName(id));
                         UpdateAcceptState(id, false);
+                    }
+                    client.socket.Send(data);
                     return;
                 }
-                Thread.Sleep(500);
+                Thread.Sleep(100);
             }
         }
 
@@ -189,8 +196,16 @@ namespace Server
 
         public void DeleteClient(int id)
         {
+            MyClient client = GetClient(id);
+            if (client.timer != null)
+            {
+                client.timer.Dispose();
+                client.timer = null;
+            }
             _clients.TryRemove(id, out _);
             ID_list.Remove(id);
+            if (ID_list.Count == 0)
+                _id = 0;
         }
 
         public int FindClient(Socket client)

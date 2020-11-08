@@ -64,7 +64,7 @@ namespace Server
                             StringField = "test"
                         };
                         byte[] data = Utils.ConcatByteArrays(header.ToBytes(), str.ToBytes());
-                        Console.WriteLine("[SERVER] ---> [All Clients]: [Message]: {0}", str.StringField);
+                        //Console.WriteLine("[SERVER] ---> [All Clients]: [Message]: {0}", str.StringField);
                         PocketManager.SendDataToAll(data);
                     }
                     else if (cmd == "list")

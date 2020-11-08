@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Server
 {
@@ -31,24 +32,26 @@ namespace Server
             BytesToTypes.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
         }
 
-        public static void HandleClientMessage(Socket client)
+        public static void HandleClientMessage(Socket server)
         {
             do
             {
                 try
                 {
-                    byte[] data = new byte[1024];
-                    client.Receive(data);
-                    ParsePocket(data, client);
+                    byte[] buffer = new byte[1024];
+                    int size = server.Receive(buffer);
+                    byte[] data = new byte[size];
+                    Buffer.BlockCopy(buffer, 0, data, 0, size);
+                    new Task(() => ParsePocket(data, server)).Start();
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Error: " + ex);
                 }
-            } while (client.Connected);
+            } while (server.Connected);
             onClientDisconnect?.Invoke();
-            client.Shutdown(SocketShutdown.Both);
-            client.Close();
+            server.Shutdown(SocketShutdown.Both);
+            server.Close();
         }
 
         private static void ParsePocket(byte[] data, Socket server)
