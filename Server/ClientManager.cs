@@ -140,7 +140,7 @@ namespace Server
                     _clients[id] = client;
                     if (wait_accept)
                     {
-                        Console.WriteLine("[SERVER] ---> [CLIENT]: sended data to '{0}'", GetClientName(id));
+                        //Console.WriteLine("[SERVER] ---> [CLIENT]: sended data to '{0}'", GetClientName(id));
                         UpdateAcceptState(id, false);
                     }
                     client.socket.Send(data);
@@ -153,8 +153,16 @@ namespace Server
         public void Send(int id, byte[] data, bool wait_accept = false)
         {
             int data_id = (int)DateTime.Now.Ticks;
-            byte[] header = MainHeader.Construct(_settings.PocketHash, data_id);
+            byte[] header = new MainHeader(_settings.PocketHash, data_id).ToBytes();
             data = Utils.ConcatBytes(header, data);
+            (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
+        }
+
+        public void Send(int id, BasePocket pocket, bool wait_accept = false)
+        {
+            int data_id = (int)DateTime.Now.Ticks;
+            var header = new MainHeader(_settings.PocketHash, data_id);
+            byte[] data = Utils.ConcatBytes(header, pocket);
             (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
         }
 

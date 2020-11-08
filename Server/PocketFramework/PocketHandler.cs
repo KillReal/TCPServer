@@ -17,11 +17,11 @@ namespace Server
 
         public static Action<ConnectionPocket, Socket, int> OnConnectionPocket;
         public static Action<ChatMessagePocket, int> OnChatMessagePocket;
-        public static Action<int> onClientDisconnect;
+        public static Action<DisconnectionPocket, int> onClientDisconnect;
         public static Action<int> OnMessageAccepted;
 
         private delegate BasePocket DeselialiseBytesToCommand(byte[] bytes);
-        private static readonly Dictionary<PocketEnum, DeselialiseBytesToCommand> BytesToPockets = new Dictionary<PocketEnum, DeselialiseBytesToCommand>();
+        private static readonly Dictionary<PocketEnum, DeselialiseBytesToCommand> BytesToTypes = new Dictionary<PocketEnum, DeselialiseBytesToCommand>();
 
         static PocketHandler()
         {
@@ -36,8 +36,9 @@ namespace Server
 
         private static void FillBytesToCommandsDictionary()
         {
-            BytesToPockets.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
-            BytesToPockets.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
+            BytesToTypes.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
+            BytesToTypes.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
+            BytesToTypes.Add(PocketEnum.Disconnection, DisconnectionPocket.FromBytes);
         }
 
         public static void HandleClientMessage(Socket client)
@@ -78,16 +79,14 @@ namespace Server
                 if (mainHeader.Hash != _settings.PocketHash || _clientManager.GetLastBufferID(client_id) == mainHeader.Id)
                     return;
                 skip_size += MainHeader.GetLenght();
-                while (data.Length >= skip_size + HeaderPocket.GetLenght())
+                while (data.Length >= skip_size + Header.GetLenght())
                 {
                     IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
-                    HeaderPocket header = HeaderPocket.FromBytes(nextPocketBytes.ToArray());
-                    skip_size += HeaderPocket.GetLenght();
+                    Header header = Header.FromBytes(nextPocketBytes.ToArray());
+                    skip_size += Header.GetLenght();
                     for (int i = 0; i < header.Count; i++)
                     {
                         var typeEnum = (PocketEnum)header.Type;
-                        if (typeEnum < 0 || (int)typeEnum > BytesToPockets.Count() + 1)
-                            break;
                         if (skip_size != data.Length)
                             nextPocketBytes = data.Skip(skip_size);
                         if (typeEnum == PocketEnum.MessageAccepted)
@@ -109,12 +108,18 @@ namespace Server
                         }
                         else if (client_id > -1 && client_id < _clientManager.GetAvailibleID() && skip_size != data.Length)
                         {
-                            BasePocket basePocket = BytesToPockets[typeEnum].Invoke(nextPocketBytes.ToArray());
+                            BasePocket basePocket = BytesToTypes[typeEnum].Invoke(nextPocketBytes.ToArray());
                             skip_size += basePocket.ToBytes().Length;
                             switch (typeEnum)
                             {
                                 case PocketEnum.ChatMessage:
                                     OnChatMessagePocket?.Invoke((ChatMessagePocket)basePocket, client_id);
+                                    break;
+                                case PocketEnum.Disconnection:
+                                    onClientDisconnect?.Invoke((DisconnectionPocket)basePocket, client_id);
+                                    break;
+                                default:
+                                    skip_size = data.Length;
                                     break;
                             }
                             accept = true;
@@ -124,7 +129,7 @@ namespace Server
                     }
                 }
                 if (accept)
-                    PocketManager.SendAcceptedToClient(client_id);
+                    PocketManager.SendAccepted(client_id);
             }
         }
     }

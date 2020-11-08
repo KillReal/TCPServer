@@ -7,7 +7,9 @@ namespace Server
     public enum PocketEnum : int
     {
         Connection = 1,
-        MessageAccepted = 2,
-        ChatMessage = 3
+        Disconnection = 2,
+        MessageAccepted = 3,
+        ChatMessage = 4,
+        ServerInfo = 5
     }
 }

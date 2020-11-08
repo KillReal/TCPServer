@@ -10,6 +10,18 @@ namespace Server.Pockets
     {
         public string Name { get; set; }
         public string Message { get; set; }
+
+        public ConnectionPocket()
+        {
+
+        }
+
+        public ConnectionPocket(string name, string message)
+        {
+            Name = name;
+            Message = message;
+        }
+
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
@@ -21,12 +33,14 @@ namespace Server.Pockets
         public static ConnectionPocket FromBytes(byte[] data)
         {
             PocketConstructor pc = new PocketConstructor(data);
-            var pocket = new ConnectionPocket
-            {
-                Name = pc.ReadString(),
-                Message = pc.ReadString()
-            };
-            return pocket;
+            return new ConnectionPocket(pc.ReadString(), pc.ReadString());
+        }
+
+        public static byte[] ConstructSingle(string name, string msg)
+        {
+            Header header = new Header(PocketEnum.Connection, 1);
+            ConnectionPocket connect = new ConnectionPocket(name, msg);
+            return Utils.ConcatBytes(header.ToBytes(), connect.ToBytes());
         }
     }
 }

@@ -17,18 +17,14 @@ namespace Client
 
         static void SendToServer(Socket server, BasePocket pocket, PocketEnum typeEnum)
         {
-            var headerPocket = new HeaderPocket
-            {
-                Count = 1,
-                Type = (int)typeEnum,
-            };
-            byte[] msg = Utils.ConcatBytes(headerPocket.ToBytes(), pocket.ToBytes());
-            msg = Utils.ConcatBytes(MainHeader.Construct(332, (int)DateTime.Now.Ticks), msg);
+            var headerPocket = new Header(typeEnum, 1);
+            byte[] msg = Utils.ConcatBytes(headerPocket, pocket);
+            msg = Utils.ConcatBytes(new MainHeader(332, (int)DateTime.Now.Ticks).ToBytes(), msg);
             server.Send(msg);
         }
         static void SendToServer(Socket server, byte[] data)
         {
-            byte[] header = MainHeader.Construct(332, (int)DateTime.Now.Ticks);
+            byte[] header = new MainHeader(332, (int)DateTime.Now.Ticks).ToBytes();
             data = Utils.ConcatBytes(header, data);
             server.Send(data);
         }
@@ -63,19 +59,20 @@ namespace Client
             Socket server = (Socket)Tserver;
             while (server.Connected)
             {
-                Console.Write("[CLIENT] ---> [Message]: ");
                 string message = Console.ReadLine();
-                HeaderPocket header = new HeaderPocket
+                byte[] data;
+                if (message == "disconnect")
                 {
-                    Count = 1,
-                    Type = (int)PocketEnum.ChatMessage,
-                };
-                ChatMessagePocket pocket = new ChatMessagePocket
+                    Header header = new Header(PocketEnum.Disconnection, 1);
+                    DisconnectionPocket pocket = new DisconnectionPocket(clientName, "exit");
+                    data = Utils.ConcatBytes(header, pocket);
+                }
+                else
                 {
-                    Name = clientName,
-                    Message = message
-                };
-                byte[] data = Utils.ConcatBytes(header.ToBytes(), pocket.ToBytes());
+                    Header header = new Header(PocketEnum.ChatMessage, 1);
+                    ChatMessagePocket pocket = new ChatMessagePocket(clientName, message);
+                    data = Utils.ConcatBytes(header, pocket);
+                }
                 SendToServer(server, data);
             }
         }
@@ -89,11 +86,7 @@ namespace Client
             server.Connect(ipEndPoint);
             Console.WriteLine("[INFO]: Connecting with {0} ...", server.RemoteEndPoint.ToString());
 
-            ConnectionPocket connectPocket = new ConnectionPocket
-            {
-                Message = "",
-                Name = clientName
-            };
+            ConnectionPocket connectPocket = new ConnectionPocket(clientName, "connect");
 
             //SendToServer(server, connectPocket, PocketEnum.MessageAccepted);
             //Thread.Sleep(1000);

@@ -17,15 +17,11 @@ namespace Server
             _clientManager = clientManager;
         }
         
-        public static void SendAcceptedToClient(int id)
+        public static void SendAccepted(int id)
         {
             try
             {
-                var headerPocket = new HeaderPocket
-                {
-                    Count = 1,
-                    Type = (int)PocketEnum.MessageAccepted,
-                };
+                var headerPocket = new Header(PocketEnum.MessageAccepted, 1);
                 _clientManager.Send(id, headerPocket.ToBytes());
             }
             catch (Exception exception)
@@ -34,15 +30,11 @@ namespace Server
             }
         }
 
-        public static void SendPocketToClient(int id, BasePocket pocket, PocketEnum typeEnum)
+        public static void SendSinglePocket(int id, BasePocket pocket, PocketEnum typeEnum)
         {
             try
             {
-                var pocketHeader = new HeaderPocket
-                {
-                    Count = 1,
-                    Type = (int)typeEnum,
-                };
+                var pocketHeader = new Header(typeEnum, 1);
                 byte[] data = Utils.ConcatBytes(pocketHeader.ToBytes(), pocket.ToBytes());
                 _clientManager.Send(id, data);
             }

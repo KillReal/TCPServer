@@ -28,6 +28,7 @@ namespace Server
         {
             BytesToTypes.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
             BytesToTypes.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
+            BytesToTypes.Add(PocketEnum.Disconnection, DisconnectionPocket.FromBytes);
         }
 
         public static void HandleClientMessage(Socket server)
@@ -60,11 +61,11 @@ namespace Server
                 bool accept = false;
                 MainHeader mainHeader = MainHeader.FromBytes(data.ToArray());
                 skip_size += MainHeader.GetLenght();
-                while (data.Length > skip_size + HeaderPocket.GetLenght())
+                while (data.Length > skip_size + Header.GetLenght())
                 {
                     IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
-                    HeaderPocket header = HeaderPocket.FromBytes(nextPocketBytes.ToArray());
-                    skip_size += HeaderPocket.GetLenght();
+                    Header header = Header.FromBytes(nextPocketBytes.ToArray());
+                    skip_size += Header.GetLenght();
                     for (int i = 0; i < header.Count; i++)
                     {
                         nextPocketBytes = data.Skip(skip_size);
@@ -87,12 +88,8 @@ namespace Server
                 }
                 if (accept)
                 {
-                    HeaderPocket header = new HeaderPocket
-                    {
-                        Type = (int)PocketEnum.MessageAccepted,
-                        Count = 1
-                    };
-                    byte[] accept_data = Utils.ConcatBytes(MainHeader.Construct(332, (int)DateTime.Now.Ticks), header.ToBytes());
+                    Header header = new Header(PocketEnum.MessageAccepted, 1);
+                    byte[] accept_data = Utils.ConcatBytes(new MainHeader(332, (int)DateTime.Now.Ticks), header);
                     server.Send(accept_data);
                 }
             }

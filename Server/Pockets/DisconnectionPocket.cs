@@ -6,17 +6,17 @@ using System.Text;
 
 namespace Server.Pockets
 {
-    class ChatMessagePocket : BasePocket
+    class DisconnectionPocket : BasePocket
     {
-        public string  Name { get; set; }
+        public string Name { get; set; }
         public string Message { get; set; }
 
-        public ChatMessagePocket()
+        public DisconnectionPocket()
         {
 
         }
 
-        public ChatMessagePocket(string name, string message)
+        public DisconnectionPocket(string name, string message)
         {
             Name = name;
             Message = message;
@@ -30,17 +30,17 @@ namespace Server.Pockets
             return pc.GetBytes();
         }
 
-        public static ChatMessagePocket FromBytes(byte[] data)
+        public static DisconnectionPocket FromBytes(byte[] data)
         {
             PocketConstructor pc = new PocketConstructor(data);
-            return new ChatMessagePocket(pc.ReadString(), pc.ReadString());
+            return new DisconnectionPocket(pc.ReadString(), pc.ReadString());
         }
 
         public static byte[] ConstructSingle(string name, string msg)
         {
-            Header header = new Header(PocketEnum.ChatMessage, 1);
-            ChatMessagePocket chat_msg = new ChatMessagePocket(name, msg);
-            return Utils.ConcatBytes(header.ToBytes(), chat_msg.ToBytes());
+            Header header = new Header(PocketEnum.Connection, 1);
+            DisconnectionPocket connect = new DisconnectionPocket(name, msg);
+            return Utils.ConcatBytes(header.ToBytes(), connect.ToBytes());
         }
     }
 }

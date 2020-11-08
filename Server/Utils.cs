@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Server.Pockets;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -39,6 +40,11 @@ namespace Server
             Buffer.BlockCopy(first, 0, ret, 0, first.Length);
             Buffer.BlockCopy(second, 0, ret, first.Length, second.Length);
             return ret;
+        }
+
+        public static byte[] ConcatBytes(BasePocket first, BasePocket second)
+        {
+            return ConcatBytes(first.ToBytes(), second.ToBytes());
         }
 
         public static int BytesToInt(byte[] bytesArray)

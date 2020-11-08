@@ -54,18 +54,10 @@ namespace Server
                     }
                     else if (cmd == "punch")
                     {
-                        HeaderPocket header = new HeaderPocket
-                        {
-                            Count = 1,
-                            Type = (int)PocketEnum.ChatMessage,
-                        };
-                        ChatMessagePocket str = new ChatMessagePocket
-                        {
-                            Name = "Server",
-                            Message = "Test"
-                        };
-                        byte[] data = Utils.ConcatBytes(header.ToBytes(), str.ToBytes());
-                        //Console.WriteLine("[SERVER] ---> [All Clients]: [Message]: {0}", str.StringField);
+                        Header header = new Header(PocketEnum.ChatMessage, 1);
+                        ChatMessagePocket str = new ChatMessagePocket("Server", "Test");
+                        byte[] data = Utils.ConcatBytes(header, str);
+                        Console.WriteLine("[SERVER] ---> [All Clients]: [Message]: {0}", str.Message);
                         PocketManager.SendDataToAll(data);
                     }
                     else if (cmd == "list")
@@ -98,9 +90,9 @@ namespace Server
                 }
             }
 
-            static void PocketListener_OnDisconnect(int id)
+            static void PocketListener_OnDisconnect(DisconnectionPocket pocket, int id)
             {
-                Console.WriteLine("[SERVER]: '{0}' disconnected", _clientManager.GetClientName(id));
+                Console.WriteLine("[SERVER]: '{0}' disconnected ({1})", pocket.Name, pocket.Message);
                 _clientManager.DeleteClient(id);
             }
 
