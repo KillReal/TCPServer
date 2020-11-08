@@ -13,7 +13,7 @@ namespace Server
 
         public static Action<ConnectionPocket, Socket> OnConnectionPocket;
         public static Action<ChatMessagePocket> OnChatMessagePocket;
-        public static Action onClientDisconnect;
+        public static Action<PingPocket> onPingPocket;
         public static Action OnMessageAccepted;
 
         private delegate BasePocket DeselialiseBytesToCommand(byte[] bytes);
@@ -29,6 +29,7 @@ namespace Server
             BytesToTypes.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
             BytesToTypes.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
             BytesToTypes.Add(PocketEnum.Disconnection, DisconnectionPocket.FromBytes);
+            BytesToTypes.Add(PocketEnum.Ping, PingPocket.FromBytes);
         }
 
         public static void HandleClientMessage(Socket server)
@@ -48,7 +49,7 @@ namespace Server
                     Console.WriteLine("Error: " + ex);
                 }
             } while (server.Connected);
-            onClientDisconnect?.Invoke();
+            //onClientDisconnect?.Invoke();
             server.Shutdown(SocketShutdown.Both);
             server.Close();
         }
@@ -80,6 +81,9 @@ namespace Server
                             {
                                 case PocketEnum.ChatMessage:
                                     OnChatMessagePocket?.Invoke((ChatMessagePocket)basePocket);
+                                    break;
+                                case PocketEnum.Ping:
+                                    onPingPocket?.Invoke((PingPocket)basePocket);
                                     break;
                             }
                             accept = true;

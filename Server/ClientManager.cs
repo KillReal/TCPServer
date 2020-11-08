@@ -3,6 +3,7 @@ using Server.Pockets;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -22,6 +23,7 @@ namespace Server
 
         public void SetSettings(Settings settings)
         {
+            PocketHandler.onPingRecieved += PocketListener_OnPing;
             ID_list = new List<int>();
             _settings = settings;
         }
@@ -35,6 +37,7 @@ namespace Server
             public byte[] send_buffer;
             public byte[] recieve_buffer;
             public int state;
+            public int ping;
             public Timer timer;
         };
         public ConcurrentDictionary<long, MyClient> _clients = new ConcurrentDictionary<long, MyClient>();
@@ -53,7 +56,8 @@ namespace Server
         public string GetClientInfo(int id)
         {
             MyClient client = GetClient(id);
-            return "[" + id.ToString() + "] name: " + client.name + " state: " + Enum.GetName(typeof(ClientStateEnum), client.state) + " callback: " + client.callback;
+            return "[" + id.ToString() + "]   Name: " + client.name + "   State: " + Enum.GetName(typeof(ClientStateEnum), client.state) + 
+                "   Callback: " + client.callback + "   Ping: " + client.ping + " ms";
         }
 
         private MyClient GetClient(int id)
@@ -180,6 +184,23 @@ namespace Server
             return client.socket;  
         }
 
+        private void PocketListener_OnPing(PingPocket pocket, int id)
+        {
+            MyClient client = GetClient(id);
+            client.ping = ((int)DateTime.Now.Ticks - pocket.Tick) / 10000;
+            _clients[id] = client;
+        }
+
+        public void ClientPinger(int id)
+        {
+            Thread.Sleep(5000);
+            while (GetClient(id).socket != null)
+            {
+                Send(id, PingPocket.ConstructSingle((int)DateTime.Now.Ticks));
+                Thread.Sleep(5000);
+            }
+        }
+
         public void AddClient(Socket socket, string name)
         {
             MyClient newClient = new MyClient
@@ -192,6 +213,7 @@ namespace Server
             };
             _clients.TryAdd(_id, newClient);
             ID_list.Add(_id);
+            (new Task(() => ClientPinger(ID_list.Last()))).Start();
             _id++;
         }
 

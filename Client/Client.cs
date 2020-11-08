@@ -12,6 +12,7 @@ namespace Client
     class Client
     {
         static string clientName = "unnamed";
+        static Socket server;
         static Thread _listenThread;
         static Thread _readThread;
 
@@ -32,6 +33,7 @@ namespace Client
         {
             PocketHandler.OnMessageAccepted += PocketListener_OnAcception;
             PocketHandler.OnChatMessagePocket += PocketListener_OnChatMessage;
+            PocketHandler.onPingPocket += PocketListener_OnPingRecieved;
 
             Console.Write("Enter client name: ");
             clientName = Console.ReadLine();
@@ -49,6 +51,12 @@ namespace Client
             }
         }
 
+        private static void PocketListener_OnPingRecieved(PingPocket pocket)
+        {
+            Thread.Sleep(50); //Simulate ping
+            SendToServer(server, PingPocket.ConstructSingle(pocket.Tick));
+        }
+
         private static void ListenForCommands(object server)
         {
             PocketHandler.HandleClientMessage((Socket)server);
@@ -56,7 +64,7 @@ namespace Client
 
         private static void Reader(object Tserver)
         {
-            Socket server = (Socket)Tserver;
+            server = (Socket)Tserver;
             while (server.Connected)
             {
                 string message = Console.ReadLine();

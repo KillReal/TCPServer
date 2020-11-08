@@ -10,6 +10,6 @@ namespace Server
         Disconnection = 2,
         MessageAccepted = 3,
         ChatMessage = 4,
-        ServerInfo = 5
+        Ping = 5
     }
 }

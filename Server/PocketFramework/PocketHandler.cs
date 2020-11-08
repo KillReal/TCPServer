@@ -3,6 +3,7 @@ using Server.Pockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -18,6 +19,7 @@ namespace Server
         public static Action<ConnectionPocket, Socket, int> OnConnectionPocket;
         public static Action<ChatMessagePocket, int> OnChatMessagePocket;
         public static Action<DisconnectionPocket, int> onClientDisconnect;
+        public static Action<PingPocket, int> onPingRecieved;
         public static Action<int> OnMessageAccepted;
 
         private delegate BasePocket DeselialiseBytesToCommand(byte[] bytes);
@@ -39,6 +41,7 @@ namespace Server
             BytesToTypes.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
             BytesToTypes.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
             BytesToTypes.Add(PocketEnum.Disconnection, DisconnectionPocket.FromBytes);
+            BytesToTypes.Add(PocketEnum.Ping, PingPocket.FromBytes);
         }
 
         public static void HandleClientMessage(Socket client)
@@ -117,6 +120,9 @@ namespace Server
                                     break;
                                 case PocketEnum.Disconnection:
                                     onClientDisconnect?.Invoke((DisconnectionPocket)basePocket, client_id);
+                                    break;
+                                case PocketEnum.Ping:
+                                    onPingRecieved?.Invoke((PingPocket)basePocket, client_id);
                                     break;
                                 default:
                                     skip_size = data.Length;
