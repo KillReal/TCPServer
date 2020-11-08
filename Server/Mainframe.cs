@@ -18,7 +18,7 @@ namespace Server
         {
             PocketHandler.OnMessageAccepted += PocketListener_OnAccept;
             PocketHandler.OnConnectionPocket += PocketListener_OnConnect;
-            PocketHandler.OnStringPocket += PocketListener_OnString;
+            PocketHandler.OnChatMessagePocket += PocketListener_OnChatMessage;
             PocketHandler.onClientDisconnect += PocketListener_OnDisconnect;
             ClientManager.onClientLostConnection += ClientManager_OnLostConnection;
 
@@ -57,13 +57,14 @@ namespace Server
                         HeaderPocket header = new HeaderPocket
                         {
                             Count = 1,
-                            Type = (int)PocketEnum.String,
+                            Type = (int)PocketEnum.ChatMessage,
                         };
-                        StringPocket str = new StringPocket
+                        ChatMessagePocket str = new ChatMessagePocket
                         {
-                            StringField = "test"
+                            Name = "Server",
+                            Message = "Test"
                         };
-                        byte[] data = Utils.ConcatByteArrays(header.ToBytes(), str.ToBytes());
+                        byte[] data = Utils.ConcatBytes(header.ToBytes(), str.ToBytes());
                         //Console.WriteLine("[SERVER] ---> [All Clients]: [Message]: {0}", str.StringField);
                         PocketManager.SendDataToAll(data);
                     }
@@ -109,13 +110,13 @@ namespace Server
                 _clientManager.DeleteClient(id);
             }
 
-            static void PocketListener_OnString(StringPocket pocket, int id)
+            static void PocketListener_OnChatMessage(ChatMessagePocket pocket, int id)
             {
-                Console.WriteLine("[SERVER] <--- [Client]: {0} [Message]: {1}", _clientManager.GetClientName(id), pocket.StringField);
+                Console.WriteLine("[SERVER] <--- [Client]: {0} [Message]: {1}", pocket.Name, pocket.Message);
 
                 /// Resend example (like chat message)
 
-                byte[] data = ChatMessagePocket.Construct(_clientManager.GetClientName(id), pocket.StringField);
+                byte[] data = ChatMessagePocket.ConstructSingle(pocket.Name, pocket.Message);
                 PocketManager.SendDataToAllExcept(data, id);
             }
         }

@@ -16,7 +16,6 @@ namespace Server
         private static Settings _settings;
 
         public static Action<ConnectionPocket, Socket, int> OnConnectionPocket;
-        public static Action<StringPocket, int> OnStringPocket;
         public static Action<ChatMessagePocket, int> OnChatMessagePocket;
         public static Action<int> onClientDisconnect;
         public static Action<int> OnMessageAccepted;
@@ -38,7 +37,6 @@ namespace Server
         private static void FillBytesToCommandsDictionary()
         {
             BytesToPockets.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
-            BytesToPockets.Add(PocketEnum.String, StringPocket.FromBytes);
             BytesToPockets.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
         }
 
@@ -88,7 +86,7 @@ namespace Server
                     for (int i = 0; i < header.Count; i++)
                     {
                         var typeEnum = (PocketEnum)header.Type;
-                        if (typeEnum < 0 || (int)typeEnum > BytesToPockets.Count())
+                        if (typeEnum < 0 || (int)typeEnum > BytesToPockets.Count() + 1)
                             break;
                         if (skip_size != data.Length)
                             nextPocketBytes = data.Skip(skip_size);
@@ -115,10 +113,8 @@ namespace Server
                             skip_size += basePocket.ToBytes().Length;
                             switch (typeEnum)
                             {
-                                case PocketEnum.String:
-                                    OnStringPocket?.Invoke((StringPocket)basePocket, client_id);
-                                    break;
                                 case PocketEnum.ChatMessage:
+                                    OnChatMessagePocket?.Invoke((ChatMessagePocket)basePocket, client_id);
                                     break;
                             }
                             accept = true;

@@ -12,7 +12,6 @@ namespace Server
     {
 
         public static Action<ConnectionPocket, Socket> OnConnectionPocket;
-        public static Action<StringPocket> OnStringPocket;
         public static Action<ChatMessagePocket> OnChatMessagePocket;
         public static Action onClientDisconnect;
         public static Action OnMessageAccepted;
@@ -28,7 +27,6 @@ namespace Server
         private static void FillBytesToCommandsDictionary()
         {
             BytesToTypes.Add(PocketEnum.Connection, ConnectionPocket.FromBytes);
-            BytesToTypes.Add(PocketEnum.String, StringPocket.FromBytes);
             BytesToTypes.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
         }
 
@@ -79,9 +77,6 @@ namespace Server
                             skip_size += basePocket.ToBytes().Length;
                             switch (typeEnum)
                             {
-                                case PocketEnum.String:
-                                    OnStringPocket?.Invoke((StringPocket)basePocket);
-                                    break;
                                 case PocketEnum.ChatMessage:
                                     OnChatMessagePocket?.Invoke((ChatMessagePocket)basePocket);
                                     break;
@@ -92,7 +87,12 @@ namespace Server
                 }
                 if (accept)
                 {
-                    byte[] accept_data = Utils.ConcatByteArrays(MainHeader.Construct(332, (int)DateTime.Now.Ticks), HeaderPocket.Construct((int)PocketEnum.MessageAccepted, 1));
+                    HeaderPocket header = new HeaderPocket
+                    {
+                        Type = (int)PocketEnum.MessageAccepted,
+                        Count = 1
+                    };
+                    byte[] accept_data = Utils.ConcatBytes(MainHeader.Construct(332, (int)DateTime.Now.Ticks), header.ToBytes());
                     server.Send(accept_data);
                 }
             }

@@ -30,10 +30,10 @@ namespace Server
 
         public static byte[] AddCommandLength(byte[] commandBytes)
         {
-            return ConcatByteArrays(BitConverter.GetBytes(commandBytes.Length), commandBytes);
+            return ConcatBytes(BitConverter.GetBytes(commandBytes.Length), commandBytes);
         }
 
-        public static byte[] ConcatByteArrays(byte[] first, byte[] second)
+        public static byte[] ConcatBytes(byte[] first, byte[] second)
         {
             byte[] ret = new byte[first.Length + second.Length];
             Buffer.BlockCopy(first, 0, ret, 0, first.Length);
@@ -46,7 +46,12 @@ namespace Server
             return BitConverter.ToInt32(bytesArray, 0);
         }
 
-        public static byte[] GetBytes(string str)
+        public static byte[] IntToBytes(int val)
+        {
+            return BitConverter.GetBytes(val);
+        }
+
+        public static byte[] StrToBytes(string str)
         {
             if (str == null)
                 return null;
@@ -57,7 +62,7 @@ namespace Server
             return bytes;
         }
 
-        public static string GetString(byte[] bytes)
+        public static string BytesToStr(byte[] bytes)
         {
             var chars = new char[bytes.Length / 2];
             Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);

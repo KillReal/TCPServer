@@ -1,47 +1,47 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using Server.PocketFramework;
+using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text;
 
-namespace Server.Pockets
-{
-    public class MainHeader
+    namespace Server.Pockets
     {
-        public int Hash { get; set; }
-        public int Id { get; set; }
-        public static int GetLenght()
+        public class MainHeader
         {
-            return sizeof(int) * 2;
-        }
-
-        public static MainHeader FromBytes(byte[] bytes)
-        {
-            using var ms = new MemoryStream(bytes);
-            var br = new BinaryReader(ms);
-            var pocket = new MainHeader();
-            pocket.Hash = br.ReadInt32();
-            pocket.Id = br.ReadInt32();
-            return pocket;
-        }
-
-        public byte[] ToBytes()
-        {
-            var messageData = new byte[sizeof(int) * 2];
-            using var stream = new MemoryStream(messageData);
-            var writer = new BinaryWriter(stream);
-            writer.Write(Hash);
-            writer.Write(Id);
-            return messageData;
-        }
-
-        public static byte[] Construct(int hash, int id)
-        {
-            MainHeader header = new MainHeader
+            public int Hash { get; set; } // DONT CHANGE
+            public int Id { get; set; }
+            public static int GetLenght()
             {
-                Hash = hash,
-                Id = id
-            };
-            return header.ToBytes();
+                return 8; // needed for right read from bytes
+            }
+
+            public static MainHeader FromBytes(byte[] data)
+            {
+                PocketConstructor pc = new PocketConstructor(data);
+                var pocket = new MainHeader
+                {
+                    Hash = pc.ReadInt32(),
+                    Id = pc.ReadInt32()
+                };
+                return pocket;
+            }
+
+            public byte[] ToBytes()
+            {
+                PocketConstructor pc = new PocketConstructor();
+                pc.WriteInt32(Hash);
+                pc.WriteInt32(Id);
+                return pc.GetBytes();
+            }
+
+            public static byte[] Construct(int hash, int id)
+            {
+                MainHeader header = new MainHeader
+                {
+                    Hash = hash,
+                    Id = id
+                };
+                return header.ToBytes();
+            }
         }
     }
-}

@@ -22,20 +22,19 @@ namespace Client
                 Count = 1,
                 Type = (int)typeEnum,
             };
-            byte[] msg = Utils.ConcatByteArrays(headerPocket.ToBytes(), pocket.ToBytes());
-            msg = Utils.ConcatByteArrays(MainHeader.Construct(332, (int)DateTime.Now.Ticks), msg);
+            byte[] msg = Utils.ConcatBytes(headerPocket.ToBytes(), pocket.ToBytes());
+            msg = Utils.ConcatBytes(MainHeader.Construct(332, (int)DateTime.Now.Ticks), msg);
             server.Send(msg);
         }
         static void SendToServer(Socket server, byte[] data)
         {
             byte[] header = MainHeader.Construct(332, (int)DateTime.Now.Ticks);
-            data = Utils.ConcatByteArrays(header, data);
+            data = Utils.ConcatBytes(header, data);
             server.Send(data);
         }
         static void Main(string[] args)
         {
             PocketHandler.OnMessageAccepted += PocketListener_OnAcception;
-            PocketHandler.OnStringPocket += PocketListener_OnString;
             PocketHandler.OnChatMessagePocket += PocketListener_OnChatMessage;
 
             Console.Write("Enter client name: ");
@@ -69,13 +68,14 @@ namespace Client
                 HeaderPocket header = new HeaderPocket
                 {
                     Count = 1,
-                    Type = (int)PocketEnum.String,
+                    Type = (int)PocketEnum.ChatMessage,
                 };
-                StringPocket pocket = new StringPocket
+                ChatMessagePocket pocket = new ChatMessagePocket
                 {
-                    StringField = message
+                    Name = clientName,
+                    Message = message
                 };
-                byte[] data = Utils.ConcatByteArrays(header.ToBytes(), pocket.ToBytes());
+                byte[] data = Utils.ConcatBytes(header.ToBytes(), pocket.ToBytes());
                 SendToServer(server, data);
             }
         }
@@ -114,10 +114,6 @@ namespace Client
         private static void PocketListener_OnAcception()
         {
             Console.Write("[ClIENT] <--- [Accepted]\n");
-        }
-        private static void PocketListener_OnString(StringPocket pocket)
-        {
-            Console.WriteLine("[CLIENT] <--- [Message]: {0}", pocket.StringField);
         }
 
         private static void PocketListener_OnChatMessage(ChatMessagePocket pocket)

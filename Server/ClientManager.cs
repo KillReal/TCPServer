@@ -154,7 +154,7 @@ namespace Server
         {
             int data_id = (int)DateTime.Now.Ticks;
             byte[] header = MainHeader.Construct(_settings.PocketHash, data_id);
-            data = Utils.ConcatByteArrays(header, data);
+            data = Utils.ConcatBytes(header, data);
             (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
         }
 

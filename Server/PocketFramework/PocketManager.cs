@@ -43,7 +43,7 @@ namespace Server
                     Count = 1,
                     Type = (int)typeEnum,
                 };
-                byte[] data = Utils.ConcatByteArrays(pocketHeader.ToBytes(), pocket.ToBytes());
+                byte[] data = Utils.ConcatBytes(pocketHeader.ToBytes(), pocket.ToBytes());
                 _clientManager.Send(id, data);
             }
             catch (Exception exception)

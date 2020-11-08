@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Server.PocketFramework;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -7,31 +8,30 @@ namespace Server
 {
     public struct HeaderPocket
     {
-        public int Type { get; set; }
+        public int Type { get; set; }  // DONT CHANGE
         public int Count { get; set; }
         public static int GetLenght()
         {
-            return sizeof(int) + sizeof(int);
+            return 8;  // Size of body, needed for right reading from bytes
         }
 
-        public static HeaderPocket FromBytes(byte[] bytes)
+        public static HeaderPocket FromBytes(byte[] data)
         {
-            using var ms = new MemoryStream(bytes);
-            var br = new BinaryReader(ms);
-            var pocket = new HeaderPocket();
-            pocket.Type = br.ReadInt32();
-            pocket.Count = br.ReadInt32();
+            PocketConstructor pc = new PocketConstructor(data);
+            var pocket = new HeaderPocket
+            {
+                Type = pc.ReadInt32(),
+                Count = pc.ReadInt32()
+            };
             return pocket;
         }
 
         public byte[] ToBytes()
         {
-            var data = new byte[GetLenght()];
-            using var stream = new MemoryStream(data);
-            var writer = new BinaryWriter(stream);
-            writer.Write(Type);
-            writer.Write(Count);
-            return data;
+            PocketConstructor pc = new PocketConstructor();
+            pc.WriteInt32(Type);
+            pc.WriteInt32(Count);
+            return pc.GetBytes();
 
         }
     }

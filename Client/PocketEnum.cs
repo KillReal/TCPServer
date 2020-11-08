@@ -8,7 +8,6 @@ namespace Server
     {
         Connection = 1,
         MessageAccepted = 2,
-        String = 3,
-        ChatMessage = 4
+        ChatMessage = 3
     }
 }
