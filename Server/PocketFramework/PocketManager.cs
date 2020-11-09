@@ -19,15 +19,8 @@ namespace Server
         
         public static void SendAccepted(int id)
         {
-            try
-            {
-                var headerPocket = new Header(PocketEnum.MessageAccepted, 1);
-                _clientManager.Send(id, headerPocket.ToBytes());
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine("[ERROR]:  " + exception.Message + " " + exception.InnerException);
-            }
+            var header = new Header(PocketEnum.MessageAccepted, 1);
+            _clientManager.Send(id, header.ToBytes());
         }
 
         public static void SendSinglePocket(int id, BasePocket pocket, PocketEnum typeEnum)
@@ -44,17 +37,17 @@ namespace Server
             }
         }
 
-        static public void SendDataToAll(byte[] data)
+        static public void SendDataToAll(byte[] data, bool require_accept = true)
         {
             for (int i = 0; i < _clientManager.GetAvailibleID(); i++)
-                _clientManager.Send(i, data, true);
+                _clientManager.Send(i, data, require_accept);
         }
 
-        static public void SendDataToAllExcept(byte[] data, int excepted_id)
+        static public void SendDataToAllExcept(byte[] data, int excepted_id, bool require_accept = true)
         {
             for (int i = 0; i < _clientManager.GetAvailibleID(); i++)
                 if (i != excepted_id)
-                    _clientManager.Send(i, data, true);
+                    _clientManager.Send(i, data, require_accept);
         }
     }
 }

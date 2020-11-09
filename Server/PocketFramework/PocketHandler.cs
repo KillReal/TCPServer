@@ -3,7 +3,6 @@ using Server.Pockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -16,8 +15,8 @@ namespace Server
         private static ClientManager _clientManager;
         private static Settings _settings;
 
-        public static Action<ConnectionPocket, Socket, int> OnConnectionPocket;
-        public static Action<ChatMessagePocket, int> OnChatMessagePocket;
+        public static Action<ConnectionPocket, Socket, int> OnConnection;
+        public static Action<ChatMessagePocket, int> OnChatMessage;
         public static Action<DisconnectionPocket, int> onClientDisconnect;
         public static Action<PingPocket, int> onPingRecieved;
         public static Action<int> OnMessageAccepted;
@@ -56,9 +55,19 @@ namespace Server
                     size = client.Receive(buffer);
                     byte[] data = new byte[size];
                     Buffer.BlockCopy(buffer, 0, data, 0, size);
-                    if (client_id > -1)
-                        _clientManager.SetRecieve(client_id, data);
-                    new Task(() => ParsePocket(data, client, ref client_id)).Start();
+                    if (_settings.EncryptionEnabled)
+                        data = Encryption.Decrypt(data);
+                    if (data == null)
+                    {
+                        if (_settings.ExceptionPrint)
+                            Console.WriteLine("[ERROR]: Decryption failed");
+                    }
+                    else
+                    {
+                        if (client_id > -1)
+                            _clientManager.SetRecieve(client_id, data);
+                        new Task(() => ParsePocket(data, client, ref client_id)).Start();
+                    }
                 }
                 catch (Exception exception)
                 {
@@ -98,25 +107,25 @@ namespace Server
                             skip_size = data.Length;
                             break;
                         }
-                        else if (typeEnum == PocketEnum.Connection)
+                        else if (client_id == -1 && typeEnum == PocketEnum.Connection)
                         {
                             ConnectionPocket pocket = ConnectionPocket.FromBytes(nextPocketBytes.ToArray());
                             int rec_id = (int)_clientManager.FindClient(pocket.Name);
                             client_id = _clientManager.GetAvailibleID();
                             if (rec_id > -1 && _clientManager.GetClientState(rec_id) == (int)(ClientStateEnum.Disconnected))
                                 client_id = rec_id;
-                            OnConnectionPocket?.Invoke(pocket, client, client_id);
+                            OnConnection?.Invoke(pocket, client, client_id);
                             skip_size = data.Length;
                             break;
                         }
-                        else if (client_id > -1 && client_id < _clientManager.GetAvailibleID() && skip_size != data.Length)
+                        else if (client_id > -1 && client_id < _clientManager.GetMaxID() + 1 && skip_size != data.Length)
                         {
                             BasePocket basePocket = BytesToTypes[typeEnum].Invoke(nextPocketBytes.ToArray());
                             skip_size += basePocket.ToBytes().Length;
                             switch (typeEnum)
                             {
                                 case PocketEnum.ChatMessage:
-                                    OnChatMessagePocket?.Invoke((ChatMessagePocket)basePocket, client_id);
+                                    OnChatMessage?.Invoke((ChatMessagePocket)basePocket, client_id);
                                     break;
                                 case PocketEnum.Disconnection:
                                     onClientDisconnect?.Invoke((DisconnectionPocket)basePocket, client_id);

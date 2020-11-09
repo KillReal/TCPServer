@@ -42,6 +42,7 @@ namespace Server
                     int size = server.Receive(buffer);
                     byte[] data = new byte[size];
                     Buffer.BlockCopy(buffer, 0, data, 0, size);
+                    data = Encryption.Decrypt(data);
                     new Task(() => ParsePocket(data, server)).Start();
                 }
                 catch (Exception ex)
@@ -50,7 +51,7 @@ namespace Server
                 }
             } while (server.Connected);
             //onClientDisconnect?.Invoke();
-            server.Shutdown(SocketShutdown.Both);
+            server.Shutdown(SocketShutdown.Receive);
             server.Close();
         }
 
@@ -94,6 +95,7 @@ namespace Server
                 {
                     Header header = new Header(PocketEnum.MessageAccepted, 1);
                     byte[] accept_data = Utils.ConcatBytes(new MainHeader(332, (int)DateTime.Now.Ticks), header);
+                    accept_data = Encryption.Encrypt(accept_data);
                     server.Send(accept_data);
                 }
             }

@@ -17,7 +17,6 @@ namespace Server
         public static Action<int> onClientLostConnection;
 
         public List<int> ID_list;
-        public List<TimerCallback> TIMER_list;
 
         private int _id;
 
@@ -42,8 +41,33 @@ namespace Server
         };
         public ConcurrentDictionary<long, MyClient> _clients = new ConcurrentDictionary<long, MyClient>();
 
+        public int GetMaxID()
+        {
+            int max = 0;
+            for (int i = 1; i < ID_list.Count; i++)
+                if (ID_list[i] > max)
+                    max = ID_list[i];
+            return max;
+        }
+
         public int GetAvailibleID()
         {
+            /*if (ID_list.Count > 0)
+            {
+                int min = ID_list[0];
+                for (int i = 1; i < ID_list.Count(); i++)
+                {
+                    if (ID_list[i] < min)
+                    {
+                        min = ID_list[i];
+                    }
+                }
+                if (min > 0)
+                {
+                    min--;
+                    return min;
+                }    
+            }*/
             return _id;
         }
 
@@ -147,7 +171,25 @@ namespace Server
                         //Console.WriteLine("[SERVER] ---> [CLIENT]: sended data to '{0}'", GetClientName(id));
                         UpdateAcceptState(id, false);
                     }
-                    client.socket.Send(data);
+                    if (_settings.EncryptionEnabled)
+                        data = Encryption.Encrypt(data);
+                    if (data == null)
+                    {
+                        if (_settings.ExceptionPrint)
+                            Console.WriteLine("[ERROR]: Decryption failed");
+                    }
+                    else
+                    {
+                        try
+                        {
+                            client.socket.Send(data);
+                        }
+                        catch (Exception exception)
+                        {
+                            if (_settings.ExceptionPrint)
+                                Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
+                        }
+                    }
                     return;
                 }
                 Thread.Sleep(100);
@@ -193,12 +235,13 @@ namespace Server
 
         public void ClientPinger(int id)
         {
-            Thread.Sleep(5000);
-            while (GetClient(id).socket != null)
+            do
             {
-                Send(id, PingPocket.ConstructSingle((int)DateTime.Now.Ticks));
-                Thread.Sleep(5000);
-            }
+                Thread.Sleep(_settings.PingTimerFreq * 1000);
+                MyClient client = GetClient(id);
+                if (client.callback)
+                    Send(id, PingPocket.ConstructSingle((int)DateTime.Now.Ticks, client.ping));
+            } while (GetClient(id).socket != null);
         }
 
         public void AddClient(Socket socket, string name)

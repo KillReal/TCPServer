@@ -17,14 +17,15 @@ namespace Server
         static void Main(string[] args)
         {
             PocketHandler.OnMessageAccepted += PocketListener_OnAccept;
-            PocketHandler.OnConnectionPocket += PocketListener_OnConnect;
-            PocketHandler.OnChatMessagePocket += PocketListener_OnChatMessage;
+            PocketHandler.OnConnection += PocketListener_OnConnect;
+            PocketHandler.OnChatMessage += PocketListener_OnChatMessage;
             PocketHandler.onClientDisconnect += PocketListener_OnDisconnect;
             ClientManager.onClientLostConnection += ClientManager_OnLostConnection;
 
             Settings _settings = new Settings();
             _clientManager.SetSettings(_settings);
             PocketListener pocketListener = new PocketListener(_clientManager, _settings);
+            Encryption.Init(_settings);
             PocketManager.Init(_clientManager, _settings);
             PocketHandler.Init(_clientManager, _settings);
             Console.WriteLine("[INFO]:  Server is starting...");
@@ -52,7 +53,7 @@ namespace Server
                         Console.ReadKey();
                         Environment.Exit(0);
                     }
-                    else if (cmd == "punch")
+                    else if (cmd == "ping")
                     {
                         Header header = new Header(PocketEnum.ChatMessage, 1);
                         ChatMessagePocket str = new ChatMessagePocket("Server", "Test");
@@ -66,9 +67,9 @@ namespace Server
                         for (int i = 0; i < _clientManager.ID_list.Count; i++)
                             Console.WriteLine("   " + _clientManager.GetClientInfo(_clientManager.ID_list[i]));
                     }
-                    else if (cmd == "ping")
+                    else if (cmd == "clr")
                     {
-                        //PocketManager.SendDataToAll(PingPocket.ConstructSingle((int)DateTime.Now.Ticks));
+                        Console.Clear();
                     }
                     Thread.Sleep(100);
                 }

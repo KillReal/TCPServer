@@ -21,12 +21,14 @@ namespace Client
             var headerPocket = new Header(typeEnum, 1);
             byte[] msg = Utils.ConcatBytes(headerPocket, pocket);
             msg = Utils.ConcatBytes(new MainHeader(332, (int)DateTime.Now.Ticks).ToBytes(), msg);
+            msg = Encryption.Encrypt(msg);
             server.Send(msg);
         }
         static void SendToServer(Socket server, byte[] data)
         {
             byte[] header = new MainHeader(332, (int)DateTime.Now.Ticks).ToBytes();
             data = Utils.ConcatBytes(header, data);
+            data = Encryption.Encrypt(data);
             server.Send(data);
         }
         static void Main(string[] args)
@@ -54,7 +56,7 @@ namespace Client
         private static void PocketListener_OnPingRecieved(PingPocket pocket)
         {
             Thread.Sleep(50); //Simulate ping
-            SendToServer(server, PingPocket.ConstructSingle(pocket.Tick));
+            SendToServer(server, PingPocket.ConstructSingle(pocket.Tick, pocket.LastPing));
         }
 
         private static void ListenForCommands(object server)
