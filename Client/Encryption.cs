@@ -22,7 +22,7 @@ namespace Server
                 byte[] salt = Utils.StrToBytes(EncryptionSalt);
                 aes.KeySize = 128;
                 aes.BlockSize = 128;
-                aes.Padding = PaddingMode.Zeros;
+                aes.Padding = PaddingMode.PKCS7;
                 aes.Key = key;
                 aes.IV = salt;
 
@@ -43,13 +43,14 @@ namespace Server
                 byte[] salt = Utils.StrToBytes(EncryptionSalt);
                 aes.KeySize = 128;
                 aes.BlockSize = 128;
-                aes.Padding = PaddingMode.Zeros;
+                aes.Padding = PaddingMode.PKCS7;
                 aes.Key = key;
                 aes.IV = salt;
 
                 using (var decryptor = aes.CreateDecryptor(aes.Key, aes.IV))
                 {
-                    return PerformCryptography(data, decryptor);
+                    byte[] data_decrypted = PerformCryptography(data, decryptor);
+                    return data_decrypted ;
                 }
             }
         }

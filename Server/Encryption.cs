@@ -21,7 +21,7 @@ namespace Server
             using var aes = Aes.Create();
             aes.KeySize = 128;
             aes.BlockSize = 128;
-            aes.Padding = PaddingMode.Zeros;
+            aes.Padding = PaddingMode.PKCS7;
             aes.Key = Utils.StrToBytes(_settings.EncryptionKey);
             aes.IV = Utils.StrToBytes(_settings.EncryptionSalt);
             using var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
@@ -33,7 +33,7 @@ namespace Server
             using var aes = Aes.Create();
             aes.KeySize = 128;
             aes.BlockSize = 128;
-            aes.Padding = PaddingMode.Zeros;
+            aes.Padding = PaddingMode.PKCS7;
             aes.Key = Utils.StrToBytes(_settings.EncryptionKey);
             aes.IV = Utils.StrToBytes(_settings.EncryptionSalt);
             using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);

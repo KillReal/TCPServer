@@ -34,8 +34,26 @@ namespace Server
             return ConcatBytes(BitConverter.GetBytes(commandBytes.Length), commandBytes);
         }
 
+        public static byte[] SplitBytes(ref byte[] bytesArray, int size)
+        {
+            byte[] ret = new byte[size];
+            if (bytesArray.Length <= size)
+            {
+                ret = bytesArray;
+                bytesArray = new byte[0];
+                return ret;
+            }
+            byte[] newArray = new byte[bytesArray.Length - size];
+            Buffer.BlockCopy(bytesArray, 0, ret, 0, size);
+            Buffer.BlockCopy(bytesArray, size, newArray, 0, bytesArray.Length - size);
+            bytesArray = newArray;
+            return ret;
+        }
+
         public static byte[] ConcatBytes(byte[] first, byte[] second)
         {
+            if (first == null)
+                first = new byte[0];
             byte[] ret = new byte[first.Length + second.Length];
             Buffer.BlockCopy(first, 0, ret, 0, first.Length);
             Buffer.BlockCopy(second, 0, ret, first.Length, second.Length);

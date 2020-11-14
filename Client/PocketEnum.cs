@@ -10,6 +10,7 @@ namespace Server
         Disconnection = 2,
         MessageAccepted = 3,
         ChatMessage = 4,
-        Ping = 5
+        Ping = 5,
+        SplittedPocket = 6
     }
 }

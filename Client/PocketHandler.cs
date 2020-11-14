@@ -16,6 +16,9 @@ namespace Server
         public static Action<PingPocket> onPingPocket;
         public static Action OnMessageAccepted;
 
+        private static int last_recieved_id;
+        private static byte[] buffer;
+
         private delegate BasePocket DeselialiseBytesToCommand(byte[] bytes);
         private static readonly Dictionary<PocketEnum, DeselialiseBytesToCommand> BytesToTypes = new Dictionary<PocketEnum, DeselialiseBytesToCommand>();
 
@@ -43,7 +46,7 @@ namespace Server
                     byte[] data = new byte[size];
                     Buffer.BlockCopy(buffer, 0, data, 0, size);
                     data = Encryption.Decrypt(data);
-                    new Task(() => ParsePocket(data, server)).Start();
+                    ParsePocket(data, server);
                 }
                 catch (Exception ex)
                 {
@@ -51,7 +54,7 @@ namespace Server
                 }
             } while (server.Connected);
             //onClientDisconnect?.Invoke();
-            server.Shutdown(SocketShutdown.Receive);
+            server.Shutdown(SocketShutdown.Both);
             server.Close();
         }
 
@@ -62,6 +65,9 @@ namespace Server
                 int skip_size = 0;
                 bool accept = false;
                 MainHeader mainHeader = MainHeader.FromBytes(data.ToArray());
+                if (mainHeader.Id == last_recieved_id)
+                    return;
+                last_recieved_id = mainHeader.Id;
                 skip_size += MainHeader.GetLenght();
                 while (data.Length > skip_size + Header.GetLenght())
                 {
@@ -74,6 +80,19 @@ namespace Server
                         var typeEnum = (PocketEnum)header.Type;
                         if (typeEnum == PocketEnum.MessageAccepted)
                             OnMessageAccepted?.Invoke();
+                        else if (typeEnum == PocketEnum.SplittedPocket)
+                        {
+                            Utils.SplitBytes(ref data, Header.GetLenght() + MainHeader.GetLenght());
+                            buffer = Utils.ConcatBytes(buffer, data);           
+                            if (header.Count == 1)
+                            {
+                                ParsePocket(buffer, server);
+                                buffer = null;
+                                return;
+                            }
+                            accept = true;
+                            break;
+                        }
                         else
                         {
                             BasePocket basePocket = BytesToTypes[typeEnum].Invoke(nextPocketBytes.ToArray());
@@ -87,8 +106,8 @@ namespace Server
                                     onPingPocket?.Invoke((PingPocket)basePocket);
                                     break;
                             }
-                            accept = true;
                         }
+                        accept = true;
                     }
                 }
                 if (accept)

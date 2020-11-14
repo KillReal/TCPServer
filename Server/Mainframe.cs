@@ -78,7 +78,7 @@ namespace Server
 
         static void PocketListener_OnAccept(int id)
         {
-            //Console.WriteLine("[SERVER] <--- [Accepted] from [Client]: {0}", _clientManager.GetClientName(id));
+            Console.WriteLine("[SERVER] <--- [Accepted] from [Client]: {0}", _clientManager.GetClientName(id));
             _clientManager.UpdateAcceptState(id, true);
         }
 

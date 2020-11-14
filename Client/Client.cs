@@ -15,6 +15,21 @@ namespace Client
         static Socket server;
         static Thread _listenThread;
         static Thread _readThread;
+        public static void SendSplittedPocket(byte[] data)
+        {
+            data = Utils.ConcatBytes(new MainHeader(332, (int)DateTime.Now.Ticks).ToBytes(), data);
+            int split_count = data.Length / 20 + 1;
+            do
+            {
+                byte[] pocket = data;
+                if (data.Length > 20)
+                    pocket = Utils.SplitBytes(ref data, 20);
+                pocket = Utils.ConcatBytes(new Header(PocketEnum.SplittedPocket, split_count).ToBytes(), pocket);
+                SendToServer(server, pocket);
+                Thread.Sleep(100);
+                split_count--;
+            } while (split_count > 0);
+        }
 
         static void SendToServer(Socket server, BasePocket pocket, PocketEnum typeEnum)
         {
@@ -76,14 +91,16 @@ namespace Client
                     Header header = new Header(PocketEnum.Disconnection, 1);
                     DisconnectionPocket pocket = new DisconnectionPocket(clientName, "exit");
                     data = Utils.ConcatBytes(header, pocket);
+                    SendToServer(server, data);
                 }
                 else
                 {
                     Header header = new Header(PocketEnum.ChatMessage, 1);
                     ChatMessagePocket pocket = new ChatMessagePocket(clientName, message);
                     data = Utils.ConcatBytes(header, pocket);
+                    SendSplittedPocket(data);
                 }
-                SendToServer(server, data);
+                
             }
         }
 

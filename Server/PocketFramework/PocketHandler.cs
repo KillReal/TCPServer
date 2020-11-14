@@ -88,7 +88,7 @@ namespace Server
                 int skip_size = 0;
                 bool accept = false;
                 MainHeader mainHeader = MainHeader.FromBytes(data.ToArray());
-                if (mainHeader.Hash != _settings.PocketHash || _clientManager.GetLastBufferID(client_id) == mainHeader.Id)
+                if (mainHeader.Hash != _settings.PocketHash || _clientManager.GetLastPocketID(client_id) == mainHeader.Id)
                     return;
                 skip_size += MainHeader.GetLenght();
                 while (data.Length >= skip_size + Header.GetLenght())
@@ -107,7 +107,7 @@ namespace Server
                             skip_size = data.Length;
                             break;
                         }
-                        else if (client_id == -1 && typeEnum == PocketEnum.Connection)
+                        else if (typeEnum == PocketEnum.Connection)
                         {
                             ConnectionPocket pocket = ConnectionPocket.FromBytes(nextPocketBytes.ToArray());
                             int rec_id = (int)_clientManager.FindClient(pocket.Name);
@@ -118,24 +118,40 @@ namespace Server
                             skip_size = data.Length;
                             break;
                         }
-                        else if (client_id > -1 && client_id < _clientManager.GetMaxID() + 1 && skip_size != data.Length)
-                        {
-                            BasePocket basePocket = BytesToTypes[typeEnum].Invoke(nextPocketBytes.ToArray());
-                            skip_size += basePocket.ToBytes().Length;
-                            switch (typeEnum)
+                        else if (client_id > -1)
+                        {                                 
+                            if (typeEnum == PocketEnum.SplittedPocket)
                             {
-                                case PocketEnum.ChatMessage:
-                                    OnChatMessage?.Invoke((ChatMessagePocket)basePocket, client_id);
-                                    break;
-                                case PocketEnum.Disconnection:
-                                    onClientDisconnect?.Invoke((DisconnectionPocket)basePocket, client_id);
-                                    break;
-                                case PocketEnum.Ping:
-                                    onPingRecieved?.Invoke((PingPocket)basePocket, client_id);
-                                    break;
-                                default:
-                                    skip_size = data.Length;
-                                    break;
+                                Utils.SplitBytes(ref data, Header.GetLenght() + MainHeader.GetLenght());
+                                _clientManager.AddBuffer(client_id, data);
+                                if (header.Count == 1)
+                                {
+                                    ParsePocket(_clientManager.GetBuffer(client_id), client, ref client_id);
+                                    _clientManager.SetBuffer(client_id, null);
+                                    return;
+                                }
+                                accept = true;
+                                break;
+                            }
+                            else if (client_id < _clientManager.GetMaxID() + 1 && skip_size != data.Length)
+                            {
+                                BasePocket basePocket = BytesToTypes[typeEnum].Invoke(nextPocketBytes.ToArray());
+                                skip_size += basePocket.ToBytes().Length;
+                                switch (typeEnum)
+                                {
+                                    case PocketEnum.ChatMessage:
+                                        OnChatMessage?.Invoke((ChatMessagePocket)basePocket, client_id);
+                                        break;
+                                    case PocketEnum.Disconnection:
+                                        onClientDisconnect?.Invoke((DisconnectionPocket)basePocket, client_id);
+                                        break;
+                                    case PocketEnum.Ping:
+                                        onPingRecieved?.Invoke((PingPocket)basePocket, client_id);
+                                        break;
+                                    default:
+                                        skip_size = data.Length;
+                                        break;
+                                }
                             }
                             accept = true;
                         }
