@@ -38,7 +38,7 @@ namespace Server.Pockets
 
         public static byte[] ConstructSingle(string name, string msg)
         {
-            Header header = new Header(PocketEnum.Connection, 1);
+            Header header = new Header(PocketEnum.Disconnection, 1);
             DisconnectionPocket connect = new DisconnectionPocket(name, msg);
             return Utils.ConcatBytes(header.ToBytes(), connect.ToBytes());
         }

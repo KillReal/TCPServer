@@ -40,7 +40,7 @@ namespace Server
             }
             finally
             {
-                Console.WriteLine("[INFO]:  Server started successfully! (Press <Q> for stop server)");
+                Console.WriteLine("[INFO]:  Server started successfully! (Type <exit> to console for stop server)");
                 while (true)
                 {
                     string cmd = Console.ReadLine();
@@ -59,7 +59,7 @@ namespace Server
                         ChatMessagePocket str = new ChatMessagePocket("Server", "Test");
                         byte[] data = Utils.ConcatBytes(header, str);
                         Console.WriteLine("[SERVER] ---> [All Clients]: [Message]: {0}", str.Message);
-                        PocketManager.SendDataToAll(data);
+                        _clientManager.SendToAll(data);
                     }
                     else if (cmd == "list")
                     {
@@ -71,6 +71,18 @@ namespace Server
                     {
                         Console.Clear();
                     }
+                    else if (cmd == "kick")
+                    {
+                        Console.Write("Enter client id: ");
+                        int id = Convert.ToInt32(Console.ReadLine());
+                        if (id > -1 && id < _clientManager.GetMaxID())
+                        {
+                            Console.WriteLine("[SERVER]: Client '{0}' kicked by admin", _clientManager.GetClientName(id));
+                            byte[] data = DisconnectionPocket.ConstructSingle("Server", "Kicked");
+                            _clientManager.Send(id, data);
+                            _clientManager.DeleteClient(id);
+                        }
+                    }
                     Thread.Sleep(100);
                 }
             }
@@ -78,7 +90,7 @@ namespace Server
 
         static void PocketListener_OnAccept(int id)
         {
-            Console.WriteLine("[SERVER] <--- [Accepted] from [Client]: {0}", _clientManager.GetClientName(id));
+            //Console.WriteLine("[SERVER] <--- [Accepted] from [Client]: {0}", _clientManager.GetClientName(id));
             _clientManager.UpdateAcceptState(id, true);
         }
 
@@ -86,7 +98,10 @@ namespace Server
         {
             if (id > -1 && id < _clientManager.GetAvailibleID())
             {
-                _clientManager.ReplaceClient(client, id);
+                if (_clientManager.GetClientState(id) == (int)ClientStateEnum.Disconnected)
+                    _clientManager.ReplaceClient(client, id);
+                else
+                    _clientManager.UpdateClientSocket(id, client);
                 Console.WriteLine("[SERVER]: '{0}' reconnected", pocket.Name, pocket.Message);
             }
             else
@@ -94,11 +109,19 @@ namespace Server
                 _clientManager.AddClient(client, pocket.Name);
                 Console.WriteLine("[SERVER]: '{0}' connected", pocket.Name, pocket.Message);
             }
+            byte[] data = ConnectionPocket.ConstructSingle("Server", "Successfull");
+            _clientManager.Send(id, data);
         }
 
         static void PocketListener_OnDisconnect(DisconnectionPocket pocket, int id)
         {
             Console.WriteLine("[SERVER]: '{0}' disconnected ({1})", pocket.Name, pocket.Message);
+            if (_clientManager.GetSocket(id) != null)
+            {
+                byte[] data = DisconnectionPocket.ConstructSingle("Server", "Successfull");
+                _clientManager.Send(id, data);
+            }
+            _clientManager.GetSocket(id).Shutdown(SocketShutdown.Both);
             _clientManager.DeleteClient(id);
         }
 
@@ -115,7 +138,7 @@ namespace Server
             /// Resend example (like chat message)
 
             byte[] data = ChatMessagePocket.ConstructSingle(pocket.Name, pocket.Message);
-            PocketManager.SendDataToAllExcept(data, id);
+            _clientManager.SendToAllExcept(data, id);
         }
     }
 }

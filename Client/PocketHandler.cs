@@ -4,17 +4,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Server
 {
     class PocketHandler
     {
-
-        public static Action<ConnectionPocket, Socket> OnConnectionPocket;
+        public static Action<ConnectionPocket> OnConnectionPocket;
+        public static Action<DisconnectionPocket> OnDisconnectionPocket;
         public static Action<ChatMessagePocket> OnChatMessagePocket;
         public static Action<PingPocket> onPingPocket;
         public static Action OnMessageAccepted;
+        private static Socket server;
 
         private static int last_recieved_id;
         private static byte[] buffer;
@@ -35,7 +37,12 @@ namespace Server
             BytesToTypes.Add(PocketEnum.Ping, PingPocket.FromBytes);
         }
 
-        public static void HandleClientMessage(Socket server)
+        public static void UpdateSocket(Socket newserver)
+        {
+            server = newserver;
+        }
+
+        public static void HandleClientMessage()
         {
             do
             {
@@ -50,12 +57,20 @@ namespace Server
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Error: " + ex);
+                    //Console.WriteLine("Error: " + ex);
                 }
             } while (server.Connected);
             //onClientDisconnect?.Invoke();
-            server.Shutdown(SocketShutdown.Both);
-            server.Close();
+            Thread.Sleep(500);
+            try
+            {
+                server.Shutdown(SocketShutdown.Both);
+                server.Close();
+            }
+            catch
+            {
+
+            }
         }
 
         private static void ParsePocket(byte[] data, Socket server)
@@ -104,6 +119,12 @@ namespace Server
                                     break;
                                 case PocketEnum.Ping:
                                     onPingPocket?.Invoke((PingPocket)basePocket);
+                                    break;
+                                case PocketEnum.Connection:
+                                    OnConnectionPocket?.Invoke((ConnectionPocket)basePocket);
+                                    break;
+                                case PocketEnum.Disconnection:
+                                    OnDisconnectionPocket?.Invoke((DisconnectionPocket)basePocket);
                                     break;
                             }
                         }

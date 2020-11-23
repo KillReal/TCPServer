@@ -41,7 +41,9 @@ namespace Server
 
         public int GetMaxID()
         {
-            return ID_list.Max() + 1;
+            if (ID_list.Count > 0)
+                return ID_list.Max() + 1;
+            return 0;
         }
 
         public int GetAvailibleID()
@@ -162,15 +164,21 @@ namespace Server
             while (GetClient(id).socket != null)
             {
                 MyClient client = GetClient(id);
-                if (data_id - client.pocket_id < 1000000)
-                    Thread.Sleep(100);
                 if (client.callback)
                 {   
                     client.pocket_id = data_id;
                     _clients[id] = client;
                     if (wait_accept)
                         UpdateAcceptState(id, false);
-                    client.socket.Send(data);
+                    try
+                    {
+                        client.socket.Send(data);
+                    }
+                    catch
+                    {
+                        if (_settings.ExceptionPrint)
+                            Console.WriteLine("[ERROR]: Pocket send to '{0}' failed (pid: {1})", client.name, data_id);
+                    }
                     return;
                 }
                 Thread.Sleep(100);
@@ -179,6 +187,8 @@ namespace Server
 
         public void Send(int id, byte[] data, bool wait_accept = false)
         {
+            if (!ID_list.Contains(id))
+                return;
             int data_id = (int)DateTime.Now.Ticks;
             byte[] header = new MainHeader(_settings.PocketHash, data_id).ToBytes();
             data = Utils.ConcatBytes(header, data);
@@ -191,6 +201,31 @@ namespace Server
             }
             else
                 (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
+        }
+
+        public void SendToAll(byte[] data, bool require_accept = true)
+        {
+            for (int i = 0; i < GetMaxID(); i++)
+            {
+                if (data.Length > _settings.MaxPocketSize)
+                    PocketManager.SendSplittedPocket(i, data);
+                else
+                    Send(i, data, require_accept);
+            }
+        }
+
+        public void SendToAllExcept(byte[] data, int excepted_id, bool require_accept = true)
+        {
+            for (int i = 0; i < GetMaxID(); i++)
+            {
+                if (i != excepted_id)
+                {
+                    if (data.Length > _settings.MaxPocketSize)
+                        PocketManager.SendSplittedPocket(i, data);
+                    else
+                        Send(i, data, require_accept);
+                }
+            }
         }
 
         public void SetRecieve(int id, byte[] data)
@@ -218,11 +253,25 @@ namespace Server
         {
             do
             {
-                Thread.Sleep(_settings.PingTimerFreq * 1000);
+                Thread.Sleep(_settings.PingTimerFreq);
                 MyClient client = GetClient(id);
                 if (client.callback)
                     Send(id, PingPocket.ConstructSingle((int)DateTime.Now.Ticks, client.ping));
             } while (GetClient(id).socket != null);
+        }
+
+        private void LaunchBackgroundWorkers(int id)
+        {
+            (new Task(() => ClientPinger(id))).Start();
+        }
+
+        public void UpdateClientSocket(int id, Socket new_socket)
+        {
+            MyClient client = GetClient(id);
+            client.socket = new_socket;
+            client.send_buffer = null;
+            _clients[id] = client;
+            LaunchBackgroundWorkers(id);
         }
 
         public void AddClient(Socket socket, string name)
@@ -238,7 +287,7 @@ namespace Server
             };
             _clients.TryAdd(id, newClient);
             ID_list.Add(id);
-            (new Task(() => ClientPinger(id))).Start();
+            LaunchBackgroundWorkers(id);
         }
 
         public void ReplaceClient(Socket socket, int id)
@@ -247,6 +296,7 @@ namespace Server
             client.socket = socket;
             _clients[id] = client;
             ToggleConnectionState(id, true);
+            LaunchBackgroundWorkers(id);
         }
 
         public void DeleteClient(int id)
@@ -257,6 +307,8 @@ namespace Server
                 client.timer.Dispose();
                 client.timer = null;
             }
+            if (client.socket != null)
+                client.socket.Disconnect(false);
             _clients.TryRemove(id, out _);
             ID_list.Remove(id);
         }

@@ -30,7 +30,7 @@ namespace Server
                 pocket = Utils.ConcatBytes(new Header(PocketEnum.SplittedPocket, split_count).ToBytes(), pocket);
                 _clientManager.Send(id, pocket, true);
                 split_count--;
-                Thread.Sleep(100);
+                Thread.Sleep(5);
             } while (_clientManager.GetSocket(id) != null && split_count > 0);
         }
         
@@ -51,31 +51,6 @@ namespace Server
             catch (Exception exception)
             {
                 Console.WriteLine("[ERROR]:  " + exception.Message + " " + exception.InnerException);
-            }
-        }
-
-        static public void SendDataToAll(byte[] data, bool require_accept = true)
-        {
-            for (int i = 0; i < _clientManager.GetAvailibleID(); i++)
-            {
-                if (data.Length > _settings.MaxPocketSize)
-                    SendSplittedPocket(i, data);
-                else
-                    _clientManager.Send(i, data, require_accept);
-            }
-        }
-
-        static public void SendDataToAllExcept(byte[] data, int excepted_id, bool require_accept = true)
-        {
-            for (int i = 0; i < _clientManager.GetAvailibleID(); i++)
-            {
-                if (i != excepted_id)
-                {
-                    if (data.Length > _settings.MaxPocketSize)
-                        SendSplittedPocket(i, data);
-                    else
-                        _clientManager.Send(i, data, require_accept);
-                }
             }
         }
     }

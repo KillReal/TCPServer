@@ -75,8 +75,12 @@ namespace Server
                         Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
                 }
             } while (client.Connected);
-            Console.WriteLine("[SERVER]: Lost connection with '{0}'", _clientManager.GetClientName(client_id));
-            _clientManager.ToggleConnectionState(client_id);
+            Thread.Sleep(500);
+            if (_clientManager.GetClientName(client_id) != "unknown" && _clientManager.GetClientName(client_id) != null)
+            {
+                Console.WriteLine("[SERVER]: Lost connection with '{0}'", _clientManager.GetClientName(client_id));
+                _clientManager.ToggleConnectionState(client_id);
+            }
             client.Shutdown(SocketShutdown.Both);
             client.Close();
         }
@@ -112,7 +116,7 @@ namespace Server
                             ConnectionPocket pocket = ConnectionPocket.FromBytes(nextPocketBytes.ToArray());
                             int rec_id = (int)_clientManager.FindClient(pocket.Name);
                             client_id = _clientManager.GetAvailibleID();
-                            if (rec_id > -1 && _clientManager.GetClientState(rec_id) == (int)(ClientStateEnum.Disconnected))
+                            if (rec_id > -1)
                                 client_id = rec_id;
                             OnConnection?.Invoke(pocket, client, client_id);
                             skip_size = data.Length;
