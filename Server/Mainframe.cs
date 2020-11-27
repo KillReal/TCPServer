@@ -77,7 +77,7 @@ namespace Server
                         int id = Convert.ToInt32(Console.ReadLine());
                         if (id > -1 && id < _clientManager.GetMaxID())
                         {
-                            Console.WriteLine("[SERVER]: Client '{0}' kicked by admin", _clientManager.GetClientName(id));
+                            Console.WriteLine("[SERVER]: Client '{0}' kicked", _clientManager.GetClientName(id));
                             byte[] data = DisconnectionPocket.ConstructSingle("Server", "Kicked");
                             _clientManager.Send(id, data);
                             _clientManager.DeleteClient(id);
@@ -110,7 +110,7 @@ namespace Server
                 Console.WriteLine("[SERVER]: '{0}' connected", pocket.Name, pocket.Message);
             }
             byte[] data = ConnectionPocket.ConstructSingle("Server", "Successfull");
-            _clientManager.Send(id, data);
+            _clientManager.Send(id, data, false);
         }
 
         static void PocketListener_OnDisconnect(DisconnectionPocket pocket, int id)
@@ -121,7 +121,9 @@ namespace Server
                 byte[] data = DisconnectionPocket.ConstructSingle("Server", "Successfull");
                 _clientManager.Send(id, data);
             }
-            _clientManager.GetSocket(id).Shutdown(SocketShutdown.Both);
+            //do
+                Thread.Sleep(50);
+            //while (!_clientManager.GetClientCallback(id));
             _clientManager.DeleteClient(id);
         }
 

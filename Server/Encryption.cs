@@ -18,6 +18,8 @@ namespace Server
 
         public static byte[] Encrypt(byte[] data)
         {
+            if (!_settings.EncryptionEnabled)
+                return data;
             using var aes = Aes.Create();
             aes.KeySize = 128;
             aes.BlockSize = 128;
@@ -25,11 +27,16 @@ namespace Server
             aes.Key = Utils.StrToBytes(_settings.EncryptionKey);
             aes.IV = Utils.StrToBytes(_settings.EncryptionSalt);
             using var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
-            return PerformCryptography(data, encryptor);
+            data = PerformCryptography(data, encryptor);
+            if (data == null)
+                throw new Exception("Failed encryption");
+            return data;
         }
 
         public static byte[] Decrypt(byte[] data)
         {
+            if (!_settings.EncryptionEnabled)
+                return data;
             using var aes = Aes.Create();
             aes.KeySize = 128;
             aes.BlockSize = 128;
@@ -37,7 +44,10 @@ namespace Server
             aes.Key = Utils.StrToBytes(_settings.EncryptionKey);
             aes.IV = Utils.StrToBytes(_settings.EncryptionSalt);
             using var decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-            return PerformCryptography(data, decryptor);
+            data = PerformCryptography(data, decryptor);
+            if (data == null)
+                throw new Exception("Failed decryption");
+            return data;
         }
 
         private static byte[] PerformCryptography(byte[] data, ICryptoTransform cryptoTransform)

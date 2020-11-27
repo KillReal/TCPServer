@@ -39,6 +39,12 @@ namespace Server
         };
         public ConcurrentDictionary<long, MyClient> _clients = new ConcurrentDictionary<long, MyClient>();
 
+        public bool GetClientCallback(int id)
+        {
+            _clients.TryGetValue(id, out MyClient client);
+            return client.callback;
+        }
+
         public int GetMaxID()
         {
             if (ID_list.Count > 0)
@@ -85,7 +91,11 @@ namespace Server
                     return;
                 }
                 else if (client.socket != null && client.send_buffer != null)
+                {
+                    Console.WriteLine("Resended " + client.send_buffer.Length + " bytes");
                     client.socket.Send(client.send_buffer);
+                }
+                    
                 Thread.Sleep(1000);
             }
             onClientLostConnection?.Invoke(id);
@@ -167,11 +177,12 @@ namespace Server
                 if (client.callback)
                 {   
                     client.pocket_id = data_id;
+                    client.send_buffer = data;
                     _clients[id] = client;
                     if (wait_accept)
                         UpdateAcceptState(id, false);
                     try
-                    {
+                    { 
                         client.socket.Send(data);
                     }
                     catch
@@ -192,15 +203,8 @@ namespace Server
             int data_id = (int)DateTime.Now.Ticks;
             byte[] header = new MainHeader(_settings.PocketHash, data_id).ToBytes();
             data = Utils.ConcatBytes(header, data);
-            if (_settings.EncryptionEnabled)
-                data = Encryption.Encrypt(data);
-            if (data == null)
-            {
-                if (_settings.ExceptionPrint)
-                    Console.WriteLine("[ERROR]: Decryption failed");
-            }
-            else
-                (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
+            data = Encryption.Encrypt(data);
+            (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
         }
 
         public void SendToAll(byte[] data, bool require_accept = true)
@@ -230,6 +234,8 @@ namespace Server
 
         public void SetRecieve(int id, byte[] data)
         {
+            if (!ID_list.Contains(id))
+                return;
             MyClient client = GetClient(id);
             client.send_buffer = data;
             UpdateAcceptState(id, true);
@@ -262,7 +268,7 @@ namespace Server
 
         private void LaunchBackgroundWorkers(int id)
         {
-            (new Task(() => ClientPinger(id))).Start();
+           // (new Task(() => ClientPinger(id))).Start();
         }
 
         public void UpdateClientSocket(int id, Socket new_socket)
@@ -307,10 +313,11 @@ namespace Server
                 client.timer.Dispose();
                 client.timer = null;
             }
-            if (client.socket != null)
-                client.socket.Disconnect(false);
+            Socket temp_socket = client.socket;
             _clients.TryRemove(id, out _);
             ID_list.Remove(id);
+            if (temp_socket != null)
+                temp_socket.Disconnect(false);
         }
 
         public int FindClient(Socket client)

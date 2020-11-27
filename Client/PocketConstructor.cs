@@ -53,7 +53,7 @@ namespace Server.PocketFramework
             Data = newData;
             return Utils.BytesToStr(bytes);
         }
-
+        
         public byte[] GetBytes()
         {
             return Data;

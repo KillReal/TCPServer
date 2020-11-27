@@ -14,7 +14,7 @@ namespace Server
         ClientManager _clientManager;
         IPEndPoint _ipEndpoint;
         Thread _listenThread;
-        bool _continueListen = true;
+        public static bool _continueListen = true;
 
         public PocketListener(ClientManager clientManager, Settings settings)
         {
@@ -40,8 +40,8 @@ namespace Server
             {
                 try
                 {
-                    //Console.WriteLine("[INFO]:  Waiting connection from {0}", _ipEndpoint);
                     Socket handler = _listener.Accept();
+                    handler.ReceiveTimeout = 100;
                     var clientThread = new Thread(HandleClientPocket);
                     clientThread.Start(handler);
                 }

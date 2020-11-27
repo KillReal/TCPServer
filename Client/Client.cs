@@ -21,7 +21,7 @@ namespace Client
         public static void SendSplittedPocket(byte[] data)
         {
             data = Utils.ConcatBytes(new MainHeader(332, (int)DateTime.Now.Ticks).ToBytes(), data);
-            int split_count = data.Length / 20 + 1;
+            int split_count = (data.Length / 20 + 1) + 1000;
             do
             {
                 byte[] pocket = data;
@@ -30,26 +30,13 @@ namespace Client
                 pocket = Utils.ConcatBytes(new Header(PocketEnum.SplittedPocket, split_count).ToBytes(), pocket);
                 SendToServer(server, pocket);
                 Thread.Sleep(100);
+                if (split_count > 1000)
+                    split_count %= 1000;
                 split_count--;
             } while (split_count > 0);
         }
 
-        static void SendToServer(Socket server, BasePocket pocket, PocketEnum typeEnum)
-        {
-            var headerPocket = new Header(typeEnum, 1);
-            byte[] msg = Utils.ConcatBytes(headerPocket, pocket);
-            msg = Utils.ConcatBytes(new MainHeader(332, (int)DateTime.Now.Ticks).ToBytes(), msg);
-            msg = Encryption.Encrypt(msg);
-            try
-            {
-                server.Send(msg);
-            }
-            catch
-            {
-
-            }
-        }
-        static void SendToServer(Socket server, byte[] data)
+        public static void SendToServer(Socket server, byte[] data)
         {
             byte[] header = new MainHeader(332, (int)DateTime.Now.Ticks).ToBytes();
             data = Utils.ConcatBytes(header, data);
@@ -92,6 +79,7 @@ namespace Client
         private static void PocketListener_OnDisconnection(DisconnectionPocket pocket)
         {
             Console.WriteLine("[CLIENT] <--- Disconnected ({0})", pocket.Message);
+            server.Disconnect(false);
         }
 
         private static void PocketListener_OnPingRecieved(PingPocket pocket)
@@ -103,7 +91,7 @@ namespace Client
         private static void ListenForPockets(object server)
         {
             if (server != null)
-                (new Task(() => PocketHandler.HandleClientMessage())).Start();
+                PocketHandler.HandleClientMessage((Socket)server);
         }
 
         static void SendMessageFromSocket(int port)
@@ -123,15 +111,14 @@ namespace Client
                     DisconnectionPocket pocket = new DisconnectionPocket(clientName, "Exit");
                     data = Utils.ConcatBytes(header, pocket);
                     SendToServer(server, data);
-                    Thread.Sleep(1000);
-                    if (server != null)
-                        server.Close();
                 }
                 else if (message == "connect")
                 {
                     server = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    server.ReceiveTimeout = 100;
                     server.Connect(ipEndPoint);
-                    PocketHandler.UpdateSocket((Socket)server);
+                    if (_listenThread != null)
+                        _listenThread.Interrupt();
                     data = ConnectionPocket.ConstructSingle(clientName, "Connect");
                     _listenThread = new Thread(ListenForPockets);
                     _listenThread.Start(server);

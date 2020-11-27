@@ -51,19 +51,13 @@ namespace Server
                 try
                 {
                     byte[] buffer = new byte[1024];
-                    int size = 0;
-                    size = client.Receive(buffer);
-                    byte[] data = new byte[size];
-                    Buffer.BlockCopy(buffer, 0, data, 0, size);
-                    if (_settings.EncryptionEnabled)
+                    int size = client.Receive(buffer);
+                    //Console.WriteLine("Recieved: " + size + " bytes");
+                    if (size != 0)
+                    {
+                        byte[] data = new byte[size];
+                        Buffer.BlockCopy(buffer, 0, data, 0, size);
                         data = Encryption.Decrypt(data);
-                    if (data == null)
-                    {
-                        if (_settings.ExceptionPrint)
-                            Console.WriteLine("[ERROR]: Decryption failed");
-                    }
-                    else
-                    {
                         if (client_id > -1)
                             _clientManager.SetRecieve(client_id, data);
                         new Task(() => ParsePocket(data, client, ref client_id)).Start();
@@ -74,8 +68,7 @@ namespace Server
                     if (_settings.ExceptionPrint)
                         Console.WriteLine("[ERROR]: " + exception.Message + " " + exception.InnerException);
                 }
-            } while (client.Connected);
-            Thread.Sleep(500);
+            } while (client.Connected && PocketListener._continueListen);
             if (_clientManager.GetClientName(client_id) != "unknown" && _clientManager.GetClientName(client_id) != null)
             {
                 Console.WriteLine("[SERVER]: Lost connection with '{0}'", _clientManager.GetClientName(client_id));
@@ -87,84 +80,96 @@ namespace Server
 
         private static void ParsePocket(byte[] data, Socket client, ref int client_id)
         {
-            if (data.Length >= MainHeader.GetLenght())
+            try
             {
-                int skip_size = 0;
-                bool accept = false;
-                MainHeader mainHeader = MainHeader.FromBytes(data.ToArray());
-                if (mainHeader.Hash != _settings.PocketHash || _clientManager.GetLastPocketID(client_id) == mainHeader.Id)
-                    return;
-                skip_size += MainHeader.GetLenght();
-                while (data.Length >= skip_size + Header.GetLenght())
+                if (data.Length >= MainHeader.GetLenght())
                 {
-                    IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
-                    Header header = Header.FromBytes(nextPocketBytes.ToArray());
-                    skip_size += Header.GetLenght();
-                    for (int i = 0; i < header.Count; i++)
+                    int skip_size = 0;
+                    bool accept = false;
+                    MainHeader mainHeader = MainHeader.FromBytes(data.ToArray());
+                    if (mainHeader.Hash != _settings.PocketHash || _clientManager.GetLastPocketID(client_id) == mainHeader.Id)
+                        return;
+                    skip_size += MainHeader.GetLenght();
+                    while (data.Length >= skip_size + Header.GetLenght())
                     {
-                        var typeEnum = (PocketEnum)header.Type;
-                        if (skip_size != data.Length)
-                            nextPocketBytes = data.Skip(skip_size);
-                        if (typeEnum == PocketEnum.MessageAccepted)
+                        IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
+                        Header header = Header.FromBytes(nextPocketBytes.ToArray());
+                        skip_size += Header.GetLenght();
+                        for (int i = 0; i < header.Count; i++)
                         {
-                            OnMessageAccepted?.Invoke(client_id);
-                            skip_size = data.Length;
-                            break;
-                        }
-                        else if (typeEnum == PocketEnum.Connection)
-                        {
-                            ConnectionPocket pocket = ConnectionPocket.FromBytes(nextPocketBytes.ToArray());
-                            int rec_id = (int)_clientManager.FindClient(pocket.Name);
-                            client_id = _clientManager.GetAvailibleID();
-                            if (rec_id > -1)
-                                client_id = rec_id;
-                            OnConnection?.Invoke(pocket, client, client_id);
-                            skip_size = data.Length;
-                            break;
-                        }
-                        else if (client_id > -1)
-                        {                                 
-                            if (typeEnum == PocketEnum.SplittedPocket)
+                            var typeEnum = (PocketEnum)header.Type;
+                            if (skip_size != data.Length)
+                                nextPocketBytes = data.Skip(skip_size);
+                            if (typeEnum == PocketEnum.MessageAccepted)
                             {
-                                Utils.SplitBytes(ref data, Header.GetLenght() + MainHeader.GetLenght());
-                                _clientManager.AddBuffer(client_id, data);
-                                if (header.Count == 1)
-                                {
-                                    ParsePocket(_clientManager.GetBuffer(client_id), client, ref client_id);
-                                    _clientManager.SetBuffer(client_id, null);
-                                    return;
-                                }
-                                accept = true;
+                                OnMessageAccepted?.Invoke(client_id);
+                                skip_size = data.Length;
                                 break;
                             }
-                            else if (client_id < _clientManager.GetMaxID() + 1 && skip_size != data.Length)
+                            else if (typeEnum == PocketEnum.Connection)
                             {
-                                BasePocket basePocket = BytesToTypes[typeEnum].Invoke(nextPocketBytes.ToArray());
-                                skip_size += basePocket.ToBytes().Length;
-                                switch (typeEnum)
+                                ConnectionPocket pocket = ConnectionPocket.FromBytes(nextPocketBytes.ToArray());
+                                int rec_id = (int)_clientManager.FindClient(pocket.Name);
+                                client_id = _clientManager.GetAvailibleID();
+                                if (rec_id > -1)
+                                    client_id = rec_id;
+                                OnConnection?.Invoke(pocket, client, client_id);
+                                skip_size = data.Length;
+                                break;
+                            }
+                            else if (client_id > -1)
+                            {
+                                accept = true;
+                                if (typeEnum == PocketEnum.SplittedPocket)
                                 {
-                                    case PocketEnum.ChatMessage:
-                                        OnChatMessage?.Invoke((ChatMessagePocket)basePocket, client_id);
-                                        break;
-                                    case PocketEnum.Disconnection:
-                                        onClientDisconnect?.Invoke((DisconnectionPocket)basePocket, client_id);
-                                        break;
-                                    case PocketEnum.Ping:
-                                        onPingRecieved?.Invoke((PingPocket)basePocket, client_id);
-                                        break;
-                                    default:
-                                        skip_size = data.Length;
-                                        break;
+                                    if (header.Count > 1000)
+                                    {
+                                        _clientManager.SetBuffer(client_id, null);
+                                        header.Count %= 1000;
+                                    }
+                                    Utils.SplitBytes(ref data, Header.GetLenght() + MainHeader.GetLenght());
+                                    _clientManager.AddBuffer(client_id, data); 
+                                    if (header.Count == 1)
+                                    {
+                                        ParsePocket(_clientManager.GetBuffer(client_id), client, ref client_id);
+                                        _clientManager.SetBuffer(client_id, null);
+                                        return;
+                                    }
+                                    break;
+                                }
+                                else if (client_id < _clientManager.GetMaxID() + 1 && skip_size != data.Length)
+                                {
+                                    BasePocket basePocket = BytesToTypes[typeEnum].Invoke(nextPocketBytes.ToArray());
+                                    skip_size += basePocket.ToBytes().Length;
+                                    switch (typeEnum)
+                                    {
+                                        case PocketEnum.ChatMessage:
+                                            OnChatMessage?.Invoke((ChatMessagePocket)basePocket, client_id);
+                                            break;
+                                        case PocketEnum.Disconnection:
+                                            onClientDisconnect?.Invoke((DisconnectionPocket)basePocket, client_id);
+                                            break;
+                                        case PocketEnum.Ping:
+                                            onPingRecieved?.Invoke((PingPocket)basePocket, client_id);
+                                            break;
+                                        default:
+                                            skip_size = data.Length;
+                                            break;
+                                    }
                                 }
                             }
-                            accept = true;
+                            else
+                                break;
                         }
-                        else
-                            break;
                     }
+                    if (accept)
+                        PocketManager.SendAccepted(client_id);
                 }
-                if (accept)
-                    PocketManager.SendAccepted(client_id);
+            }
+            catch (Exception exception)
+            {
+                //if (_settings.ExceptionPrint)
+                    Console.WriteLine("[ERROR]:  " + exception.Message + " " + exception.InnerException);
             }
         }
     }

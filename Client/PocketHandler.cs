@@ -16,7 +16,6 @@ namespace Server
         public static Action<ChatMessagePocket> OnChatMessagePocket;
         public static Action<PingPocket> onPingPocket;
         public static Action OnMessageAccepted;
-        private static Socket server;
 
         private static int last_recieved_id;
         private static byte[] buffer;
@@ -37,12 +36,7 @@ namespace Server
             BytesToTypes.Add(PocketEnum.Ping, PingPocket.FromBytes);
         }
 
-        public static void UpdateSocket(Socket newserver)
-        {
-            server = newserver;
-        }
-
-        public static void HandleClientMessage()
+        public static void HandleClientMessage(Socket server)
         {
             do
             {
@@ -50,27 +44,22 @@ namespace Server
                 {
                     byte[] buffer = new byte[1024];
                     int size = server.Receive(buffer);
-                    byte[] data = new byte[size];
-                    Buffer.BlockCopy(buffer, 0, data, 0, size);
-                    data = Encryption.Decrypt(data);
-                    ParsePocket(data, server);
+                    //Console.WriteLine("Recieved: " + size + " bytes");
+                    if (size != 0)
+                    {
+                        byte[] data = new byte[size];
+                        Buffer.BlockCopy(buffer, 0, data, 0, size);
+                        data = Encryption.Decrypt(data);
+                        ParsePocket(data, server);
+                    }
                 }
                 catch (Exception ex)
                 {
                     //Console.WriteLine("Error: " + ex);
                 }
             } while (server.Connected);
-            //onClientDisconnect?.Invoke();
-            Thread.Sleep(500);
-            try
-            {
-                server.Shutdown(SocketShutdown.Both);
-                server.Close();
-            }
-            catch
-            {
-
-            }
+            server.Shutdown(SocketShutdown.Both);
+            server.Close();
         }
 
         private static void ParsePocket(byte[] data, Socket server)
@@ -97,6 +86,11 @@ namespace Server
                             OnMessageAccepted?.Invoke();
                         else if (typeEnum == PocketEnum.SplittedPocket)
                         {
+                            if (header.Count > 1000)
+                            {
+                                buffer = null;
+                                header.Count %= 1000;
+                            }
                             Utils.SplitBytes(ref data, Header.GetLenght() + MainHeader.GetLenght());
                             buffer = Utils.ConcatBytes(buffer, data);           
                             if (header.Count == 1)
@@ -119,13 +113,16 @@ namespace Server
                                     break;
                                 case PocketEnum.Ping:
                                     onPingPocket?.Invoke((PingPocket)basePocket);
-                                    break;
+                                    return;
                                 case PocketEnum.Connection:
                                     OnConnectionPocket?.Invoke((ConnectionPocket)basePocket);
                                     break;
                                 case PocketEnum.Disconnection:
+                                    byte[] accept_data = Utils.ConcatBytes(new MainHeader(332, (int)DateTime.Now.Ticks), new Header(PocketEnum.MessageAccepted, 1));
+                                    accept_data = Encryption.Encrypt(accept_data);
+                                    server.Send(accept_data);
                                     OnDisconnectionPocket?.Invoke((DisconnectionPocket)basePocket);
-                                    break;
+                                    return;
                             }
                         }
                         accept = true;
@@ -134,9 +131,7 @@ namespace Server
                 if (accept)
                 {
                     Header header = new Header(PocketEnum.MessageAccepted, 1);
-                    byte[] accept_data = Utils.ConcatBytes(new MainHeader(332, (int)DateTime.Now.Ticks), header);
-                    accept_data = Encryption.Encrypt(accept_data);
-                    server.Send(accept_data);
+                    (new Task(() => Client.Client.SendToServer(server, header.ToBytes()))).Start();
                 }
             }
         }

@@ -21,14 +21,18 @@ namespace Server
         public static void SendSplittedPocket(int id, byte[] data)
         {
             data = Utils.ConcatBytes(new MainHeader(_settings.PocketHash, (int)DateTime.Now.Ticks).ToBytes(), data);
-            int split_count = data.Length / _settings.MaxPocketSize + 1;
+            int split_count = (data.Length / _settings.MaxPocketSize + 1) + 1000;
             do
             {
                 byte[] pocket = data;
                 if (data.Length > _settings.MaxPocketSize)
                     pocket = Utils.SplitBytes(ref data, _settings.MaxPocketSize);
                 pocket = Utils.ConcatBytes(new Header(PocketEnum.SplittedPocket, split_count).ToBytes(), pocket);
+                while (!_clientManager.GetClientCallback(id))
+                    Thread.Sleep(10);
                 _clientManager.Send(id, pocket, true);
+                if (split_count > 1000)
+                    split_count %= 1000;
                 split_count--;
                 Thread.Sleep(5);
             } while (_clientManager.GetSocket(id) != null && split_count > 0);
