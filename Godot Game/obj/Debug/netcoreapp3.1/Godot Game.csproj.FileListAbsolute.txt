@@ -1,0 +1,9 @@
+C:\Users\28nik\source\repos\TCPServer\Godot Game\bin\Debug\netcoreapp3.1\Godot Game.deps.json
+C:\Users\28nik\source\repos\TCPServer\Godot Game\bin\Debug\netcoreapp3.1\Godot Game.dll
+C:\Users\28nik\source\repos\TCPServer\Godot Game\bin\Debug\netcoreapp3.1\Godot Game.pdb
+C:\Users\28nik\source\repos\TCPServer\Godot Game\obj\Debug\netcoreapp3.1\Godot Game.csprojAssemblyReference.cache
+C:\Users\28nik\source\repos\TCPServer\Godot Game\obj\Debug\netcoreapp3.1\Godot Game.AssemblyInfoInputs.cache
+C:\Users\28nik\source\repos\TCPServer\Godot Game\obj\Debug\netcoreapp3.1\Godot Game.AssemblyInfo.cs
+C:\Users\28nik\source\repos\TCPServer\Godot Game\obj\Debug\netcoreapp3.1\Godot Game.csproj.CoreCompileInputs.cache
+C:\Users\28nik\source\repos\TCPServer\Godot Game\obj\Debug\netcoreapp3.1\Godot Game.dll
+C:\Users\28nik\source\repos\TCPServer\Godot Game\obj\Debug\netcoreapp3.1\Godot Game.pdb
