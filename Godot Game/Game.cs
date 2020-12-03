@@ -91,7 +91,7 @@ namespace Godot_Game
             IAction.map = map;
         }
 
-        public object Action(Buttons button, int param, Coord pos)
+        public object Action(Buttons button, Coord pos, int param)
         {
             switch (button)
             {
