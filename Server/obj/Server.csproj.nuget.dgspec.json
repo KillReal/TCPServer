@@ -1,23 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Server\\Server.csproj": {}
+    "C:\\Users\\rtimo\\Desktop\\TCPServer\\Server\\Server.csproj": {}
   },
   "projects": {
-    "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Godot Game\\Godot Game.csproj": {
+    "C:\\Users\\rtimo\\Desktop\\TCPServer\\Godot Game\\Godot Game.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Godot Game\\Godot Game.csproj",
+        "projectUniqueName": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Godot Game\\Godot Game.csproj",
         "projectName": "Godot Game",
-        "projectPath": "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Godot Game\\Godot Game.csproj",
-        "packagesPath": "C:\\Users\\28nik\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Godot Game\\obj\\",
+        "projectPath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Godot Game\\Godot Game.csproj",
+        "packagesPath": "C:\\Users\\rtimo\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Godot Game\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
-        ],
         "configFilePaths": [
-          "C:\\Users\\28nik\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\rtimo\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -29,6 +26,7 @@
         },
         "frameworks": {
           "netcoreapp3.1": {
+            "targetAlias": "netcoreapp3.1",
             "projectReferences": {}
           }
         },
@@ -40,6 +38,7 @@
       },
       "frameworks": {
         "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
           "imports": [
             "net461",
             "net462",
@@ -55,24 +54,21 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.402\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.100\\RuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Server\\Server.csproj": {
+    "C:\\Users\\rtimo\\Desktop\\TCPServer\\Server\\Server.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Server\\Server.csproj",
+        "projectUniqueName": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Server\\Server.csproj",
         "projectName": "Server",
-        "projectPath": "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Server\\Server.csproj",
-        "packagesPath": "C:\\Users\\28nik\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Server\\obj\\",
+        "projectPath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Server\\Server.csproj",
+        "packagesPath": "C:\\Users\\rtimo\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Server\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
-        ],
         "configFilePaths": [
-          "C:\\Users\\28nik\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\rtimo\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -84,9 +80,10 @@
         },
         "frameworks": {
           "netcoreapp3.1": {
+            "targetAlias": "netcoreapp3.1",
             "projectReferences": {
-              "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Godot Game\\Godot Game.csproj": {
-                "projectPath": "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Godot Game\\Godot Game.csproj"
+              "C:\\Users\\rtimo\\Desktop\\TCPServer\\Godot Game\\Godot Game.csproj": {
+                "projectPath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Godot Game\\Godot Game.csproj"
               }
             }
           }
@@ -99,6 +96,7 @@
       },
       "frameworks": {
         "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
           "imports": [
             "net461",
             "net462",
@@ -114,7 +112,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.402\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.100\\RuntimeIdentifierGraph.json"
         }
       }
     }
