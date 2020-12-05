@@ -19,6 +19,7 @@ namespace Server
         public static Action<ChatMessagePocket, int> OnChatMessage;
         public static Action<DisconnectionPocket, int> onClientDisconnect;
         public static Action<PingPocket, int> onPingRecieved;
+        public static Action<GameActionPocket, int> onGameAction;
         public static Action<int> OnMessageAccepted;
 
         private delegate BasePocket DeselialiseBytesToCommand(byte[] bytes);
@@ -41,6 +42,7 @@ namespace Server
             BytesToTypes.Add(PocketEnum.ChatMessage, ChatMessagePocket.FromBytes);
             BytesToTypes.Add(PocketEnum.Disconnection, DisconnectionPocket.FromBytes);
             BytesToTypes.Add(PocketEnum.Ping, PingPocket.FromBytes);
+            BytesToTypes.Add(PocketEnum.GameAction, GameActionPocket.FromBytes);
         }
 
         public static void HandleClientMessage(Socket client)
@@ -52,7 +54,6 @@ namespace Server
                 {
                     byte[] buffer = new byte[1024];
                     int size = client.Receive(buffer);
-                    //Console.WriteLine("Recieved: " + size + " bytes");
                     if (size != 0)
                     {
                         byte[] data = new byte[size];
@@ -151,6 +152,9 @@ namespace Server
                                             break;
                                         case PocketEnum.Ping:
                                             onPingRecieved?.Invoke((PingPocket)basePocket, client_id);
+                                            break;
+                                        case PocketEnum.GameAction:
+                                            onGameAction?.Invoke((GameActionPocket)basePocket, client_id);
                                             break;
                                         default:
                                             skip_size = data.Length;

@@ -48,7 +48,7 @@ namespace Server
                 catch (Exception exception)
                 {
                     if (_settings.ExceptionPrint)
-                        Console.WriteLine("[ERROR]:  " + exception.Message + " " + exception.InnerException);
+                        Console.WriteLine($"[ERROR]:  {exception.Message } - {exception.InnerException}");
                 }
             }
             _listener.Close();
