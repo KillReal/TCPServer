@@ -11,7 +11,7 @@ namespace Server.Pockets
         public int Buttons { get; set; }
         public int CoordX { get; set; }
         public int CoordY { get; set; }
-        public static int Param { get; set; }
+        public int Param { get; set; }
 
         public static int GetLenght()
         {

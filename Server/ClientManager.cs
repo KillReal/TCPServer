@@ -19,7 +19,7 @@ namespace Server
 
         public List<int> ID_list;
 
-        public void SetSettings(Settings settings)
+        public void Init(Settings settings)
         {
             PocketHandler.onPingRecieved += PocketListener_OnPing;
             ID_list = new List<int>();
@@ -339,10 +339,10 @@ namespace Server
             return client.name;
         }
 
-        public int GetClientState(int id)
+        public ClientStateEnum GetClientState(int id)
         {
             _clients.TryGetValue(id, out MyClient client);
-            return client.state;
+            return (ClientStateEnum)client.state;
         }
 
         public long FindClient(string name)

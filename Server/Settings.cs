@@ -9,6 +9,7 @@ namespace Server
         public string HostName = "localhost";
         public int Port = 11000;
         public int PocketHash = 332;
+        public int MaxClients = 2;
         public int ConnectionTimeOut = 10;   //sec
         public int ReconnectionTimeOut = 10; //sec
         public int SendWaitingFreq = 100;    //ms
