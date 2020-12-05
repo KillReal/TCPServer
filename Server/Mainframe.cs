@@ -36,54 +36,56 @@ namespace Server
             catch (Exception exception)
             {
                 if (_settings.ExceptionPrint)
-                    Console.WriteLine("[ERROR]:  " + exception.Message + " " + exception.InnerException);
+                    Console.WriteLine($"[ERROR]:  {exception.Message } - {exception.InnerException}");
             }
-            finally
+            Console.WriteLine("[INFO]:  Server started successfully! (Type <exit> to console for stop server)");
+
+            while (true)
             {
-                Console.WriteLine("[INFO]:  Server started successfully! (Type <exit> to console for stop server)");
-                while (true)
+                switch (Console.ReadLine())
                 {
-                    string cmd = Console.ReadLine();
-                    if (cmd == "quit")
-                    {
+                    case "quit":
                         Console.WriteLine("[INFO]:  Server is stopping...");
                         pocketListener.Stop();
-                        Thread.Sleep(100);
                         Console.WriteLine("[INFO]:  Server is successfully stopped! Press any key to exit.");
                         Console.ReadKey();
-                        Environment.Exit(0);
-                    }
-                    else if (cmd == "ping")
-                    {
-                        Header header = new Header(PocketEnum.ChatMessage, 1);
-                        ChatMessagePocket str = new ChatMessagePocket("Server", "Test");
-                        byte[] data = Utils.ConcatBytes(header, str);
-                        Console.WriteLine("[SERVER] ---> [All Clients]: [Message]: {0}", str.Message);
-                        _clientManager.SendToAll(data);
-                    }
-                    else if (cmd == "list")
-                    {
-                        Console.WriteLine("   List of all connected clients");
-                        for (int i = 0; i < _clientManager.ID_list.Count; i++)
-                            Console.WriteLine("   " + _clientManager.GetClientInfo(_clientManager.ID_list[i]));
-                    }
-                    else if (cmd == "clr")
-                    {
-                        Console.Clear();
-                    }
-                    else if (cmd == "kick")
-                    {
-                        Console.Write("Enter client id: ");
-                        int id = Convert.ToInt32(Console.ReadLine());
-                        if (id > -1 && id < _clientManager.GetMaxID())
+                        return;
+
+                    case "ping":
                         {
-                            Console.WriteLine("[SERVER]: Client '{0}' kicked", _clientManager.GetClientName(id));
-                            byte[] data = DisconnectionPocket.ConstructSingle("Server", "Kicked");
-                            _clientManager.Send(id, data);
-                            _clientManager.DeleteClient(id);
+                            Header header = new Header(PocketEnum.ChatMessage, 1);
+                            ChatMessagePocket str = new ChatMessagePocket("Server", "Test");
+                            byte[] data = Utils.ConcatBytes(header, str);
+                            Console.WriteLine($"[SERVER] ---> [All Clients]: [Message]: {str.Message}");
+                            _clientManager.SendToAll(data);
+                            break;
                         }
-                    }
-                    Thread.Sleep(100);
+
+                    case "list":
+                        {
+                            Console.WriteLine("   List of all connected clients");
+                            for (int i = 0; i < _clientManager.ID_list.Count; i++)
+                                Console.WriteLine("   " + _clientManager.GetClientInfo(_clientManager.ID_list[i]));
+                            break;
+                        }
+
+                    case "clr":
+                        Console.Clear();
+                        break;
+                        
+                    case "kick":
+                        {
+                            Console.Write("Enter client id: ");
+                            int id = Convert.ToInt32(Console.ReadLine());
+                            if (id > -1 && id < _clientManager.GetMaxID())
+                            {
+                                Console.WriteLine($"[SERVER]: Client '{_clientManager.GetClientName(id)}' kicked");
+                                byte[] data = DisconnectionPocket.ConstructSingle("Server", "Kicked");
+                                _clientManager.Send(id, data);
+                                _clientManager.DeleteClient(id);
+                            }
+                            break;
+                        }
                 }
             }
         }
@@ -102,12 +104,12 @@ namespace Server
                     _clientManager.ReplaceClient(client, id);
                 else
                     _clientManager.UpdateClientSocket(id, client);
-                Console.WriteLine("[SERVER]: '{0}' reconnected", pocket.Name, pocket.Message);
+                Console.WriteLine($"[SERVER]: '{pocket.Name}' reconnected"); // {pocket.Message}
             }
             else
             {
                 _clientManager.AddClient(client, pocket.Name);
-                Console.WriteLine("[SERVER]: '{0}' connected", pocket.Name, pocket.Message);
+                Console.WriteLine($"[SERVER]: '{pocket.Name}' connected"); // pocket.Message
             }
             byte[] data = ConnectionPocket.ConstructSingle("Server", "Successfull");
             _clientManager.Send(id, data, false);
@@ -115,27 +117,27 @@ namespace Server
 
         static void PocketListener_OnDisconnect(DisconnectionPocket pocket, int id)
         {
-            Console.WriteLine("[SERVER]: '{0}' disconnected ({1})", pocket.Name, pocket.Message);
+            Console.WriteLine($"[SERVER]: '{pocket.Name}' disconnected ({pocket.Message})");
             if (_clientManager.GetSocket(id) != null)
             {
                 byte[] data = DisconnectionPocket.ConstructSingle("Server", "Successfull");
                 _clientManager.Send(id, data);
             }
             //do
-                Thread.Sleep(50);
+            Thread.Sleep(50);
             //while (!_clientManager.GetClientCallback(id));
             _clientManager.DeleteClient(id);
         }
 
         static void ClientManager_OnLostConnection(int id)
         {
-            Console.WriteLine("[SERVER]: '{0}' disconnected (Timed out)", _clientManager.GetClientName(id));
+            Console.WriteLine($"[SERVER]: '{_clientManager.GetClientName(id)}' disconnected (Timed out)");
             _clientManager.DeleteClient(id);
         }
 
         static void PocketListener_OnChatMessage(ChatMessagePocket pocket, int id)
         {
-            Console.WriteLine("[SERVER] <--- [Client]: {0} [Message]: {1}", pocket.Name, pocket.Message);
+            Console.WriteLine($"[SERVER] <--- [Client]: {pocket.Name} [Message]: {pocket.Message}");
 
             /// Resend example (like chat message)
 
