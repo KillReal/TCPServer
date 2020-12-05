@@ -8,8 +8,9 @@ namespace Server.Pockets
 {
     public class GameActionPocket : BasePocket
     {
-        public static Game.Buttons Buttons { get; set; }
-        public static Coord Coord { get; set; }
+        public int Buttons { get; set; }
+        public int CoordX { get; set; }
+        public int CoordY { get; set; }
         public static int Param { get; set; }
 
         public static int GetLenght()
@@ -19,26 +20,24 @@ namespace Server.Pockets
 
         public GameActionPocket(Game.Buttons _buttons, Coord _coord, int _param)
         {
-            Buttons = _buttons;
-            Coord = _coord;
+            Buttons = (int)_buttons;
+            CoordX = _coord.X;
+            CoordY = _coord.Y;
             Param = _param;
         }
 
         public static GameActionPocket FromBytes(byte[] data)
         {
             PocketConstructor pc = new PocketConstructor(data);
-            Buttons = (Game.Buttons)pc.ReadInt32();
-            Coord = new Coord(pc.ReadInt32(), pc.ReadInt32());
-            Param = pc.ReadInt32();
-            return new GameActionPocket(Buttons, Coord, Param);
+            return new GameActionPocket((Game.Buttons)pc.ReadInt32(), new Coord(pc.ReadInt32(), pc.ReadInt32()), pc.ReadInt32());
         }
 
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
-            pc.WriteInt32((int)Buttons);
-            pc.WriteInt32(Coord.X);
-            pc.WriteInt32(Coord.Y);
+            pc.WriteInt32(Buttons);
+            pc.WriteInt32(CoordX);
+            pc.WriteInt32(CoordY);
             pc.WriteInt32(Param);
             return pc.GetBytes();
         }

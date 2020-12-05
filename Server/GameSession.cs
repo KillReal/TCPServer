@@ -13,15 +13,10 @@ namespace Server
             PocketHandler.onGameAction += Player_onGameAction;
         }
 
-        public void CreatePlayer(int id)
-        {
-
-        }
-
         private void Player_onGameAction(GameActionPocket pocket, int id)
         {
-            
-            Game.Action(pocket)
+            // Action proceed
+            //Game.Action((Game.Buttons)pocket.Buttons, new Coord(pocket.CoordX, pocket.CoordY), pocket.Param);
         }
     }
 }
