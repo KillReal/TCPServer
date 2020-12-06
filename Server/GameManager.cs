@@ -89,22 +89,22 @@ namespace Server
                         break;
                     case Buttons.Left:
                     case Buttons.Right:
-                        switch (game.map.Map[pocket.CoordX, pocket.CoordY].type)
+                        switch (game.map.Map[pocket.Coord.X, pocket.Coord.Y].type)
                         {
                             case GameObj.typeObj.empty when (Buttons)pocket.Button == Buttons.Left:
-                                data = new MoveUnitPocket(game.currentPlayer.selectUnit, game.MoveUnit(new Coord(pocket.CoordX, pocket.CoordY))).ToBytes();
+                                data = new MoveUnitPocket(game.currentPlayer.selectUnit, game.MoveUnit(new Coord(pocket.Coord.X, pocket.Coord.Y))).ToBytes();
                                 break;
                             case GameObj.typeObj.unit when (Buttons)pocket.Button == Buttons.Left:
-                                game.SelectUnit((Unit)game.map.Map[pocket.CoordX, pocket.CoordY]);
+                                game.SelectUnit((Unit)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
                                 data = new SelectUnitPocket(game.currentPlayer.selectUnit).ToBytes();
                                 break;
                             case GameObj.typeObj.unit when (Buttons)pocket.Button == Buttons.Right:
                             case GameObj.typeObj.town when (Buttons)pocket.Button == Buttons.Right:
-                                GameObj[] gm = game.Attack(game.map.Map[pocket.CoordX, pocket.CoordY]);
+                                GameObj[] gm = game.Attack(game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
                                 data = new AttackPocket(gm[0], gm[1]).ToBytes();
                                 break;
                             case GameObj.typeObj.mine when (Buttons)pocket.Button == Buttons.Right:
-                                data = new CaptureMinePocket(game.CaptureMine((Mine)game.map.Map[pocket.CoordX, pocket.CoordY])).ToBytes();
+                                data = new CaptureMinePocket(game.CaptureMine((Mine)game.map.Map[pocket.Coord.X, pocket.Coord.Y])).ToBytes();
                                 break;
                             // Market:...
                         }
@@ -124,7 +124,7 @@ namespace Server
         public void checkClient(int id)
         {
             // is there a client in the game?
-            if (clientManager.GetClientState(id) == ClientStateEnum.Connected)
+            if (clientManager.GetClientState(id) >= ClientStateEnum.Connected)
             {
                 // ??
             }

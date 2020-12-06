@@ -9,31 +9,6 @@ namespace Server
 {
     class Utils
     {
-        //
-        // TODO: increase func's speed and usability
-        //
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
-        public static extern IntPtr GetForegroundWindow();
-        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
-        public static extern short GetAsyncKeyState(int vKey);
-        [DllImport("kernel32.dll")]
-        static extern IntPtr GetConsoleWindow();
-        static public bool IsKeyPressed(char key)
-        {
-            int result = GetAsyncKeyState(key);
-            if (GetConsoleWindow() != GetForegroundWindow())
-                return false;
-            if (result < 0 && (result & 0x01) == 0x01)
-                return true;
-            return false;
-        }
-
-        public static byte[] AddCommandLength(byte[] commandBytes)
-        {
-            return ConcatBytes(BitConverter.GetBytes(commandBytes.Length), commandBytes);
-        }
-
         public static byte[] SplitBytes(ref byte[] bytesArray, int size)
         {
             byte[] ret = new byte[size];
@@ -79,18 +54,14 @@ namespace Server
         {
             if (str == null)
                 return null;
-            byte[] str_bytes = Encoding.Default.GetBytes(str);
-            string encoded_str = Encoding.UTF8.GetString(str_bytes);
-            var bytes = new byte[encoded_str.Length * 2];
-            Buffer.BlockCopy(encoded_str.ToCharArray(), 0, bytes, 0, bytes.Length);
-            return bytes;
+            return Encoding.UTF8.GetBytes(str);
         }
 
         public static string BytesToStr(byte[] bytes)
         {
-            var chars = new char[bytes.Length / 2];
-            Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
-            return new string(chars);
+            if (bytes == null)
+                return null;
+            return Encoding.UTF8.GetString(bytes);
         }
     }
 }

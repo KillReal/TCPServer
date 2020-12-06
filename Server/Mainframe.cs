@@ -28,7 +28,6 @@ namespace Server
             gameManager.Init(clientManager);
             PocketListener pocketListener = new PocketListener(clientManager, settings);
             Encryption.Init(settings);
-            PocketManager.Init(clientManager, settings);
             PocketHandler.Init(clientManager, settings);
             Console.WriteLine("[INFO]:  Server is starting...");
             try

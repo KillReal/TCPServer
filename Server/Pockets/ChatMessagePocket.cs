@@ -40,7 +40,7 @@ namespace Server.Pockets
         {
             Header header = new Header(PocketEnum.ChatMessage, 1);
             ChatMessagePocket chat_msg = new ChatMessagePocket(name, msg);
-            return Utils.ConcatBytes(header.ToBytes(), chat_msg.ToBytes());
+            return Utils.ConcatBytes(header, chat_msg);
         }
     }
 }

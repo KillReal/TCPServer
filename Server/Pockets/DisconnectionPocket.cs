@@ -40,7 +40,7 @@ namespace Server.Pockets
         {
             Header header = new Header(PocketEnum.Disconnection, 1);
             DisconnectionPocket connect = new DisconnectionPocket(name, msg);
-            return Utils.ConcatBytes(header.ToBytes(), connect.ToBytes());
+            return Utils.ConcatBytes(header, connect);
         }
     }
 }

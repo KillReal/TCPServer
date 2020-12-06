@@ -38,8 +38,9 @@ namespace Server.PocketFramework
 
         public void WriteString(string str)
         {
-            WriteInt32(str.Length * 2);
-            byte[] bytes = Utils.StrToBytes(str);
+            //WriteInt32(str.Length * 2); UTF16
+            WriteInt32(str.Length);
+            byte[] bytes = Utils.StrToBytes(Utils.Utf16ToUtf8(str));
             Data = Utils.ConcatBytes(Data, bytes);
         }
 

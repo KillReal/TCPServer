@@ -34,7 +34,7 @@ namespace Server.Pockets
         {
             Header header = new Header(PocketEnum.ErrorPocket, 1);
             ErrorPocket err_msg = new ErrorPocket(idError, ErrorMessage);
-            return Utils.ConcatBytes(header.ToBytes(), err_msg.ToBytes());
+            return Utils.ConcatBytes(header, err_msg);
         }
     }
 }

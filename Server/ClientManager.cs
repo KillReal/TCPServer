@@ -113,7 +113,7 @@ namespace Server
             MyClient client = GetClient(id);
             if (client.socket == null)
                 return;
-            if (client.state == (int)ClientStateEnum.Connected && !forceConnected)
+            if (client.state >= (int)ClientStateEnum.Connected && !forceConnected)
             {
                 client.state = (int)ClientStateEnum.Disconnected;
                 client.socket = null;
@@ -170,6 +170,32 @@ namespace Server
             _clients[id] = client;
         }
 
+        public void SendSplittedPocket(int id, byte[] data)
+        {
+            data = Utils.ConcatBytes(new MainHeader(_settings.PocketHash, (int)DateTime.Now.Ticks).ToBytes(), data);
+            int split_count = (data.Length / _settings.MaxPocketSize + 1) + 1000;
+            do
+            {
+                byte[] pocket = data;
+                if (data.Length > _settings.MaxPocketSize)
+                    pocket = Utils.SplitBytes(ref data, _settings.MaxPocketSize);
+                pocket = Utils.ConcatBytes(new Header(PocketEnum.SplittedPocket, split_count).ToBytes(), pocket);
+                while (!GetClientCallback(id))
+                    Thread.Sleep(10);
+                Send(id, pocket, true);
+                if (split_count > 1000)
+                    split_count %= 1000;
+                split_count--;
+                Thread.Sleep(5);
+            } while (GetSocket(id) != null && split_count > 0);
+        }
+
+        public void SendAccepted(int id)
+        {
+            var header = new Header(PocketEnum.MessageAccepted, 1);
+            Send(id, header.ToBytes());
+        }
+
         private void SendTask(int id, byte[] data, int data_id, bool wait_accept)
         {
             while (GetClient(id).socket != null)
@@ -205,32 +231,23 @@ namespace Server
             byte[] header = new MainHeader(_settings.PocketHash, data_id).ToBytes();
             data = Utils.ConcatBytes(header, data);
             data = Encryption.Encrypt(data);
-            (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
+           // if (data.Length > _settings.MaxPocketSize)  //For client testing
+                //SendSplittedPocket(id, data);
+            //else
+                (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
         }
 
         public void SendToAll(byte[] data, bool require_accept = true)
         {
             for (int i = 0; i < GetMaxID(); i++)
-            {
-                if (data.Length > _settings.MaxPocketSize)
-                    PocketManager.SendSplittedPocket(i, data);
-                else
-                    Send(i, data, require_accept);
-            }
+                Send(i, data, require_accept);
         }
 
         public void SendToAllExcept(byte[] data, int excepted_id, bool require_accept = true)
         {
             for (int i = 0; i < GetMaxID(); i++)
-            {
                 if (i != excepted_id)
-                {
-                    if (data.Length > _settings.MaxPocketSize)
-                        PocketManager.SendSplittedPocket(i, data);
-                    else
-                        Send(i, data, require_accept);
-                }
-            }
+                    Send(i, data, require_accept);
         }
 
         public void SetRecieve(int id, byte[] data)
@@ -269,7 +286,7 @@ namespace Server
 
         private void LaunchBackgroundWorkers(int id)
         {
-           // (new Task(() => ClientPinger(id))).Start();
+           // (new Task(() => ClientPinger(id))).Start(); For client testing
         }
 
         public void UpdateClientSocket(int id, Socket new_socket)

@@ -9,8 +9,8 @@ namespace Server
 {
     public class Encryption
     {
-        static string EncryptionSalt = "66-BC-GC";
-        static string EncryptionKey = "A24-C356";
+        static string EncryptionSalt = "66-BC-GC66-BC-GC";
+        static string EncryptionKey = "A24-C356A24-C356";
         static bool EncryptionEnabled = true;
         public static byte[] Encrypt(byte[] data)
         {

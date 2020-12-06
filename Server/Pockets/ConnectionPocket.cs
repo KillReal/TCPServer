@@ -40,7 +40,7 @@ namespace Server.Pockets
         {
             Header header = new Header(PocketEnum.Connection, 1);
             ConnectionPocket connect = new ConnectionPocket(name, msg);
-            return Utils.ConcatBytes(header.ToBytes(), connect.ToBytes());
+            return Utils.ConcatBytes(header, connect);
         }
     }
 }
