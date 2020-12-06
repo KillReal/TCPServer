@@ -60,6 +60,7 @@ namespace Server
         private void Player_onGameAction(GameActionPocket pocket, int id)
         {
             Game game = playerClients[id].game;
+            byte[] data = null;
             try
             {
                 switch ((Buttons)pocket.Button)
@@ -76,45 +77,48 @@ namespace Server
                         break;
                     case Buttons.UpgradeTown:
                         game.UpgradeTown();
-                        clientManager.Send(id, new UpgradeTownPocket(game.currentPlayer.town).ToBytes());
+                        data = new UpgradeTownPocket(game.currentPlayer.town).ToBytes();
                         break;
                     case Buttons.Market:
                         game.Market();
-                        clientManager.Send(id, new MarketPocket(game.currentPlayer).ToBytes());
+                        data = new MarketPocket(game.currentPlayer).ToBytes();
                         break;
                     case Buttons.NextTurn:
                         game.nextTurn();
-                        clientManager.Send(id, new NextTurnPocket(game.currentPlayer).ToBytes());
+                        data = new NextTurnPocket(game.currentPlayer).ToBytes();
                         break;
                     case Buttons.Left:
                     case Buttons.Right:
                         switch (game.map.Map[pocket.CoordX, pocket.CoordY].type)
                         {
                             case GameObj.typeObj.empty when (Buttons)pocket.Button == Buttons.Left:
-                                clientManager.Send(id, new MoveUnitPocket(game.currentPlayer.selectUnit, game.MoveUnit(new Coord(pocket.CoordX, pocket.CoordY))).ToBytes());
+                                data = new MoveUnitPocket(game.currentPlayer.selectUnit, game.MoveUnit(new Coord(pocket.CoordX, pocket.CoordY))).ToBytes();
                                 break;
                             case GameObj.typeObj.unit when (Buttons)pocket.Button == Buttons.Left:
                                 game.SelectUnit((Unit)game.map.Map[pocket.CoordX, pocket.CoordY]);
-                                clientManager.Send(id, new SelectUnitPocket(game.currentPlayer.selectUnit).ToBytes());
+                                data = new SelectUnitPocket(game.currentPlayer.selectUnit).ToBytes();
                                 break;
                             case GameObj.typeObj.unit when (Buttons)pocket.Button == Buttons.Right:
                             case GameObj.typeObj.town when (Buttons)pocket.Button == Buttons.Right:
                                 GameObj[] gm = game.Attack(game.map.Map[pocket.CoordX, pocket.CoordY]);
-                                clientManager.Send(id, new AttackPocket(gm[0], gm[1]).ToBytes());
+                                data = new AttackPocket(gm[0], gm[1]).ToBytes();
                                 break;
                             case GameObj.typeObj.mine when (Buttons)pocket.Button == Buttons.Right:
-                                clientManager.Send(id, new CaptureMinePocket(game.CaptureMine((Mine)game.map.Map[pocket.CoordX, pocket.CoordY])).ToBytes());
+                                data = new CaptureMinePocket(game.CaptureMine((Mine)game.map.Map[pocket.CoordX, pocket.CoordY])).ToBytes();
                                 break;
                             // Market:...
                         }
                         break;
+                    default:
+                        throw new Exception("undefined");
                 }
-                //return null;
             }
             catch(Exception e)
             {
-                //return e;
+                clientManager.Send(id, new ErrorPocket(1, e.Message).ToBytes()); // add type Exception
             }
+            clientManager.Send(id, data); // 1
+            clientManager.Send(id, data); // 2
         }
 
         public void checkClient(int id)

@@ -24,6 +24,7 @@ namespace Server.Pockets
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
+            pc.WriteInt32((int)ResponsePocketEnum.UpgradeTown);
             pc.WriteInt32(town.owner.id);
             // coord ?
             pc.WriteInt32(town.level);
