@@ -4,72 +4,11 @@ using System.Text;
 
 namespace Server.GameLogic
 {
-    interface IAction
-    {
-        static Player player;
-        static _Map map;
-        static public void SelectUnit(Unit unit) // click (Left)
-        {
-            if (unit.owner != player) throw new Exception("This is enemy");
-            player.selectUnit = unit;
-        }
-        static Coord[] MoveUnit(Coord A)  // click (Left)
-        {
-            if (player.selectUnit == null) throw new Exception("Not select unit");
-            // SANIN ALG // 
-            int costMoving = 0;
-            if (player.selectUnit.actionPoints - costMoving < 0) throw new Exception("Not moving");
-            return null;
-        }
-        static public GameObj[] Attack(GameObj obj) // click (Right)
-        {
-            if (player.selectUnit == null) throw new Exception("Not select unit");
-            player.selectUnit.atack(obj);
-            // CHECK DIE! and maybe delete object in map//
-            return new GameObj[] { player.selectUnit, obj };
-        }
-
-        static public Coord SpawnUnit(Unit.typeUnit id, int level = 1) // interface buttons
-        {
-            Unit u = null;
-            switch (id)
-            {
-                case Unit.typeUnit.Scout:
-                    u = new Scout();
-                    break;
-                case Unit.typeUnit.Warior:
-                    u = new Warior(level);
-                    break;
-                case Unit.typeUnit.Shooter:
-                    u = new Shooter(level);
-                    break;
-                case Unit.typeUnit.Top:
-                    u = new Top();
-                    break;
-            }
-            u.owner = player;
-            return map.SpawnUnit(u);
-        }
-        static public void UpgradeTown() // interface buttons
-        {
-            player.town.upgrade();
-        }
-        static public void Market() // Params: type trading
-        {
-
-        }
-        static public void CaptureMine(Mine mine) // click (Right)
-        {
-            Coord c = (player.selectUnit.Position - mine.Position).ABS;
-            if (c.X > 1 || c.Y > 1) throw new Exception("out of range");
-            mine.owner = player;
-        }
-    }
-
-    public class Game : IAction
+    public class Game
     {
         public _Map map;
         public Player[] players;
+        public Player currentPlayer;
         public enum Buttons
         {
             Left,
@@ -89,49 +28,71 @@ namespace Server.GameLogic
             players[0].id = 0;
             players[1].town = map.Towns[1];
             players[1].id = 1;
-            IAction.player = players[0];
-            IAction.map = map;
+            currentPlayer = players[0];
         }
 
-        public object Action(Buttons button, Coord pos, int param)
+        public void SelectUnit(Unit unit) // click (Left)
         {
-            switch (button)
+            if (unit.owner != currentPlayer) throw new Exception("This is enemy");
+            currentPlayer.selectUnit = unit;
+        }
+        public int[] MoveUnit(Coord A)  // click (Left)
+        {
+            if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
+            // SANIN ALG // 
+            int costMoving = 0;
+            if (currentPlayer.selectUnit.actionPoints - costMoving < 0) throw new Exception("Not moving");
+            return null;
+        }
+        public GameObj[] Attack(GameObj obj) // click (Right)
+        {
+            if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
+            currentPlayer.selectUnit.atack(obj);
+            // CHECK DIE! and maybe delete object in map//
+            return new GameObj[] { currentPlayer.selectUnit, obj };
+        }
+
+        public Unit SpawnUnit(Unit.typeUnit id, int level = 1) // interface buttons
+        {
+            Unit u = null;
+            switch (id)
             {
-                case Buttons.SpawnUnit:
-                    return IAction.SpawnUnit((Unit.typeUnit)param);
-                case Buttons.UpgradeTown:
-                    IAction.UpgradeTown();
+                case Unit.typeUnit.Scout:
+                    u = new Scout();
                     break;
-                case Buttons.Market:
-                    IAction.Market();
+                case Unit.typeUnit.Warior:
+                    u = new Warior(level);
                     break;
-                case Buttons.NextTurn:
-                    nextTurn();
+                case Unit.typeUnit.Shooter:
+                    u = new Shooter(level);
                     break;
-                case Buttons.Left:
-                case Buttons.Right:
-                    switch (map.Map[pos.X, pos.Y].type)
-                    {
-                        case GameObj.typeObj.empty when button == Buttons.Left:
-                            return IAction.MoveUnit(pos);
-                        case GameObj.typeObj.unit when button == Buttons.Left:
-                            IAction.SelectUnit((Unit)map.Map[pos.X, pos.Y]);
-                            break;
-                        case GameObj.typeObj.unit when button == Buttons.Right:
-                        case GameObj.typeObj.town when button == Buttons.Right:
-                            return IAction.Attack(map.Map[pos.X, pos.Y]);
-                        case GameObj.typeObj.mine when button == Buttons.Right:
-                            IAction.CaptureMine((Mine)map.Map[pos.X, pos.Y]);
-                            break;
-                    }
+                case Unit.typeUnit.Top:
+                    u = new Top();
                     break;
             }
-            return null;
+            u.owner = currentPlayer;
+            map.SpawnUnit(u);
+            return u;
+        }
+        public void UpgradeTown() // interface buttons
+        {
+            currentPlayer.town.upgrade();
+        }
+        public void Market() // Params: type trading
+        {
+
+        }
+        public Mine CaptureMine(Mine mine) // click (Right)
+        {
+            Coord c = (currentPlayer.selectUnit.Position - mine.Position).ABS;
+            if (c.X > 1 || c.Y > 1) throw new Exception("out of range");
+            mine.owner = currentPlayer;
+            return mine;
         }
 
         public void nextTurn()
         {
-            IAction.player = IAction.player == players[0]
+            currentPlayer = currentPlayer == players[0]
                 ? players[1]
                 : players[0];
         }

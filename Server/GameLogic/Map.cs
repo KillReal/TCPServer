@@ -7,8 +7,8 @@ namespace Server.GameLogic
 {
     public struct Coord
     {
-        public int X { get; set; }
-        public int Y { get; set; }
+        public int X;
+        public int Y; 
         public Coord(int x, int y)
         {
             X = x;
@@ -114,7 +114,7 @@ namespace Server.GameLogic
             }
         }
 
-        public Coord SpawnUnit(Unit u)
+        public void SpawnUnit(Unit u)
         {
             for (int i = 0; i < 3; i++)
             {
@@ -124,7 +124,7 @@ namespace Server.GameLogic
                     u.type = GameObj.typeObj.unit;
                     Map[c.X, c.Y] = u;
                     u.Position = new Coord(c.X, c.Y);
-                    return c;
+                    return;
                 }
             }
             throw new Exception("no free places");
