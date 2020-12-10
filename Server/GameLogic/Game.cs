@@ -15,8 +15,10 @@ namespace Server.GameLogic
             this.map = map;
             players = p;
             players[0].town = map.Towns[0];
+            players[0].town.owner = players[0];
             players[0].id = 0;
             players[1].town = map.Towns[1];
+            players[1].town.owner = players[1];
             players[1].id = 1;
             currentPlayer = players[0];
         }
@@ -32,6 +34,7 @@ namespace Server.GameLogic
             int[] path = PathFinding(currentPlayer.selectUnit.Position, A);
             if (currentPlayer.selectUnit.actionPoints - path.Length < 0) throw new Exception("Not moving");
             var unit = currentPlayer.selectUnit;
+            //currentPlayer.selectUnit.actionPoints -= path.Length;
             map.Map[unit.Position.X, unit.Position.Y] = new GameObj();
             map.Map[unit.Position.X, unit.Position.Y].type = GameObj.typeObj.empty;
             map.Map[unit.Position.X, unit.Position.Y].Position = unit.Position;
@@ -79,6 +82,7 @@ namespace Server.GameLogic
         }
         public Mine CaptureMine(Mine mine) // click (Right)
         {
+            if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             Coord c = (currentPlayer.selectUnit.Position - mine.Position).ABS;
             if (c.X > 1 || c.Y > 1) throw new Exception("out of range");
             mine.owner = currentPlayer;
@@ -167,6 +171,7 @@ namespace Server.GameLogic
                         dist[j] = dist[pos] + matrix[pos, j];
             }
 
+            // List!!
             int[] ver = new int[lines * columns]; // массив посещенных вершин
             for (int i = 0; i < lines * columns; i++)
             {
@@ -199,6 +204,7 @@ namespace Server.GameLogic
                 }
             }
 
+            // reverse - нахуй убрать!
             for (int i = 0; i < lines * columns / 2; i++)
             {
                 //(ver[i], ver[lines * columns - i - 1]) = (ver[lines * columns - i - 1], ver[i]);

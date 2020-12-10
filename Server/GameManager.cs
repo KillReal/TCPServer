@@ -67,10 +67,10 @@ namespace Server
             {
                 switch (pocket.Button)
                 {
-                    case Buttons.SpawnUnit:
+                    case Buttons.SpawnUnit: // OK
                         data = new SpawnUnitPocket(game.SpawnUnit((Unit.typeUnit)pocket.Param)).ToBytes();
                         break;
-                    case Buttons.UpgradeTown:
+                    case Buttons.UpgradeTown: // OK
                         game.UpgradeTown();
                         data = new UpgradeTownPocket(game.currentPlayer.town).ToBytes();
                         break;
@@ -86,10 +86,10 @@ namespace Server
                     case Buttons.Right:
                         switch (game.map.Map[pocket.Coord.X, pocket.Coord.Y].type)
                         {
-                            case GameObj.typeObj.empty when pocket.Button == Buttons.Left:
+                            case GameObj.typeObj.empty when pocket.Button == Buttons.Left: // OK
                                 data = new MoveUnitPocket(game.currentPlayer.selectUnit, game.MoveUnit(new Coord(pocket.Coord.X, pocket.Coord.Y))).ToBytes();
                                 break;
-                            case GameObj.typeObj.unit when pocket.Button == Buttons.Left:
+                            case GameObj.typeObj.unit when pocket.Button == Buttons.Left:  // OK
                                 game.SelectUnit((Unit)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
                                 data = new SelectUnitPocket(game.currentPlayer.selectUnit).ToBytes();
                                 break;
@@ -98,7 +98,7 @@ namespace Server
                                 GameObj[] gm = game.Attack(game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
                                 data = new AttackPocket(gm[0], gm[1]).ToBytes();
                                 break;
-                            case GameObj.typeObj.mine when pocket.Button == Buttons.Right:
+                            case GameObj.typeObj.mine when pocket.Button == Buttons.Right:  // OK
                                 data = new CaptureMinePocket(game.CaptureMine((Mine)game.map.Map[pocket.Coord.X, pocket.Coord.Y])).ToBytes();
                                 break;
                             default:
