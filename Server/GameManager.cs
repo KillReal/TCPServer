@@ -101,6 +101,8 @@ namespace Server
                             case GameObj.typeObj.mine when pocket.Button == Buttons.Right:
                                 data = new CaptureMinePocket(game.CaptureMine((Mine)game.map.Map[pocket.Coord.X, pocket.Coord.Y])).ToBytes();
                                 break;
+                            default:
+                                throw new Exception("block!");
                             // Market:...
                         }
                         break;

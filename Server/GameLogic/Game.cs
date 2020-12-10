@@ -107,31 +107,35 @@ namespace Server.GameLogic
 
             for (int i = 0; i < lines * columns; i++)
                 for (int j = 0; j < lines * columns; j++)
-                    path[i, j] = inf;
-                
-            
-
-            for (int y = 0; y < lines - 1; y++)
-            {
-                for (int x = 0; x < columns - 1; x++)
                 {
-                    matrix[y * columns + x, x * lines + y] = inf; // ТУТ Я
+                    matrix[i, j] = inf;
+                    path[i, j] = inf;
+                }
+
+
+            for (int y = 0; y < lines; y++)
+            {
+                for (int x = 0; x < columns; x++)
+                {
+                    if (posA.X != x && posA.Y != y)
+                        if (Map[x, y].type != 0) continue;
+                    int top = y * columns + x; // ME!
                     if (x != 0 && y != 0)
-                        matrix[y * columns + x - 1, x * lines + y - 1] = Map[x, y].type == 0 ? 2 : inf; // лево вверх
+                        matrix[top, top - columns - 1] = Map[x - 1, y - 1].type == 0 ? 2 : inf; // лево вверх
                     if (y != 0)
-                        matrix[y * columns + x, x * lines + y - 1]     = Map[x, y].type == 0 ? 1 : inf; // вверх
+                        matrix[top, top - columns]     = Map[x, y - 1].type == 0 ? 1 : inf; // вверх
                     if (x != columns - 1 && y != 0)
-                        matrix[y * columns + x + 1, x * lines + y - 1] = Map[x, y].type == 0 ? 2 : inf; // вправо вверх
+                        matrix[top, top - columns + 1] = Map[x + 1, y - 1].type == 0 ? 2 : inf; // вправо вверх
                     if (x != columns - 1)
-                        matrix[y * columns + x + 1, x * lines + y]     = Map[x, y].type == 0 ? 1 : inf; // вправо
+                        matrix[top, top + 1]           = Map[x + 1, y].type == 0 ? 1 : inf; // вправо
                     if (x != columns - 1 && y != lines - 1)
-                        matrix[y * columns + x + 1, x * lines + y + 1] = Map[x, y].type == 0 ? 2 : inf; // вправо вниз
+                        matrix[top, top + columns + 1] = Map[x + 1, y + 1].type == 0 ? 2 : inf; // вправо вниз
                     if (y != lines - 1)
-                        matrix[y * columns + x, x * lines + y + 1]     = Map[x, y].type == 0 ? 1 : inf; // вниз
+                        matrix[top, top + columns]     = Map[x, y + 1].type == 0 ? 1 : inf; // вниз
                     if (x != 0 && y != lines - 1)
-                        matrix[y * columns + x - 1, x * lines + y + 1] = Map[x, y].type == 0 ? 2 : inf; // влево вниз
+                        matrix[top, top + columns - 1] = Map[x - 1, y + 1].type == 0 ? 2 : inf; // влево вниз
                     if (x != 0)
-                        matrix[y * columns + x - 1, x * lines + y]     = Map[x, y].type == 0 ? 1 : inf; // влево
+                        matrix[top, top - 1]           = Map[x - 1, y].type == 0 ? 1 : inf; // влево
                 }
             }
 
@@ -180,9 +184,9 @@ namespace Server.GameLogic
             {
                 for (int i = 0; i < lines * columns; i++)
                 {// просматриваем все вершины
-                    if (matrix[end, i] != 0)   // если связь есть
+                    if (matrix[i, end] != inf)   // если связь есть
                     {
-                        int temp = weight - matrix[end, i]; // определяем вес пути из предыдущей вершины
+                        int temp = weight - matrix[i, end]; // определяем вес пути из предыдущей вершины
                         if (temp == dist[i]) // если вес совпал с рассчитанным
                         {                 // значит из этой вершины и был переход
                             weight = temp; // сохраняем новый вес
@@ -219,12 +223,11 @@ namespace Server.GameLogic
 
             for (int i = 0; i < count; i++)
             {
-                //k = anss[i] - anss[i + 1];
-                int ii = i;
-                int jj = i + 1;
-                Coord p1 = new Coord(ii - ii % columns * columns, ii % columns);
-                Coord p2 = new Coord(jj - jj % columns * columns, jj % columns);
-                Coord p = p1 - p2;
+                int ii = anss[i];
+                int jj = anss[i + 1];
+                Coord p1 = new Coord(ii % columns, ii / columns);
+                Coord p2 = new Coord(jj % columns, jj / columns);
+                Coord p = p2 - p1;
                 if (p == new Coord(-1, -1)) // left up
                     ans[i] = 1;
                 else if (p == new Coord(0, -1)) // up
