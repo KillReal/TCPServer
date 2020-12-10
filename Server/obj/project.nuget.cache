@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "g6OUY5qYFTz9lOn2EQ5TuRJmXB++vVxHfnIX7ev++NFpIlugJ5f1JmMQR5CA0tNXzlzvR+e4qerBEp5eXoCBew==",
+  "dgSpecHash": "iLIkra2jO4KJBWM4CfSqOpzrqCPcRXM0c0oSWcRCdnW1nHoWqmsQ7zGP3x+88emfgjTrDullXvRpt23wwNPlkw==",
   "success": true,
-  "projectFilePath": "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Server\\Server.csproj",
+  "projectFilePath": "C:\\Users\\28nik\\source\\repos\\TCPServer\\Server\\Server.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

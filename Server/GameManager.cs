@@ -62,9 +62,9 @@ namespace Server
         private void Player_onGameAction(GameActionPocket pocket, int id)
         {
             Game game = playerClients[id].game;
-            byte[] data = null;
             try
             {
+                byte[] data;
                 switch (pocket.Button)
                 {
                     case Buttons.SpawnUnit: // OK
@@ -103,7 +103,7 @@ namespace Server
                                 break;
                             default:
                                 throw new Exception("block!");
-                            // Market:...
+                                // Market:...
                         }
                         break;
                     default:
@@ -112,7 +112,7 @@ namespace Server
                 clientManager.Send(id, data); // 1
                 //clientManager.Send(id, data); // 2
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 clientManager.Send(id, new ErrorPocket(228, e.Message).ToBytes()); // add type Exception
             }

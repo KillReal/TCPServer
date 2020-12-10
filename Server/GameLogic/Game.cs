@@ -23,12 +23,12 @@ namespace Server.GameLogic
             currentPlayer = players[0];
         }
 
-        public void SelectUnit(Unit unit) // click (Left)
+        public void SelectUnit(Unit unit) // click (Left) // OK
         {
             if (unit.owner != currentPlayer) throw new Exception("This is enemy");
             currentPlayer.selectUnit = unit;
         }
-        public Stack<int> MoveUnit(Coord A)  // click (Left)
+        public Stack<int> MoveUnit(Coord A)  // click (Left) // OK
         {
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             Stack<int> path = PathFinding(currentPlayer.selectUnit.Position, A);
@@ -50,7 +50,7 @@ namespace Server.GameLogic
             return new GameObj[] { currentPlayer.selectUnit, obj };
         }
 
-        public Unit SpawnUnit(Unit.typeUnit id, int level = 1) // interface buttons
+        public Unit SpawnUnit(Unit.typeUnit id, int level = 1) // interface buttons // OK
         {
             Unit u = null;
             switch (id)
@@ -72,7 +72,7 @@ namespace Server.GameLogic
             map.SpawnUnit(u);
             return u;
         }
-        public void UpgradeTown() // interface buttons
+        public void UpgradeTown() // interface buttons // OK
         {
             currentPlayer.town.upgrade();
         }
@@ -80,7 +80,7 @@ namespace Server.GameLogic
         {
 
         }
-        public Mine CaptureMine(Mine mine) // click (Right)
+        public Mine CaptureMine(Mine mine) // click (Right) // OK
         {
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             Coord c = (currentPlayer.selectUnit.Position - mine.Position).ABS;
@@ -98,12 +98,12 @@ namespace Server.GameLogic
 
         // ... //
 
-        public Stack<int> PathFinding(Coord posA, Coord posB)
+        public Stack<int> PathFinding(Coord posA, Coord posB) // OK (can be optimal)
         {
             GameObj[,] Map = map.Map;
             const int inf = 1000000;
-            int lines = Map.GetUpperBound(1);
-            int columns = Map.GetUpperBound(0);
+            int lines = Map.GetUpperBound(1) + 1;
+            int columns = Map.GetUpperBound(0) + 1;
             int[,] matrix = new int[lines * columns, lines * columns];
 
             for (int i = 0; i < lines * columns; i++)
@@ -158,6 +158,8 @@ namespace Server.GameLogic
                     if (dist[j] > dist[pos] + matrix[pos, j])
                         dist[j] = dist[pos] + matrix[pos, j];
             }
+
+            if (dist[topE] == inf) throw new Exception("no way");
 
             Stack<int> visited = new Stack<int>(); // массив посещенных вершин
             int end = topE; // индекс конечной вершины // можно тоже упростить с помощью стека

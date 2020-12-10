@@ -85,10 +85,10 @@ namespace Server.GameLogic
                 Map = new GameObj[int.Parse(s[1]), int.Parse(s[0])];
                 Mines = new List<Mine>();
                 Towns = new List<Town>();
-                for (int y = 0; y <= Map.GetUpperBound(1); y++)
+                for (int y = 0; y < Map.GetUpperBound(1) + 1; y++) // 51
                 {
                     s = fs.ReadLine().Split(' ');
-                    for (int x = 0; x <= Map.GetUpperBound(0); x++)
+                    for (int x = 0; x < Map.GetUpperBound(0) + 1; x++) // 71
                     {
                         switch ((GameObj.typeObj)int.Parse(s[x]))
                         {
