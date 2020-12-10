@@ -24,6 +24,7 @@ namespace Server.Pockets
         {
             PocketConstructor pc = new PocketConstructor();
             pc.WriteInt32((int)ResponsePocketEnum.Market);
+            pc.WriteInt32(1);
             pc.WriteInt32(player.id);
             pc.WriteInt32(player.gold);
             pc.WriteInt32(player.wood);

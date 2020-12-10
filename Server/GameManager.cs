@@ -21,17 +21,19 @@ namespace Server
         private const string map = @"..\..\..\Resources\Map.txt"; // "~/Resources/Map.txt"; // path to the map file (for now one map)
         public enum Buttons
         {
-            Left,
-            Right,
-            SpawnUnit,
-            UpgradeTown,
-            Market,
-            NextTurn
+            Left = 1,
+            Right = 2,
+            SpawnUnit = 3,
+            UpgradeTown = 4,
+            Market = 5,
+            NextTurn = 6
         }
 
         public GameManager()
         {
             PocketHandler.onGameAction += Player_onGameAction;
+            games = new List<Game>();
+            playerClients = new Dictionary<int, PlayerClient>();
         }
 
         public void Init(ClientManager _clientManager)
@@ -63,19 +65,12 @@ namespace Server
             byte[] data = null;
             try
             {
-                switch ((Buttons)pocket.Button)
+                switch (pocket.Button)
                 {
-                    case Buttons.SpawnUnit:
-                        clientManager.Send(
-                            id, 
-                            new SpawnUnitPocket(
-                                game.SpawnUnit(
-                                    (Unit.typeUnit)pocket.Param
-                                )
-                            ).ToBytes()
-                        );
+                    case Buttons.SpawnUnit: // OK
+                        data = new SpawnUnitPocket(game.SpawnUnit((Unit.typeUnit)pocket.Param)).ToBytes();
                         break;
-                    case Buttons.UpgradeTown:
+                    case Buttons.UpgradeTown: // OK
                         game.UpgradeTown();
                         data = new UpgradeTownPocket(game.currentPlayer.town).ToBytes();
                         break;
@@ -91,34 +86,36 @@ namespace Server
                     case Buttons.Right:
                         switch (game.map.Map[pocket.Coord.X, pocket.Coord.Y].type)
                         {
-                            case GameObj.typeObj.empty when (Buttons)pocket.Button == Buttons.Left:
+                            case GameObj.typeObj.empty when pocket.Button == Buttons.Left: // OK
                                 data = new MoveUnitPocket(game.currentPlayer.selectUnit, game.MoveUnit(new Coord(pocket.Coord.X, pocket.Coord.Y))).ToBytes();
                                 break;
-                            case GameObj.typeObj.unit when (Buttons)pocket.Button == Buttons.Left:
+                            case GameObj.typeObj.unit when pocket.Button == Buttons.Left:  // OK
                                 game.SelectUnit((Unit)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
                                 data = new SelectUnitPocket(game.currentPlayer.selectUnit).ToBytes();
                                 break;
-                            case GameObj.typeObj.unit when (Buttons)pocket.Button == Buttons.Right:
-                            case GameObj.typeObj.town when (Buttons)pocket.Button == Buttons.Right:
+                            case GameObj.typeObj.unit when pocket.Button == Buttons.Right:
+                            case GameObj.typeObj.town when pocket.Button == Buttons.Right:
                                 GameObj[] gm = game.Attack(game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
                                 data = new AttackPocket(gm[0], gm[1]).ToBytes();
                                 break;
-                            case GameObj.typeObj.mine when (Buttons)pocket.Button == Buttons.Right:
+                            case GameObj.typeObj.mine when pocket.Button == Buttons.Right:  // OK
                                 data = new CaptureMinePocket(game.CaptureMine((Mine)game.map.Map[pocket.Coord.X, pocket.Coord.Y])).ToBytes();
                                 break;
+                            default:
+                                throw new Exception("block!");
                             // Market:...
                         }
                         break;
                     default:
                         throw new Exception("undefined");
                 }
+                clientManager.Send(id, data); // 1
+                //clientManager.Send(id, data); // 2
             }
             catch(Exception e)
             {
-                clientManager.Send(id, new ErrorPocket(1, e.Message).ToBytes()); // add type Exception
+                clientManager.Send(id, new ErrorPocket(228, e.Message).ToBytes()); // add type Exception
             }
-            clientManager.Send(id, data); // 1
-            clientManager.Send(id, data); // 2
         }
 
         public void checkClient(int id)

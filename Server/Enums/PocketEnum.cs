@@ -19,13 +19,13 @@ namespace Server
     public enum ResponsePocketEnum: int
     {
         SelectUnit = 10,
-        MoveUnit,
-        Attack,
-        SpawnUnit,
-        UpgradeTown,
-        Market,
-        CaptureMine,
-        nextTurn,
+        MoveUnit = 11,
+        Attack = 12,
+        SpawnUnit = 13,
+        UpgradeTown = 14,
+        Market = 15,
+        CaptureMine = 16,
+        nextTurn = 17,
 
     }
 }

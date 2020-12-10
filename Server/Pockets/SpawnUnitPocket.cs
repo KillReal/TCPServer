@@ -24,6 +24,7 @@ namespace Server.Pockets
         {
             PocketConstructor pc = new PocketConstructor();
             pc.WriteInt32((int)ResponsePocketEnum.SpawnUnit);
+            pc.WriteInt32(1); // count
             pc.WriteInt32(unit.owner.id);
             pc.WriteInt32(unit.Position.X);
             pc.WriteInt32(unit.Position.Y);

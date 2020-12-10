@@ -24,6 +24,7 @@ namespace Server.Pockets
         {
             PocketConstructor pc = new PocketConstructor();
             pc.WriteInt32((int)ResponsePocketEnum.CaptureMine);
+            pc.WriteInt32(1);
             pc.WriteInt32(mine.owner.id);
             pc.WriteInt32(mine.Position.X);
             pc.WriteInt32(mine.Position.Y);
