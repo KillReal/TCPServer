@@ -10,6 +10,7 @@ namespace Server
     public struct PlayerClient
     {
         public int idClient;
+        public int idAponent;
         public Game game;
         public Player playerInGame;
     }
@@ -49,18 +50,25 @@ namespace Server
             games.Add(game);
             playerClients.Add(idClients[0], new PlayerClient() {
                 idClient = idClients[0],
+                idAponent = idClients[1],
                 game = game,
                 playerInGame = game.players[0],
             });
             playerClients.Add(idClients[1], new PlayerClient() {
                 idClient = idClients[1],
+                idAponent = idClients[0],
                 game = game,
                 playerInGame = game.players[1],
             });
+            clientManager.Send(idClients[0], new InitGamePocket(playerClients[idClients[0]].playerInGame).ToBytes());
+            clientManager.Send(idClients[1], new InitGamePocket(playerClients[idClients[1]].playerInGame).ToBytes());
+            clientManager.Send(idClients[0], new NextTurnPocket(playerClients[idClients[0]].game.currentPlayer).ToBytes());
+            clientManager.Send(idClients[1], new NextTurnPocket(playerClients[idClients[1]].game.currentPlayer).ToBytes());
         }
 
         private void Player_onGameAction(GameActionPocket pocket, int id)
         {
+
             Game game = playerClients[id].game;
             try
             {
@@ -78,7 +86,7 @@ namespace Server
                         game.Market();
                         data = new MarketPocket(game.currentPlayer).ToBytes();
                         break;
-                    case Buttons.NextTurn:
+                    case Buttons.NextTurn: // OK
                         game.nextTurn();
                         data = new NextTurnPocket(game.currentPlayer).ToBytes();
                         break;
@@ -109,8 +117,8 @@ namespace Server
                     default:
                         throw new Exception("undefined");
                 }
-                clientManager.Send(id, data); // 1
-                //clientManager.Send(id, data); // 2
+                clientManager.Send(playerClients[id].idClient, data);  // 1
+                clientManager.Send(playerClients[id].idAponent, data); // 2
             }
             catch (Exception e)
             {

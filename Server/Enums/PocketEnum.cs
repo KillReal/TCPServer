@@ -14,6 +14,7 @@ namespace Server
         SplittedPocket = 6,
         GameAction = 7,
         ErrorPocket = 8,
+        InitGame = 9,
     }
 
     public enum ResponsePocketEnum: int

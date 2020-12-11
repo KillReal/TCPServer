@@ -28,10 +28,10 @@ namespace Server.GameLogic
             if (unit.owner != currentPlayer) throw new Exception("This is enemy");
             currentPlayer.selectUnit = unit;
         }
-        public Stack<int> MoveUnit(Coord A)  // click (Left) // OK
+        public Queue<int> MoveUnit(Coord A)  // click (Left) // OK
         {
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
-            Stack<int> path = PathFinding(currentPlayer.selectUnit.Position, A);
+            Queue<int> path = PathFinding(currentPlayer.selectUnit.Position, A);
             if (currentPlayer.selectUnit.actionPoints - path.Count < 0) throw new Exception("Not moving");
             var unit = currentPlayer.selectUnit;
             //currentPlayer.selectUnit.actionPoints -= path.Length;
@@ -98,7 +98,7 @@ namespace Server.GameLogic
 
         // ... //
 
-        public Stack<int> PathFinding(Coord posA, Coord posB) // OK (can be optimal)
+        public Queue<int> PathFinding(Coord posA, Coord posB) // OK (can be optimal)
         {
             GameObj[,] Map = map.Map;
             const int inf = 1000000;
@@ -179,7 +179,7 @@ namespace Server.GameLogic
                         }
                     }
 
-            Stack<int> ans = new Stack<int>();
+            Queue<int> ans = new Queue<int>();
             for (int i = visited.Pop(); visited.Count != 0; i = visited.Pop())
             {
                 int j = visited.Peek();
@@ -187,21 +187,21 @@ namespace Server.GameLogic
                 Coord p2 = new Coord(j % columns, j / columns);
                 Coord p = p2 - p1;
                 if (p == new Coord(-1, -1))     // left up
-                    ans.Push(1);
+                    ans.Enqueue(1);
                 else if (p == new Coord(0, -1)) // up
-                    ans.Push(2);
+                    ans.Enqueue(2);
                 else if (p == new Coord(1, -1)) // right up
-                    ans.Push(3);
+                    ans.Enqueue(3);
                 else if (p == new Coord(1, 0)) // right
-                    ans.Push(4);
+                    ans.Enqueue(4);
                 else if (p == new Coord(1, 1)) // right down
-                    ans.Push(5);
+                    ans.Enqueue(5);
                 else if (p == new Coord(0, 1)) // down
-                    ans.Push(6);
+                    ans.Enqueue(6);
                 else if (p == new Coord(-1, 1)) // left down
-                    ans.Push(7);
+                    ans.Enqueue(7);
                 else if (p == new Coord(-1, 0)) // left
-                    ans.Push(8);
+                    ans.Enqueue(8);
             }
 
             return ans;
