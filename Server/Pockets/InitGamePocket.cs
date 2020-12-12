@@ -23,11 +23,14 @@ namespace Server.Pockets
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
-            pc.WriteInt32((int)PocketEnum.InitGame);
-            pc.WriteInt32(1);
             pc.WriteInt32(player.id);
             // resources player?
             return pc.GetBytes();
+        }
+
+        public override int GetType()
+        {
+            return (int)PocketEnum.Init;
         }
     }
 }

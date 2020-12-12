@@ -11,6 +11,11 @@ namespace Server
         MessageAccepted = 3,
         ChatMessage = 4,
         Ping = 5,
-        SplittedPocket = 6
+        SplittedPocketStart = 6,
+        SplittedPocket = 7,
+        SplittedPocketEnd = 8,
+        GameAction = 9,
+        Error = 10,
+        Init = 11
     }
 }

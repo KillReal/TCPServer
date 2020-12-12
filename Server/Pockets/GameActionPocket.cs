@@ -39,5 +39,10 @@ namespace Server.Pockets
             pc.WriteInt32(Param);
             return pc.GetBytes();
         }
+
+        public override int GetType()
+        {
+            return (int)PocketEnum.GameAction;
+        }
     }
 }

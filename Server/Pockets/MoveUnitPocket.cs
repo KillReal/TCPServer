@@ -20,8 +20,6 @@ namespace Server.Pockets
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
-            pc.WriteInt32((int)ResponsePocketEnum.MoveUnit);
-            pc.WriteInt32(1);
             pc.WriteInt32(unit.owner.id);
             pc.WriteInt32(unit.Position.X);
             pc.WriteInt32(unit.Position.Y);
@@ -30,6 +28,11 @@ namespace Server.Pockets
                 pc.WriteInt32(item);
             
             return pc.GetBytes();
+        }
+
+        public override int GetType()
+        {
+            return (int)ResponsePocketEnum.MoveUnit;
         }
     }
 }
