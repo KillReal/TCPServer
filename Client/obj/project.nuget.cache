@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "dlfuxh8WBgm3TqIsQh7cdXFvPa1sprAml1zj1pfc+jotb8A0B/e19vKDBR66NbdCFqzHL0RDPfxoffXBdxYldg==",
+  "dgSpecHash": "a51hFKnHD4N80Os6Q9Odl2BfnAerKg0Mx/Q6DkjsQJP/bBBIUnl+G1wJ8x46l55/SoedeeQTEuwPNZ49PlBdBg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Client\\Client.csproj",
+  "projectFilePath": "C:\\Users\\28nik\\Source\\Repos\\TCPServer\\Client\\Client.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

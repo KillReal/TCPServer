@@ -6,30 +6,27 @@ using Server.PocketFramework;
 
 namespace Server.Pockets
 {
-
-    class UpgradeTownPocket : BasePocket
+    class InitGamePocket : BasePocket
     {
-        public Town town;
+        public Player player;
 
         public static int GetLenght()
         {
-            return sizeof(int) * 3;
+            return sizeof(int);
         }
 
-        public UpgradeTownPocket(Town town)
+        public InitGamePocket(Player p)
         {
-            this.town = town;
+            player = p;
         }
 
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
-            pc.WriteInt32((int)ResponsePocketEnum.UpgradeTown);
+            pc.WriteInt32((int)PocketEnum.InitGame);
             pc.WriteInt32(1);
-            pc.WriteInt32(town.owner.id);
-            // coord ?
-            pc.WriteInt32(town.level);
-            pc.WriteInt32(town.health);
+            pc.WriteInt32(player.id);
+            // resources player?
             return pc.GetBytes();
         }
     }

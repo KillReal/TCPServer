@@ -48,7 +48,7 @@ namespace Server.GameLogic
             this.defense = 1;
             this.damage = 1;
             this.health = 1;
-            this.MAXactionPoints = 1;
+            this.MAXactionPoints = 10;
             this.actionPoints = this.MAXactionPoints;
         }
         override public void atack(GameObj unit)

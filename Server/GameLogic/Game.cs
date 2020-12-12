@@ -9,40 +9,38 @@ namespace Server.GameLogic
         public _Map map;
         public Player[] players;
         public Player currentPlayer;
-        public enum Buttons
-        {
-            Left,
-            Right,
-            SpawnUnit,
-            UpgradeTown,
-            Market,
-            NextTurn
-        }
-
 
         public Game(_Map map, Player[] p) // expecting 2 players
         {
             this.map = map;
             players = p;
             players[0].town = map.Towns[0];
+            players[0].town.owner = players[0];
             players[0].id = 0;
             players[1].town = map.Towns[1];
+            players[1].town.owner = players[1];
             players[1].id = 1;
             currentPlayer = players[0];
         }
 
-        public void SelectUnit(Unit unit) // click (Left)
+        public void SelectUnit(Unit unit) // click (Left) // OK
         {
             if (unit.owner != currentPlayer) throw new Exception("This is enemy");
             currentPlayer.selectUnit = unit;
         }
-        public int[] MoveUnit(Coord A)  // click (Left)
+        public Queue<int> MoveUnit(Coord A)  // click (Left) // OK
         {
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
-            // SANIN ALG // 
-            int costMoving = 0;
-            if (currentPlayer.selectUnit.actionPoints - costMoving < 0) throw new Exception("Not moving");
-            return null;
+            Queue<int> path = PathFinding(currentPlayer.selectUnit.Position, A);
+            if (currentPlayer.selectUnit.actionPoints - path.Count < 0) throw new Exception("Not moving");
+            var unit = currentPlayer.selectUnit;
+            //currentPlayer.selectUnit.actionPoints -= path.Length;
+            map.Map[unit.Position.X, unit.Position.Y] = new GameObj();
+            map.Map[unit.Position.X, unit.Position.Y].type = GameObj.typeObj.empty;
+            map.Map[unit.Position.X, unit.Position.Y].Position = unit.Position;
+            map.Map[A.X, A.Y] = unit;
+            unit.Position = A;
+            return path;
         }
         public GameObj[] Attack(GameObj obj) // click (Right)
         {
@@ -52,7 +50,7 @@ namespace Server.GameLogic
             return new GameObj[] { currentPlayer.selectUnit, obj };
         }
 
-        public Unit SpawnUnit(Unit.typeUnit id, int level = 1) // interface buttons
+        public Unit SpawnUnit(Unit.typeUnit id, int level = 1) // interface buttons // OK
         {
             Unit u = null;
             switch (id)
@@ -74,7 +72,7 @@ namespace Server.GameLogic
             map.SpawnUnit(u);
             return u;
         }
-        public void UpgradeTown() // interface buttons
+        public void UpgradeTown() // interface buttons // OK
         {
             currentPlayer.town.upgrade();
         }
@@ -82,8 +80,9 @@ namespace Server.GameLogic
         {
 
         }
-        public Mine CaptureMine(Mine mine) // click (Right)
+        public Mine CaptureMine(Mine mine) // click (Right) // OK
         {
+            if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             Coord c = (currentPlayer.selectUnit.Position - mine.Position).ABS;
             if (c.X > 1 || c.Y > 1) throw new Exception("out of range");
             mine.owner = currentPlayer;
@@ -95,6 +94,117 @@ namespace Server.GameLogic
             currentPlayer = currentPlayer == players[0]
                 ? players[1]
                 : players[0];
+        }
+
+        // ... //
+
+        public Queue<int> PathFinding(Coord posA, Coord posB) // OK (can be optimal)
+        {
+            GameObj[,] Map = map.Map;
+            const int inf = 1000000;
+            int lines = Map.GetUpperBound(1) + 1;
+            int columns = Map.GetUpperBound(0) + 1;
+            int[,] matrix = new int[lines * columns, lines * columns];
+
+            for (int i = 0; i < lines * columns; i++)
+                for (int j = 0; j < lines * columns; j++)
+                    matrix[i, j] = inf;
+
+            for (int y = 0; y < lines; y++)
+                for (int x = 0; x < columns; x++)
+                {
+                    int top = y * columns + x; // ME!
+                    if (x != 0 && y != 0)
+                        matrix[top, top - columns - 1] = Map[x - 1, y - 1].type == 0 ? 2 : inf; // лево вверх
+                    if (y != 0)
+                        matrix[top, top - columns]     = Map[x, y - 1].type == 0 ? 1 : inf; // вверх
+                    if (x != columns - 1 && y != 0)
+                        matrix[top, top - columns + 1] = Map[x + 1, y - 1].type == 0 ? 2 : inf; // вправо вверх
+                    if (x != columns - 1)
+                        matrix[top, top + 1]           = Map[x + 1, y].type == 0 ? 1 : inf; // вправо
+                    if (x != columns - 1 && y != lines - 1)
+                        matrix[top, top + columns + 1] = Map[x + 1, y + 1].type == 0 ? 2 : inf; // вправо вниз
+                    if (y != lines - 1)
+                        matrix[top, top + columns]     = Map[x, y + 1].type == 0 ? 1 : inf; // вниз
+                    if (x != 0 && y != lines - 1)
+                        matrix[top, top + columns - 1] = Map[x - 1, y + 1].type == 0 ? 2 : inf; // влево вниз
+                    if (x != 0)
+                        matrix[top, top - 1]           = Map[x - 1, y].type == 0 ? 1 : inf; // влево
+                }
+
+            int topS = posA.Y * columns + posA.X;
+            int topE = posB.Y * columns + posB.X;
+
+            bool[] flag = new bool[lines * columns];
+            int[] dist = new int[lines * columns];
+            Array.Fill<int>(dist, inf);
+
+            // Дейкстра
+            dist[topS] = 0;
+            int pos = 0;
+            for (int i = 0; i < lines * columns - 1; i++)
+            {
+                int num = inf;
+                for (int j = 0; j < lines * columns; j++)
+                    if (dist[j] < num && !flag[j])
+                    {
+                        num = dist[j];
+                        pos = j;
+                    }
+
+                flag[pos] = true;
+
+                for (int j = 0; j < lines * columns; j++)
+                    if (dist[j] > dist[pos] + matrix[pos, j])
+                        dist[j] = dist[pos] + matrix[pos, j];
+            }
+
+            if (dist[topE] == inf) throw new Exception("no way");
+
+            Stack<int> visited = new Stack<int>(); // массив посещенных вершин
+            int end = topE; // индекс конечной вершины // можно тоже упростить с помощью стека
+            visited.Push(end); // начальный элемент - конечная вершина
+            int weight = dist[end]; // вес конечной вершины
+
+            while (end != topS) // пока не дошли до начальной вершины
+                for (int i = 0; i < lines * columns; i++) // просматриваем все вершины
+                    if (matrix[i, end] != inf)   // если связь есть
+                    {
+                        int temp = weight - matrix[i, end]; // определяем вес пути из предыдущей вершины
+                        if (temp == dist[i]) // если вес совпал с рассчитанным
+                        {                 // значит из этой вершины и был переход
+                            weight = temp; // сохраняем новый вес
+                            end = i;       // сохраняем предыдущую вершину
+                            visited.Push(i); // и записываем ее в массив
+                        }
+                    }
+
+            Queue<int> ans = new Queue<int>();
+            for (int i = visited.Pop(); visited.Count != 0; i = visited.Pop())
+            {
+                int j = visited.Peek();
+                Coord p1 = new Coord(i % columns, i / columns);
+                Coord p2 = new Coord(j % columns, j / columns);
+                Coord p = p2 - p1;
+                if (p == new Coord(-1, -1))     // left up
+                    ans.Enqueue(1);
+                else if (p == new Coord(0, -1)) // up
+                    ans.Enqueue(2);
+                else if (p == new Coord(1, -1)) // right up
+                    ans.Enqueue(3);
+                else if (p == new Coord(1, 0)) // right
+                    ans.Enqueue(4);
+                else if (p == new Coord(1, 1)) // right down
+                    ans.Enqueue(5);
+                else if (p == new Coord(0, 1)) // down
+                    ans.Enqueue(6);
+                else if (p == new Coord(-1, 1)) // left down
+                    ans.Enqueue(7);
+                else if (p == new Coord(-1, 0)) // left
+                    ans.Enqueue(8);
+            }
+
+            return ans;
         }
     }
 }
