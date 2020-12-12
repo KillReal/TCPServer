@@ -21,8 +21,6 @@ namespace Server.GameLogic
         public int attack;
         public int defense;
         public int damage;
-
-
     }
 
     // Units //
@@ -54,7 +52,7 @@ namespace Server.GameLogic
         override public void atack(GameObj unit)
         {
             Coord range = (this.Position - unit.Position).ABS;
-            if (range.X > 1 || range.Y > 1) throw new Exception("long range");
+            if (range > 1) throw new Exception("long range");
 
             //unit.health -= (this.damage * this.attack) / unit.defense;
             unit.health -= this.damage; // simple
@@ -95,7 +93,7 @@ namespace Server.GameLogic
         override public void atack(GameObj unit)
         {
             Coord range = (this.Position - unit.Position).ABS;
-            if (range.X > 1 || range.Y > 1) throw new Exception("long range");
+            if (range > 1) throw new Exception("long range");
 
             //unit.health -= (this.damage * this.attack) / unit.defense;
             unit.health -= this.damage; // simple
@@ -138,9 +136,9 @@ namespace Server.GameLogic
         override public void atack(GameObj unit)
         {
             Coord range = (this.Position - unit.Position).ABS;
-            if (range.X > 1 || range.Y > 1)
+            if (range > 1)
             {
-                if (range.X > rangeAttack || range.Y > rangeAttack)
+                if (range > rangeAttack)
                     throw new Exception("Long range");
                 else
                     unit.health -= this.damage; // simple
@@ -167,9 +165,9 @@ namespace Server.GameLogic
         override public void atack(GameObj unit)
         {
             Coord range = (this.Position - unit.Position).ABS;
-            if (range.X > 1 || range.Y > 1)
+            if (range > 1)
             {
-                if (range.X > rangeAttack || range.Y > rangeAttack)
+                if (range > rangeAttack)
                     throw new Exception("Long range");
                 else
                     unit.health -= this.damage; // simple

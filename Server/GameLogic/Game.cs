@@ -10,7 +10,7 @@ namespace Server.GameLogic
         public Player[] players;
         public Player currentPlayer;
 
-        public Game(_Map map, Player[] p) // expecting 2 players
+        public Game(_Map map, Player[] p) // expecting 2 players // OK
         {
             this.map = map;
             players = p;
@@ -42,11 +42,18 @@ namespace Server.GameLogic
             unit.Position = A;
             return path;
         }
-        public GameObj[] Attack(GameObj obj) // click (Right)
+        public GameObj[] Attack(GameObj obj) // click (Right) // OK
         {
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
+            if (obj.owner == currentPlayer) throw new Exception("your object");
             currentPlayer.selectUnit.atack(obj);
-            // CHECK DIE! and maybe delete object in map//
+            if (obj.health <= 0)
+            {
+                Coord p = obj.Position;
+                obj = new GameObj();
+                obj.type = GameObj.typeObj.empty;
+                obj.Position = p;
+            }
             return new GameObj[] { currentPlayer.selectUnit, obj };
         }
 
@@ -89,7 +96,7 @@ namespace Server.GameLogic
             return mine;
         }
 
-        public void nextTurn()
+        public void nextTurn() // OK
         {
             currentPlayer = currentPlayer == players[0]
                 ? players[1]

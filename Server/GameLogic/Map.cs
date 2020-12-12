@@ -15,18 +15,20 @@ namespace Server.GameLogic
             Y = y;
         }
         public Coord ABS => new Coord(Math.Abs(this.X), Math.Abs(this.Y));
-        public static Coord operator -(Coord c1, Coord c2)
-        {
-            return new Coord { X = c1.X - c2.X, Y = c1.Y - c2.Y };
-        }
-        public static bool operator ==(Coord c1, Coord c2)
-        {
-            return c1.X == c2.X && c1.Y == c2.Y;
-        }
-        public static bool operator !=(Coord c1, Coord c2)
-        {
-            return c1.X != c2.X && c1.Y != c2.Y;
-        }
+        public static Coord operator -(Coord c1, Coord c2) => new Coord(c1.X - c2.X, c1.Y - c2.Y);
+        public static Coord operator +(Coord c1, Coord c2) => new Coord(c1.X + c2.X, c1.Y + c2.Y);
+        public static bool operator ==(Coord c1, Coord c2) => c1.X == c2.X && c1.Y == c2.Y;
+        public static bool operator ==(Coord me, int c) => me.X == c && me.Y == c;
+        public static bool operator !=(Coord c1, Coord c2) => c1.X != c2.X && c1.Y != c2.Y;
+        public static bool operator !=(Coord me, int c) => me.X != c && me.Y != c;
+        public static bool operator >(Coord c1, Coord c2)  => c1.X >  c2.X && c1.Y >  c2.Y;
+        public static bool operator >(Coord me, int c) => me.X > c && me.Y > c;
+        public static bool operator <(Coord c1, Coord c2)  => c1.X <  c2.X && c1.Y <  c2.Y;
+        public static bool operator <(Coord me, int c) => me.X < c && me.Y < c;
+        public static bool operator >=(Coord c1, Coord c2) => c1.X >= c2.X && c1.Y >= c2.Y;
+        public static bool operator >=(Coord me, int c) => me.X >= c && me.Y >= c;
+        public static bool operator <=(Coord c1, Coord c2) => c1.X <= c2.X && c1.Y <= c2.Y;
+        public static bool operator <=(Coord me, int c) => me.X <= c && me.Y <= c;
     }
 
     public class Mine : GameObj
@@ -77,7 +79,7 @@ namespace Server.GameLogic
         public Coord[,] SpawnPos;
         public List<Town> Towns;
         public List<Mine> Mines;
-        public _Map(string fileMap)
+        public _Map(string fileMap) // OK
         {
             using (StreamReader fs = new StreamReader(fileMap))
             {
@@ -85,10 +87,10 @@ namespace Server.GameLogic
                 Map = new GameObj[int.Parse(s[1]), int.Parse(s[0])];
                 Mines = new List<Mine>();
                 Towns = new List<Town>();
-                for (int y = 0; y < Map.GetUpperBound(1) + 1; y++) // 51
+                for (int y = 0; y < Map.GetUpperBound(1) + 1; y++) 
                 {
                     s = fs.ReadLine().Split(' ');
-                    for (int x = 0; x < Map.GetUpperBound(0) + 1; x++) // 71
+                    for (int x = 0; x < Map.GetUpperBound(0) + 1; x++) 
                     {
                         switch ((GameObj.typeObj)int.Parse(s[x]))
                         {
@@ -122,7 +124,7 @@ namespace Server.GameLogic
             }
         }
 
-        public void SpawnUnit(Unit u)
+        public void SpawnUnit(Unit u) // OK
         {
             for (int i = 0; i < 3; i++)
             {

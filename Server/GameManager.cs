@@ -42,7 +42,7 @@ namespace Server
             clientManager = _clientManager;
         }
 
-        public void StartGame(List<int> idClients) // expecting 2 players
+        public void StartGame(List<int> idClients) // expecting 2 players // OK
         {
             if (idClients.Count != 2) throw new Exception("invalid number of clients");
 
@@ -101,17 +101,22 @@ namespace Server
                                 game.SelectUnit((Unit)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
                                 data = new SelectUnitPocket(game.currentPlayer.selectUnit).ToBytes();
                                 break;
-                            case GameObj.typeObj.unit when pocket.Button == Buttons.Right:
-                            case GameObj.typeObj.town when pocket.Button == Buttons.Right:
+                            case GameObj.typeObj.unit when pocket.Button == Buttons.Right: // OK
                                 GameObj[] gm = game.Attack(game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
                                 data = new AttackPocket(gm[0], gm[1]).ToBytes();
                                 break;
+                            //case GameObj.typeObj.town when pocket.Button == Buttons.Right:
+                            //    GameObj[] g = game.Attack(game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
+                            //    if (g[1].health == 0)
+                            //    {
+                            //        data = new EndGamePocket().ToBytes();
+                            //    }
+                            //    break;
                             case GameObj.typeObj.mine when pocket.Button == Buttons.Right:  // OK
                                 data = new CaptureMinePocket(game.CaptureMine((Mine)game.map.Map[pocket.Coord.X, pocket.Coord.Y])).ToBytes();
                                 break;
                             default:
-                                throw new Exception("block!");
-                                // Market:...
+                                throw new Exception("block!"); // OK
                         }
                         break;
                     default:
