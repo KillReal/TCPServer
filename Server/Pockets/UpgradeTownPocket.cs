@@ -24,13 +24,16 @@ namespace Server.Pockets
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
-            pc.WriteInt32((int)ResponsePocketEnum.UpgradeTown);
-            pc.WriteInt32(1);
             pc.WriteInt32(town.owner.id);
             // coord ?
             pc.WriteInt32(town.level);
             pc.WriteInt32(town.health);
             return pc.GetBytes();
+        }
+
+        public override int GetType()
+        {
+            return (int)ResponsePocketEnum.UpgradeTown;
         }
     }
 }

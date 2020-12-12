@@ -11,22 +11,28 @@ namespace Server
         MessageAccepted = 3,
         ChatMessage = 4,
         Ping = 5,
-        SplittedPocket = 6,
-        GameAction = 7,
-        ErrorPocket = 8,
-        InitGame = 9,
+        SplittedPocketStart = 6,
+        SplittedPocket = 7,
+        SplittedPocketEnd = 8,
+        GameAction = 9,
+        Error = 10,
+        Init = 11
     }
 
     public enum ResponsePocketEnum: int
     {
-        SelectUnit = 10,
-        MoveUnit = 11,
-        Attack = 12,
-        SpawnUnit = 13,
-        UpgradeTown = 14,
-        Market = 15,
-        CaptureMine = 16,
-        nextTurn = 17,
-
+        // Changed  !
+        //
+        //
+        //
+        //
+        SelectUnit = 20,
+        MoveUnit = 21,
+        Attack = 22,
+        SpawnUnit = 23,
+        UpgradeTown = 24,
+        Market = 25,
+        CaptureMine = 26,
+        nextTurn = 27,
     }
 }

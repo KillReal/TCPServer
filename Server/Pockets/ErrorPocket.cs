@@ -19,8 +19,6 @@ namespace Server.Pockets
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
-            pc.WriteInt32((int)PocketEnum.ErrorPocket);
-            pc.WriteInt32(1);
             pc.WriteInt32(idError);
             pc.WriteString(ErrorMessage);
             return pc.GetBytes();

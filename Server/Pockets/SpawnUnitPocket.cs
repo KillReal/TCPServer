@@ -23,14 +23,17 @@ namespace Server.Pockets
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
-            pc.WriteInt32((int)ResponsePocketEnum.SpawnUnit);
-            pc.WriteInt32(1); // count
             pc.WriteInt32(unit.owner.id);
             pc.WriteInt32(unit.Position.X);
             pc.WriteInt32(unit.Position.Y);
             pc.WriteInt32((int)unit.type);
             // other characteristics ?
             return pc.GetBytes();
+        }
+
+        public override int GetType()
+        {
+            return (int)ResponsePocketEnum.SpawnUnit;
         }
     }
 }

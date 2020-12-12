@@ -192,7 +192,7 @@ namespace Server
                 data_part = Utils.ConcatBytes(header.ToBytes(), data_part);
                 while (!GetClientCallback(id))
                     Thread.Sleep(10);
-                Send(id, data_part, true);
+                SendRawBytes(id, data_part, true);
                 split_count--;
                 Thread.Sleep(5);
             } while (GetSocket(id) != null && split_count > 0);
@@ -245,7 +245,7 @@ namespace Server
                 (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
         }
 
-        public void Send(int id, byte[] data, bool wait_accept = false)
+        public void SendRawBytes(int id, byte[] data, bool wait_accept = false)
         {
             if (!ID_list.Contains(id))
                 return;
