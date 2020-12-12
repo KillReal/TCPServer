@@ -41,7 +41,6 @@ namespace Server
                 try
                 {
                     Socket handler = _listener.Accept();
-                    handler.ReceiveTimeout = 100;
                     var clientThread = new Thread(HandleClientPocket);
                     clientThread.Start(handler);
                 }

@@ -14,7 +14,7 @@ namespace Server
         public int ReconnectionTimeOut = 10; //sec
         public int SendWaitingFreq = 100;    //ms
         public int PingTimerFreq = 3000;     //ms
-        public bool ExceptionPrint = false;
+        public bool ExceptionPrint = true;
         public bool EncryptionEnabled = false;
         public string EncryptionKey = "A24-C356A24-C356";
         public string EncryptionSalt = "66-BC-GC66-BC-GC";

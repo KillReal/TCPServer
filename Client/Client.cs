@@ -39,7 +39,7 @@ namespace Client
                 Header header = new Header(332, (int)DateTime.Now.Ticks, pocket_enum, data_part.Length);
                 data_part = Utils.ConcatBytes(header.ToBytes(), data_part);
                 SendToServer(server, data_part);
-                Thread.Sleep(100);
+                //Thread.Sleep(10);
                 split_count--;
             } while (split_count > 0);
         }
