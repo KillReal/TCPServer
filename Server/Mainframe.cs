@@ -54,11 +54,8 @@ namespace Server
 
                     case "ping":
                         {
-                            Header header = new Header(PocketEnum.ChatMessage, 1);
-                            ChatMessagePocket str = new ChatMessagePocket("Server", "Test");
-                            byte[] data = Utils.ConcatBytes(header, str);
-                            Console.WriteLine($"[SERVER] ---> [All Clients]: [Message]: {str.Message}");
-                            clientManager.SendToAll(data);
+                            Console.WriteLine($"[SERVER] ---> [All Clients]: [Message]: ping");
+                            clientManager.SendToAll(new ChatMessagePocket("Server", "Test"));
                             break;
                         }
 
@@ -81,8 +78,7 @@ namespace Server
                             if (id > -1 && id < clientManager.GetMaxID())
                             {
                                 Console.WriteLine($"[SERVER]: Client '{clientManager.GetClientName(id)}' kicked");
-                                byte[] data = DisconnectionPocket.ConstructSingle("Server", "Kicked");
-                                clientManager.Send(id, data);
+                                clientManager.Send(id, new DisconnectionPocket("Server", "Kicked"));
                                 clientManager.DeleteClient(id);
                             }
                             break;
@@ -114,8 +110,7 @@ namespace Server
                 clientManager.AddClient(client, pocket.Name);
                 Console.WriteLine($"[SERVER]: '{pocket.Name}' connected"); // pocket.Message
             }
-            byte[] data = ConnectionPocket.ConstructSingle("Server", "Successfull");
-            clientManager.Send(id, data, false);
+            clientManager.Send(id, new ConnectionPocket("Server", "Successfull"), false);
 
             if (clientManager.GetAvailibleID() == settings.MaxClients)
                 gameManager.StartGame(clientManager.ID_list);
@@ -125,10 +120,7 @@ namespace Server
         {
             Console.WriteLine($"[SERVER]: '{pocket.Name}' disconnected ({pocket.Message})");
             if (clientManager.GetSocket(id) != null)
-            {
-                byte[] data = DisconnectionPocket.ConstructSingle("Server", "Successfull");
-                clientManager.Send(id, data);
-            }
+                clientManager.Send(id, new DisconnectionPocket("Server", "Successfull"));
             //do
             Thread.Sleep(50);
             //while (!_clientManager.GetClientCallback(id));
@@ -147,8 +139,7 @@ namespace Server
 
             /// Resend example (like chat message)
 
-            byte[] data = ChatMessagePocket.ConstructSingle(pocket.Name, pocket.Message);
-            clientManager.SendToAllExcept(data, id);
+            clientManager.SendToAllExcept(new ChatMessagePocket(pocket.Name, pocket.Message), id);
         }
     }
 }

@@ -14,16 +14,16 @@ namespace Server
 {
     public class ClientManager
     {
-        private static Settings _settings;
+        private static Settings settings;
         public static Action<int> onClientLostConnection;
 
         public List<int> ID_list;
 
-        public void Init(Settings settings)
+        public void Init(Settings _settings)
         {
             PocketHandler.onPingRecieved += PocketListener_OnPing;
             ID_list = new List<int>();
-            _settings = settings;
+            settings = _settings;
         }
         public struct MyClient
         {
@@ -82,8 +82,8 @@ namespace Server
 
         private void WaitForClientDelete(int id)
         {
-            Console.WriteLine("[SERVER]: '{0}' doesn't responding, wait {1} sec reconnect timeout....", GetClientName(id), _settings.ReconnectionTimeOut);
-            for (int i = 0; i < _settings.ReconnectionTimeOut; i++)
+            Console.WriteLine("[SERVER]: '{0}' doesn't responding, wait {1} sec reconnect timeout....", GetClientName(id), settings.ReconnectionTimeOut);
+            for (int i = 0; i < settings.ReconnectionTimeOut; i++)
             {
                 MyClient client = GetClient(id);
                 if (client.callback)
@@ -135,7 +135,7 @@ namespace Server
             {
                 client.callback = false;
                 if (client.timer == null)
-                    client.timer = new Timer(new TimerCallback(WaitForClientAccept), id, _settings.ConnectionTimeOut * 1000, -1);
+                    client.timer = new Timer(new TimerCallback(WaitForClientAccept), id, settings.ConnectionTimeOut * 1000, -1);
                 _clients[id] = client;
             }
             else           
@@ -170,30 +170,37 @@ namespace Server
             _clients[id] = client;
         }
 
-        public void SendSplittedPocket(int id, byte[] data)
+        public void SendSplittedPocket(int id, BasePocket pocket)
         {
-            data = Utils.ConcatBytes(new MainHeader(_settings.PocketHash, (int)DateTime.Now.Ticks).ToBytes(), data);
-            int split_count = (data.Length / _settings.MaxPocketSize + 1) + 1000;
+            byte[] data = Utils.ConcatBytes(new Header(settings.PocketHash, (int)DateTime.Now.Ticks, pocket.GetType(), pocket.ToBytes().Length), pocket);
+            int split_count = (data.Length / settings.MaxPocketSize + 1);
+            bool first = true;
             do
             {
-                byte[] pocket = data;
-                if (data.Length > _settings.MaxPocketSize)
-                    pocket = Utils.SplitBytes(ref data, _settings.MaxPocketSize);
-                pocket = Utils.ConcatBytes(new Header(PocketEnum.SplittedPocket, split_count).ToBytes(), pocket);
+                byte[] data_part = data;
+                if (data.Length > settings.MaxPocketSize)
+                    data_part = Utils.SplitBytes(ref data, settings.MaxPocketSize);
+                int pocket_enum = (int)PocketEnum.SplittedPocket;
+                if (first)
+                {
+                    pocket_enum = (int)PocketEnum.SplittedPocketStart;
+                    first = false;
+                }
+                if (split_count == 1)
+                    pocket_enum = (int)PocketEnum.SplittedPocketEnd;
+                Header header = new Header(settings.PocketHash, (int)DateTime.Now.Ticks, pocket_enum, data_part.Length);
+                data_part = Utils.ConcatBytes(header.ToBytes(), data_part);
                 while (!GetClientCallback(id))
                     Thread.Sleep(10);
-                Send(id, pocket, true);
-                if (split_count > 1000)
-                    split_count %= 1000;
+                Send(id, data_part, true);
                 split_count--;
                 Thread.Sleep(5);
             } while (GetSocket(id) != null && split_count > 0);
         }
 
-        public void SendAccepted(int id)
+        public void SendAccepted(int id, int pocket_id)
         {
-            var header = new Header(PocketEnum.MessageAccepted, 1);
-            Send(id, header.ToBytes());
+            Send(id, new AcceptPocket(pocket_id));
         }
 
         private void SendTask(int id, byte[] data, int data_id, bool wait_accept)
@@ -214,7 +221,7 @@ namespace Server
                     }
                     catch
                     {
-                        if (_settings.ExceptionPrint)
+                        if (settings.ExceptionPrint)
                             Console.WriteLine("[ERROR]: Pocket send to '{0}' failed (pid: {1})", client.name, data_id);
                     }
                     return;
@@ -223,12 +230,13 @@ namespace Server
             }
         }
 
-        public void Send(int id, byte[] data, bool wait_accept = false)
+        public void Send(int id, BasePocket pocket, bool wait_accept = false)
         {
             if (!ID_list.Contains(id))
                 return;
             int data_id = (int)DateTime.Now.Ticks;
-            byte[] header = new MainHeader(_settings.PocketHash, data_id).ToBytes();
+            byte[] data = pocket.ToBytes();
+            byte[] header = new Header(settings.PocketHash, data_id, pocket.GetType(), data.Length).ToBytes();
             data = Utils.ConcatBytes(header, data);
             data = Encryption.Encrypt(data);
            // if (data.Length > _settings.MaxPocketSize)  //For client testing
@@ -237,17 +245,29 @@ namespace Server
                 (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
         }
 
-        public void SendToAll(byte[] data, bool require_accept = true)
+        public void Send(int id, byte[] data, bool wait_accept = false)
         {
-            for (int i = 0; i < GetMaxID(); i++)
-                Send(i, data, require_accept);
+            if (!ID_list.Contains(id))
+                return;
+            int data_id = (int)DateTime.Now.Ticks;
+            data = Encryption.Encrypt(data);
+            // if (data.Length > _settings.MaxPocketSize)  //For client testing
+            //SendSplittedPocket(id, data);
+            //else
+            (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
         }
 
-        public void SendToAllExcept(byte[] data, int excepted_id, bool require_accept = true)
+        public void SendToAll(BasePocket pocket, bool require_accept = true)
+        {
+            for (int i = 0; i < GetMaxID(); i++)
+                Send(i, pocket, require_accept);
+        }
+
+        public void SendToAllExcept(BasePocket pocket, int excepted_id, bool require_accept = true)
         {
             for (int i = 0; i < GetMaxID(); i++)
                 if (i != excepted_id)
-                    Send(i, data, require_accept);
+                    Send(i, pocket, require_accept);
         }
 
         public void SetRecieve(int id, byte[] data)
@@ -277,10 +297,10 @@ namespace Server
         {
             do
             {
-                Thread.Sleep(_settings.PingTimerFreq);
+                Thread.Sleep(settings.PingTimerFreq);
                 MyClient client = GetClient(id);
                 if (client.callback)
-                    Send(id, PingPocket.ConstructSingle((int)DateTime.Now.Ticks, client.ping));
+                    Send(id, new PingPocket((int)DateTime.Now.Ticks, client.ping));
             } while (GetClient(id).socket != null);
         }
 

@@ -64,74 +64,61 @@ namespace Server
 
         private static void ParsePocket(byte[] data, Socket server)
         {
-            if (data.Length >= MainHeader.GetLenght())
+            if (data.Length >= Header.GetLenght())
             {
                 int skip_size = 0;
                 bool accept = false;
-                MainHeader mainHeader = MainHeader.FromBytes(data.ToArray());
-                if (mainHeader.Id == last_recieved_id)
+                Header header = Header.FromBytes(data.ToArray());
+                if (header.Id == last_recieved_id)
                     return;
-                last_recieved_id = mainHeader.Id;
-                skip_size += MainHeader.GetLenght();
-                while (data.Length > skip_size + Header.GetLenght())
+                last_recieved_id = header.Id;
+                skip_size += Header.GetLenght();
+                if (data.Length > skip_size + Header.GetLenght())
                 {
                     IEnumerable<byte> nextPocketBytes = data.Skip(skip_size);
-                    Header header = Header.FromBytes(nextPocketBytes.ToArray());
-                    skip_size += Header.GetLenght();
-                    for (int i = 0; i < header.Count; i++)
+                    var typeEnum = (PocketEnum)header.Type;
+                    if (typeEnum == PocketEnum.MessageAccepted)
+                        OnMessageAccepted?.Invoke();
+                    else if (typeEnum >= PocketEnum.SplittedPocketStart && typeEnum <= PocketEnum.SplittedPocketEnd)
                     {
-                        nextPocketBytes = data.Skip(skip_size);
-                        var typeEnum = (PocketEnum)header.Type;
-                        if (typeEnum == PocketEnum.MessageAccepted)
-                            OnMessageAccepted?.Invoke();
-                        else if (typeEnum == PocketEnum.SplittedPocket)
+                        if (header.Type == (int)PocketEnum.SplittedPocketStart)
+                            buffer = null;
+                        Utils.SplitBytes(ref data, Header.GetLenght());
+                        buffer = Utils.ConcatBytes(buffer, data);
+                        if (header.Type == (int)PocketEnum.SplittedPocketEnd)
                         {
-                            if (header.Count > 1000)
-                            {
-                                buffer = null;
-                                header.Count %= 1000;
-                            }
-                            Utils.SplitBytes(ref data, Header.GetLenght() + MainHeader.GetLenght());
-                            buffer = Utils.ConcatBytes(buffer, data);           
-                            if (header.Count == 1)
-                            {
-                                ParsePocket(buffer, server);
-                                buffer = null;
-                                return;
-                            }
-                            accept = true;
-                            break;
+                            ParsePocket(buffer, server);
+                            buffer = null;
+                            return;
                         }
-                        else
-                        {
-                            BasePocket basePocket = BytesToTypes[typeEnum].Invoke(nextPocketBytes.ToArray());
-                            skip_size += basePocket.ToBytes().Length;
-                            switch (typeEnum)
-                            {
-                                case PocketEnum.ChatMessage:
-                                    OnChatMessagePocket?.Invoke((ChatMessagePocket)basePocket);
-                                    break;
-                                case PocketEnum.Ping:
-                                    onPingPocket?.Invoke((PingPocket)basePocket);
-                                    return;
-                                case PocketEnum.Connection:
-                                    OnConnectionPocket?.Invoke((ConnectionPocket)basePocket);
-                                    break;
-                                case PocketEnum.Disconnection:
-                                    byte[] accept_data = Utils.ConcatBytes(new MainHeader(332, (int)DateTime.Now.Ticks), new Header(PocketEnum.MessageAccepted, 1));
-                                    accept_data = Encryption.Encrypt(accept_data);
-                                    server.Send(accept_data);
-                                    OnDisconnectionPocket?.Invoke((DisconnectionPocket)basePocket);
-                                    return;
-                            }
-                        }
-                        accept = true;
+                        return;
                     }
+                    else
+                    {
+                        BasePocket basePocket = BytesToTypes[typeEnum].Invoke(nextPocketBytes.ToArray());
+                        skip_size += basePocket.ToBytes().Length;
+                        switch (typeEnum)
+                        {
+                            case PocketEnum.ChatMessage:
+                                OnChatMessagePocket?.Invoke((ChatMessagePocket)basePocket);
+                                break;
+                            case PocketEnum.Ping:
+                                onPingPocket?.Invoke((PingPocket)basePocket);
+                                return;
+                            case PocketEnum.Connection:
+                                OnConnectionPocket?.Invoke((ConnectionPocket)basePocket);
+                                break;
+                            case PocketEnum.Disconnection:
+                                Client.Client.SendToServer(server, new AcceptPocket(header.Id));
+                                OnDisconnectionPocket?.Invoke((DisconnectionPocket)basePocket);
+                                return;
+                        }
+                    }
+                    accept = true;
                 }
                 if (accept)
                 {
-                    Header header = new Header(PocketEnum.MessageAccepted, 1);
-                    (new Task(() => Client.Client.SendToServer(server, header.ToBytes()))).Start();
+                    (new Task(() => Client.Client.SendToServer(server, new AcceptPocket(last_recieved_id)))).Start();
                 }
             }
         }

@@ -32,11 +32,9 @@ namespace Server
             return pc.GetBytes();
         }
 
-        public static byte[] ConstructSingle(int tick, int lastPing)
+        public override int GetType()
         {
-            Header header = new Header(PocketEnum.Ping, 1);
-            PingPocket ping = new PingPocket(tick, lastPing);
-            return Utils.ConcatBytes(header.ToBytes(), ping.ToBytes());
+            return (int)PocketEnum.Ping;
         }
     }
 }

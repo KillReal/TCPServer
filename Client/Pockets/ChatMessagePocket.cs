@@ -36,11 +36,9 @@ namespace Server.Pockets
             return new ChatMessagePocket(pc.ReadString(), pc.ReadString());
         }
 
-        public static byte[] ConstructSingle(string name, string msg)
+        public override int GetType()
         {
-            Header header = new Header(PocketEnum.ChatMessage, 1);
-            ChatMessagePocket chat_msg = new ChatMessagePocket(name, msg);
-            return Utils.ConcatBytes(header.ToBytes(), chat_msg.ToBytes());
+            return (int)PocketEnum.ChatMessage;
         }
     }
 }

@@ -29,5 +29,10 @@ namespace Server.Pockets
             pc.WriteInt32(mine.Position.Y);
             return pc.GetBytes();
         }
+
+        public override int GetType()
+        {
+            return (int)ResponsePocketEnum.CaptureMine;
+        }
     }
 }

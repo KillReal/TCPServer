@@ -30,11 +30,9 @@ namespace Server.Pockets
             return new ErrorPocket(pc.ReadInt32(), pc.ReadString());
         }
 
-        public static byte[] ConstructSingle(int idError, string ErrorMessage)
+        public override int GetType()
         {
-            Header header = new Header(PocketEnum.ErrorPocket, 1);
-            ErrorPocket err_msg = new ErrorPocket(idError, ErrorMessage);
-            return Utils.ConcatBytes(header, err_msg);
+            return (int)PocketEnum.Error;
         }
     }
 }

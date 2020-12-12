@@ -25,7 +25,6 @@ namespace Server.Pockets
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
-            pc.WriteInt32((int)ResponsePocketEnum.Attack);
             pc.WriteInt32(attacking.owner.id);
             pc.WriteInt32(attacking.Position.X);
             pc.WriteInt32(attacking.Position.Y);
@@ -33,6 +32,11 @@ namespace Server.Pockets
             pc.WriteInt32(defending.Position.X);
             pc.WriteInt32(defending.Position.Y);
             return pc.GetBytes();
+        }
+
+        public override int GetType()
+        {
+            return (int)ResponsePocketEnum.Attack;
         }
     }
 }

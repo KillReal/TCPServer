@@ -36,11 +36,9 @@ namespace Server.Pockets
             return new DisconnectionPocket(pc.ReadString(), pc.ReadString());
         }
 
-        public static byte[] ConstructSingle(string name, string msg)
+        public override int GetType()
         {
-            Header header = new Header(PocketEnum.Disconnection, 1);
-            DisconnectionPocket connect = new DisconnectionPocket(name, msg);
-            return Utils.ConcatBytes(header.ToBytes(), connect.ToBytes());
+            return (int)PocketEnum.Disconnection;
         }
     }
 }

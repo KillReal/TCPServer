@@ -36,11 +36,9 @@ namespace Server.Pockets
             return new ConnectionPocket(pc.ReadString(), pc.ReadString());
         }
 
-        public static byte[] ConstructSingle(string name, string msg)
+        public override int GetType()
         {
-            Header header = new Header(PocketEnum.Connection, 1);
-            ConnectionPocket connect = new ConnectionPocket(name, msg);
-            return Utils.ConcatBytes(header.ToBytes(), connect.ToBytes());
+            return (int)PocketEnum.Connection;
         }
     }
 }
