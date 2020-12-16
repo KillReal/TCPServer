@@ -19,7 +19,7 @@ namespace Server.GameLogic
         public Player(string name)
         {
             this.name = name;
-            this.gold = 0;
+            this.gold = 1000;
             this.wood = 0;
             this.rock = 0;
             this.crystall = 0;

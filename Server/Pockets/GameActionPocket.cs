@@ -8,7 +8,9 @@ namespace Server.Pockets
 {
     public class GameActionPocket : BasePocket
     {
-        public GameManager.Buttons Button { get; set; }
+        public GameManager.Buttons Button;
+        //public int countParams;
+        //public int[] parameters;
         public Coord Coord { get; set; }
         public int Param { get; set; }
 

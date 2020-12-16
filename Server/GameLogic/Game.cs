@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace Server.GameLogic
 {
     public class Game
     {
         public _Map map;
+        private Mutex mutexMap;
         public Player[] players;
         public Player currentPlayer;
 
         public Game(_Map map, Player[] p) // expecting 2 players // OK
         {
+            mutexMap = new Mutex();
             this.map = map;
             players = p;
 
@@ -36,21 +39,30 @@ namespace Server.GameLogic
         public Queue<int> MoveUnit(Coord A)  // click (Left) // OK
         {
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
+
+            mutexMap.WaitOne();
+
             Queue<int> path = PathFinding(currentPlayer.selectUnit.Position, A);
             if (currentPlayer.selectUnit.actionPoints - path.Count < 0) throw new Exception("Not moving");
             var unit = currentPlayer.selectUnit;
-            unit.actionPoints = 100;
+
+            unit.actionPoints = 100; // delete
             currentPlayer.selectUnit.actionPoints -= path.Count;
+
             map.Map[unit.Position.X, unit.Position.Y] = new GameObj(GameObj.typeObj.empty);
             map.Map[unit.Position.X, unit.Position.Y].Position = unit.Position;
             map.Map[A.X, A.Y] = unit;
             unit.Position = A;
+
+            mutexMap.ReleaseMutex();
             return path;
         }
         public GameObj[] Attack(GameObj obj) // click (Right) // OK
         {
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             if (obj.owner == currentPlayer) throw new Exception("your object");
+
+            mutexMap.WaitOne();
             currentPlayer.selectUnit.atack(obj);
             if (obj.health <= 0)
             {
@@ -60,6 +72,7 @@ namespace Server.GameLogic
                 obj.Position = p;
                 map.Map[p.X, p.Y] = obj;
             }
+            mutexMap.ReleaseMutex();
             return new GameObj[] { currentPlayer.selectUnit, obj };
         }
 
@@ -69,23 +82,25 @@ namespace Server.GameLogic
             switch (id)
             {
                 case Unit.typeUnit.Scout:
-                    u = new Scout();
+                    u = new Scout(currentPlayer);
                     break;
                 case Unit.typeUnit.Warior:
-                    u = new Warior(level);
+                    u = new Warior(currentPlayer, level);
                     break;
                 case Unit.typeUnit.Shooter:
-                    u = new Shooter(level);
+                    u = new Shooter(currentPlayer, level);
                     break;
                 case Unit.typeUnit.Top:
-                    u = new Top();
+                    u = new Top(currentPlayer);
                     break;
                 default:
-                    u = new Scout();
+                    u = new Scout(currentPlayer);
                     break;
             }
             u.owner = currentPlayer;
+            mutexMap.WaitOne();
             map.SpawnUnit(u);
+            mutexMap.ReleaseMutex();
             currentPlayer.NextTurn += u.NextTurn;
             return u;
         }

@@ -45,13 +45,20 @@ namespace Server.GameLogic
             actionPoints = MAXactionPoints;
         }
         abstract public void atack(GameObj unit);
-        public Unit() : base(typeObj.unit) { }
+        public Unit(Player owner) : base(typeObj.unit) 
+        {
+            this.owner = owner;
+        }
     }
 
     public class Scout : Unit
     {
-        public Scout() : base()
+        public Scout(Player owner) : base(owner)
         {
+            if (owner.gold - 100 < 0)
+                throw new Exception("Not money");
+            owner.gold -= 100;
+
             this.attack = 2;
             this.defense = 2;
             this.damage = 1;
@@ -77,12 +84,16 @@ namespace Server.GameLogic
     public class Warior : Unit
     {
         public int level;
-        public Warior(int level) : base()
+        public Warior(Player owner, int level = 1) : base(owner)
         {
             this.level = level;
             switch (level)
             {
                 case 1:
+                    if (owner.gold - 100 < 0)
+                        throw new Exception("Not money");
+                    owner.gold -= 100;
+
                     this.attack = 6;
                     this.defense = 5;
                     this.damage = 4;
@@ -90,6 +101,10 @@ namespace Server.GameLogic
                     this.actionPoints = 10;
                     break;
                 case 2:
+                    if (owner.gold - 100 < 0)
+                        throw new Exception("Not money");
+                    owner.gold -= 100;
+
                     this.attack = 8;
                     this.defense = 8;
                     this.damage = 10;
@@ -97,6 +112,8 @@ namespace Server.GameLogic
                     this.actionPoints = 12;
                     break;
                 default:
+                    owner.gold -= 100;
+
                     this.attack = 10;
                     this.defense = 12;
                     this.damage = 16;
@@ -125,12 +142,14 @@ namespace Server.GameLogic
         public int level;
         public int rangeAttack;
         public int shootingDamage;
-        public Shooter(int level) : base()
+        public Shooter(Player owner, int level = 1) : base(owner)
         {
             this.level = level;
             switch (level)
             {
                 case 1:
+                    owner.gold -= 100;
+
                     this.shootingDamage = 8;
                     this.rangeAttack = 3;
                     this.attack = 1;
@@ -140,6 +159,8 @@ namespace Server.GameLogic
                     this.actionPoints = 7;
                     break;
                 case 2:
+                    owner.gold -= 100;
+
                     this.shootingDamage = 15;
                     this.rangeAttack = 5;
                     this.attack = 8;
@@ -149,6 +170,8 @@ namespace Server.GameLogic
                     this.actionPoints = 9;
                     break;
                 default:
+                    owner.gold -= 100;
+
                     this.shootingDamage = 20;
                     this.rangeAttack = 7;
                     this.attack = 13;
@@ -190,8 +213,10 @@ namespace Server.GameLogic
     {
         public int rangeAttack;
         public int shootingDamage;
-        public Top()
+        public Top(Player owner) : base(owner)
         {
+            owner.gold -= 100;
+
             this.shootingDamage = 15;
             this.rangeAttack = 5;
             this.attack = 15;
