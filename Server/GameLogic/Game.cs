@@ -57,7 +57,7 @@ namespace Server.GameLogic
             mutexMap.ReleaseMutex();
             return path;
         }
-        public GameObj[] Attack(GameObj obj) // click (Right) // OK
+        public GameObj[] Attack(Unit obj) // click (Right) // OK
         {
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             if (obj.owner == currentPlayer) throw new Exception("your object");
@@ -67,12 +67,19 @@ namespace Server.GameLogic
             if (obj.health <= 0)
             {
                 Coord p = obj.Position;
-                obj = new GameObj();
+                obj = (Unit)new GameObj();
                 obj.type = GameObj.typeObj.empty;
                 obj.Position = p;
                 map.Map[p.X, p.Y] = obj;
             }
             mutexMap.ReleaseMutex();
+            return new GameObj[] { currentPlayer.selectUnit, obj };
+        }
+        public GameObj[] Attack(Town obj)
+        {
+            if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
+            if (obj.owner == currentPlayer) throw new Exception("your object");
+            currentPlayer.selectUnit.atack(obj);
             return new GameObj[] { currentPlayer.selectUnit, obj };
         }
 
