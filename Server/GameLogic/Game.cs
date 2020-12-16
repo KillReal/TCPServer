@@ -14,12 +14,17 @@ namespace Server.GameLogic
         {
             this.map = map;
             players = p;
-            players[0].town = map.Towns[0];
+
+            players[0].town = map.towns[0];
+            players[0].NextTurn += players[0].town.nextTurn;
             players[0].town.owner = players[0];
             players[0].id = 0;
-            players[1].town = map.Towns[1];
+
+            players[1].town = map.towns[1];
+            players[1].NextTurn += players[1].town.nextTurn;
             players[1].town.owner = players[1];
             players[1].id = 1;
+
             currentPlayer = players[0];
         }
 
@@ -34,9 +39,9 @@ namespace Server.GameLogic
             Queue<int> path = PathFinding(currentPlayer.selectUnit.Position, A);
             if (currentPlayer.selectUnit.actionPoints - path.Count < 0) throw new Exception("Not moving");
             var unit = currentPlayer.selectUnit;
-            //currentPlayer.selectUnit.actionPoints -= path.Length;
-            map.Map[unit.Position.X, unit.Position.Y] = new GameObj();
-            map.Map[unit.Position.X, unit.Position.Y].type = GameObj.typeObj.empty;
+            unit.actionPoints = 100;
+            currentPlayer.selectUnit.actionPoints -= path.Count;
+            map.Map[unit.Position.X, unit.Position.Y] = new GameObj(GameObj.typeObj.empty);
             map.Map[unit.Position.X, unit.Position.Y].Position = unit.Position;
             map.Map[A.X, A.Y] = unit;
             unit.Position = A;
@@ -53,13 +58,14 @@ namespace Server.GameLogic
                 obj = new GameObj();
                 obj.type = GameObj.typeObj.empty;
                 obj.Position = p;
+                map.Map[p.X, p.Y] = obj;
             }
             return new GameObj[] { currentPlayer.selectUnit, obj };
         }
 
         public Unit SpawnUnit(Unit.typeUnit id, int level = 1) // interface buttons // OK
         {
-            Unit u = null;
+            Unit u;
             switch (id)
             {
                 case Unit.typeUnit.Scout:
@@ -74,9 +80,13 @@ namespace Server.GameLogic
                 case Unit.typeUnit.Top:
                     u = new Top();
                     break;
+                default:
+                    u = new Scout();
+                    break;
             }
             u.owner = currentPlayer;
             map.SpawnUnit(u);
+            currentPlayer.NextTurn += u.NextTurn;
             return u;
         }
         public void UpgradeTown() // interface buttons // OK
@@ -91,8 +101,9 @@ namespace Server.GameLogic
         {
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             Coord c = (currentPlayer.selectUnit.Position - mine.Position).ABS;
-            if (c.X > 1 || c.Y > 1) throw new Exception("out of range");
+            if (c > 1) throw new Exception("out of range");
             mine.owner = currentPlayer;
+            currentPlayer.NextTurn += mine.mining;
             return mine;
         }
 
@@ -101,11 +112,12 @@ namespace Server.GameLogic
             currentPlayer = currentPlayer == players[0]
                 ? players[1]
                 : players[0];
+            currentPlayer.Turn();
         }
 
         // ... //
 
-        public Queue<int> PathFinding(Coord posA, Coord posB) // OK (can be optimal)
+        private Queue<int> PathFinding(Coord posA, Coord posB) // OK (can be optimal)
         {
             GameObj[,] Map = map.Map;
             const int inf = 1000000;

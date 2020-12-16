@@ -19,7 +19,7 @@ namespace Server
         public ClientManager clientManager;
         public List<Game> games;
         public Dictionary<int, PlayerClient> playerClients;
-        private const string map = @"..\..\..\Resources\Map.txt"; // "~/Resources/Map.txt"; // path to the map file (for now one map)
+        private const string map = @"..\..\..\Resources\Map.txt"; // path to the map file (for now one map)
         public enum Buttons
         {
             Left = 1,

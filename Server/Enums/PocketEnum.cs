@@ -21,11 +21,6 @@ namespace Server
 
     public enum ResponsePocketEnum: int
     {
-        // Changed  !
-        //
-        //
-        //
-        //
         SelectUnit = 20,
         MoveUnit = 21,
         Attack = 22,

@@ -6,14 +6,9 @@ using Server.PocketFramework;
 
 namespace Server.Pockets
 {
-    class CaptureMinePocket : BasePocket
+    class CaptureMinePocket : BasePocket // CHANGED!!!
     {
         public Mine mine;
-
-        public static int GetLenght()
-        {
-            return sizeof(int) * 3;
-        }
 
         public CaptureMinePocket(Mine mine)
         {
@@ -23,9 +18,12 @@ namespace Server.Pockets
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
+
             pc.WriteInt32(mine.owner.id);
             pc.WriteInt32(mine.Position.X);
             pc.WriteInt32(mine.Position.Y);
+            pc.WriteInt32((int)mine.TypeMine);
+
             return pc.GetBytes();
         }
 

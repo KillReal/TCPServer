@@ -6,7 +6,7 @@ using Server.PocketFramework;
 
 namespace Server.Pockets
 {
-    class NextTurnPocket : BasePocket
+    class NextTurnPocket : BasePocket // CHANGED!!!
     {
         public Player player;
 
@@ -23,7 +23,14 @@ namespace Server.Pockets
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
+
             pc.WriteInt32(player.id);
+            //pc.WriteInt32(player.selectUnit); 
+            pc.WriteInt32(player.gold);
+            pc.WriteInt32(player.wood);
+            pc.WriteInt32(player.rock);
+            pc.WriteInt32(player.crystall);
+
             return pc.GetBytes();
         }
 

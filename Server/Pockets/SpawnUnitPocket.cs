@@ -27,7 +27,7 @@ namespace Server.Pockets
             pc.WriteInt32(unit.Position.X);
             pc.WriteInt32(unit.Position.Y);
             pc.WriteInt32((int)unit.type);
-            // other characteristics ?
+            //pc.WriteInt32(unit.);
             return pc.GetBytes();
         }
 
