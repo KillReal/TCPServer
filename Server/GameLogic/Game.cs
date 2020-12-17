@@ -67,10 +67,10 @@ namespace Server.GameLogic
             if (obj.health <= 0)
             {
                 Coord p = obj.Position;
-                obj = (Unit)new GameObj();
-                obj.type = GameObj.typeObj.empty;
-                obj.Position = p;
-                map.Map[p.X, p.Y] = obj;
+                var o = new GameObj();
+                o.type = GameObj.typeObj.empty;
+                o.Position = p;
+                map.Map[p.X, p.Y] = o;
             }
             mutexMap.ReleaseMutex();
             return new GameObj[] { currentPlayer.selectUnit, obj };

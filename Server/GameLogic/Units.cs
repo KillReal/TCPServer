@@ -21,6 +21,8 @@ namespace Server.GameLogic
         public int attack;
         public int defense;
         public int damage;
+        public int rangeAttack;
+        public int shootingDamage;
         public GameObj() { }
         public GameObj(typeObj type)
         {
@@ -40,6 +42,7 @@ namespace Server.GameLogic
         }
         public int actionPoints;
         public int MAXactionPoints;
+        public typeUnit type_unit;
         public void NextTurn()
         {
             actionPoints = MAXactionPoints;
@@ -99,6 +102,8 @@ namespace Server.GameLogic
                     this.damage = 4;
                     this.health = 10;
                     this.actionPoints = 10;
+                    this.rangeAttack = 0;
+                    this.shootingDamage= 0;
                     break;
                 case 2:
                     if (owner.gold - 100 < 0)
@@ -110,6 +115,8 @@ namespace Server.GameLogic
                     this.damage = 10;
                     this.health = 25;
                     this.actionPoints = 12;
+                    this.rangeAttack = 0;
+                    this.shootingDamage = 0;
                     break;
                 default:
                     owner.gold -= 100;
@@ -119,6 +126,8 @@ namespace Server.GameLogic
                     this.damage = 16;
                     this.health = 40;
                     this.actionPoints = 13;
+                    this.rangeAttack = 0;
+                    this.shootingDamage = 0;
                     break;
             }
         }
@@ -140,8 +149,6 @@ namespace Server.GameLogic
     public class Shooter : Unit
     {
         public int level;
-        public int rangeAttack;
-        public int shootingDamage;
         public Shooter(Player owner, int level = 1) : base(owner)
         {
             this.level = level;
@@ -211,8 +218,6 @@ namespace Server.GameLogic
 
     public class Top : Unit
     {
-        public int rangeAttack;
-        public int shootingDamage;
         public Top(Player owner) : base(owner)
         {
             owner.gold -= 100;
