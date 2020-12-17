@@ -64,6 +64,10 @@ namespace Server.GameLogic
     public class Town : GameObj
     {
         public int level;
+        public Town()
+        {
+            level = 1;
+        }
         public void upgrade()
         {
             if (level == 3) throw new Exception("Max upgrade");
@@ -71,22 +75,24 @@ namespace Server.GameLogic
             if (level == 2) health += 2;
             else if (level == 3) health += 3;
         }
+        public void nextTurn()
+        {
+            this.owner.gold += 100 * level;
+        }
     }
 
     public class _Map // need FIX
     {
         public GameObj[,] Map;
-        public Coord[,] SpawnPos;
-        public List<Town> Towns;
-        public List<Mine> Mines;
+        public List<Town> towns;
+        private Coord[,] SpawnPos;
         public _Map(string fileMap) // OK
         {
             using (StreamReader fs = new StreamReader(fileMap))
             {
                 string[] s = fs.ReadLine().Split(' ');
                 Map = new GameObj[int.Parse(s[1]), int.Parse(s[0])];
-                Mines = new List<Mine>();
-                Towns = new List<Town>();
+                towns = new List<Town>();
                 for (int y = 0; y < Map.GetUpperBound(1) + 1; y++) 
                 {
                     s = fs.ReadLine().Split(' ');
@@ -100,11 +106,10 @@ namespace Server.GameLogic
                                 break;
                             case GameObj.typeObj.mine:
                                 Map[x, y] = new Mine();
-                                Mines.Add((Mine)Map[x, y]);
                                 break;
                             case GameObj.typeObj.town:
                                 Map[x, y] = new Town();
-                                Towns.Add((Town)Map[x, y]);
+                                towns.Add((Town)Map[x, y]);
                                 break;
                         }
                         Map[x, y].type = (GameObj.typeObj)int.Parse(s[x]);

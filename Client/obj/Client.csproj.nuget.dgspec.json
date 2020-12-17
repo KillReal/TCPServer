@@ -1,20 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\rtimo\\Desktop\\TCPServer\\Client\\Client.csproj": {}
+    "C:\\Users\\28nik\\source\\repos\\TCPServer\\Client\\Client.csproj": {}
   },
   "projects": {
-    "C:\\Users\\rtimo\\Desktop\\TCPServer\\Client\\Client.csproj": {
+    "C:\\Users\\28nik\\source\\repos\\TCPServer\\Client\\Client.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Client\\Client.csproj",
+        "projectUniqueName": "C:\\Users\\28nik\\source\\repos\\TCPServer\\Client\\Client.csproj",
         "projectName": "Client",
-        "projectPath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Client\\Client.csproj",
-        "packagesPath": "C:\\Users\\rtimo\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\rtimo\\Desktop\\TCPServer\\Client\\obj\\",
+        "projectPath": "C:\\Users\\28nik\\source\\repos\\TCPServer\\Client\\Client.csproj",
+        "packagesPath": "C:\\Users\\28nik\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\28nik\\source\\repos\\TCPServer\\Client\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
         "configFilePaths": [
-          "C:\\Users\\rtimo\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\28nik\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -26,7 +29,6 @@
         },
         "frameworks": {
           "netcoreapp3.1": {
-            "targetAlias": "netcoreapp3.1",
             "projectReferences": {}
           }
         },
@@ -38,7 +40,6 @@
       },
       "frameworks": {
         "netcoreapp3.1": {
-          "targetAlias": "netcoreapp3.1",
           "imports": [
             "net461",
             "net462",
@@ -54,7 +55,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.100\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.402\\RuntimeIdentifierGraph.json"
         }
       }
     }

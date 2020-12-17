@@ -16,16 +16,12 @@ namespace Server
         SplittedPocketEnd = 8,
         GameAction = 9,
         Error = 10,
-        Init = 11
+        Init = 11,
+        EndGame = 12,
     }
 
     public enum ResponsePocketEnum: int
     {
-        // Changed  !
-        //
-        //
-        //
-        //
         SelectUnit = 20,
         MoveUnit = 21,
         Attack = 22,
@@ -34,5 +30,6 @@ namespace Server
         Market = 25,
         CaptureMine = 26,
         nextTurn = 27,
+        Resources = 28,
     }
 }

@@ -19,7 +19,7 @@ namespace Server
         public ClientManager clientManager;
         public List<Game> games;
         public Dictionary<int, PlayerClient> playerClients;
-        private const string map = @"..\..\..\Resources\Map.txt"; // "~/Resources/Map.txt"; // path to the map file (for now one map)
+        private const string map = @"..\..\..\Resources\Map.txt"; // path to the map file (for now one map)
         public enum Buttons
         {
             Left = 1,
@@ -72,7 +72,7 @@ namespace Server
             Game game = playerClients[id].game;
             try
             {
-                BasePocket data;
+                BasePocket data = null;
                 switch (pocket.Button)
                 {
                     case Buttons.SpawnUnit: // OK
@@ -102,16 +102,14 @@ namespace Server
                                 data = new SelectUnitPocket(game.currentPlayer.selectUnit);
                                 break;
                             case GameObj.typeObj.unit when pocket.Button == Buttons.Right: // OK
-                                GameObj[] gm = game.Attack(game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
+                                GameObj[] gm = game.Attack((Unit)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
                                 data = new AttackPocket(gm[0], gm[1]);
                                 break;
-                            //case GameObj.typeObj.town when pocket.Button == Buttons.Right:
-                            //    GameObj[] g = game.Attack(game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
-                            //    if (g[1].health == 0)
-                            //    {
-                            //        data = new EndGamePocket().ToBytes();
-                            //    }
-                            //    break;
+                            case GameObj.typeObj.town when pocket.Button == Buttons.Right:
+                                GameObj[] g = game.Attack((Town)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
+                                if (g[1].health == 0)
+                                    data = new EndGamePocket(game.currentPlayer, 1);
+                                break;
                             case GameObj.typeObj.mine when pocket.Button == Buttons.Right:  // OK
                                 data = new CaptureMinePocket(game.CaptureMine((Mine)game.map.Map[pocket.Coord.X, pocket.Coord.Y]));
                                 break;
