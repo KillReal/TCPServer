@@ -1,5 +1,4 @@
-﻿using Server.Enums;
-using Server.Pockets;
+﻿using Server.Pockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +19,7 @@ namespace Server
         public static Action<DisconnectionPocket, int> onClientDisconnect;
         public static Action<PingPocket, int> onPingRecieved;
         public static Action<GameActionPocket, int> onGameAction;
+        public static Action<PlayStatePocket, int> onPlayState;
         public static Action<int> OnMessageAccepted;
 
         private delegate BasePocket DeselialiseBytesToCommand(byte[] bytes);
@@ -43,6 +43,7 @@ namespace Server
             BytesToTypes.Add(PocketEnum.Disconnection, DisconnectionPocket.FromBytes);
             BytesToTypes.Add(PocketEnum.Ping, PingPocket.FromBytes);
             BytesToTypes.Add(PocketEnum.GameAction, GameActionPocket.FromBytes);
+            BytesToTypes.Add(PocketEnum.PlayState, PlayStatePocket.FromBytes);
         }
 
         public static void HandleClientMessage(Socket client)
@@ -55,7 +56,7 @@ namespace Server
                 {
                     byte[] buffer = new byte[1024];
                     int size = client.Receive(buffer);
-                    if (size != 0)
+                    if (size > 0)
                     {
                         byte[] data = new byte[size];
                         Buffer.BlockCopy(buffer, 0, data, 0, size);
@@ -71,10 +72,12 @@ namespace Server
                 {
                     if (_settings.ExceptionPrint)
                         Console.WriteLine($"[ERROR]: {exception.Message} {exception.InnerException}");
+                    //if (client.Connected)
+                        //client.Send((new ErrorPocket(2, exception.Message).ToBytes()));
                     rest_data = null;
                 }
             } while (client.Connected && PocketListener._continueListen);
-            if (clientManager.GetClientName(client_id) != "unknown" && clientManager.GetClientName(client_id) != null)
+            if (clientManager.GetClientName(client_id) != "unknown")
             {
                 Console.WriteLine($"[SERVER]: Lost connection with '{clientManager.GetClientName(client_id)}'");
                 clientManager.ToggleConnectionState(client_id);
@@ -85,15 +88,18 @@ namespace Server
 
         private static byte[] ParsePocket(byte[] data, Socket client, ref int client_id)
         {
-            while (data.Length >= Header.GetLenght())
+            do
             {
                 bool accept = false;
                 Header header = Header.FromBytes(data);
-                if (header.Hash != _settings.PocketHash || clientManager.GetLastPocketID(client_id) == header.Id)
-                    break;
-                byte[] temp_data = data;
+                if (clientManager.GetLastPocketID(client_id) == header.Id)
+                    return Utils.SplitBytes(ref data, header.Size + Header.GetLenght());
+                if (data.Length < header.Size)
+                    return data;
                 Utils.SplitBytes(ref data, Header.GetLenght());
                 var typeEnum = (PocketEnum)header.Type;
+                if ((int)typeEnum < 1 && typeEnum >= PocketEnum.MaxExistEnum)
+                    return null;
                 if (typeEnum == PocketEnum.MessageAccepted)
                     OnMessageAccepted?.Invoke(client_id);
                 else if (typeEnum == PocketEnum.Connection)
@@ -136,17 +142,18 @@ namespace Server
                             case PocketEnum.GameAction:
                                 onGameAction?.Invoke((GameActionPocket)basePocket, client_id);
                                 break;
+                            case PocketEnum.PlayState:
+                                onPlayState?.Invoke((PlayStatePocket)basePocket, client_id);
+                                break;
                             default:
                                 break;
                         }
                     }
                 }
-                else
-                    data = temp_data;
                 Utils.SplitBytes(ref data, header.Size);
                 if (accept)
                     clientManager.SendAccepted(client_id, header.Id);
-            }
+            } while (data.Length >= Header.GetLenght());
             return data;
         }
     }

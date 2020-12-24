@@ -20,6 +20,21 @@ namespace Server
             return ret;
         }
 
+        public static byte[] SplitBytes(byte[] bytesArray, int size)
+        {
+            byte[] ret = new byte[size];
+            if (bytesArray.Length <= size)
+            {
+                ret = bytesArray;
+                _ = new byte[0];
+                return ret;
+            }
+            byte[] newArray = new byte[bytesArray.Length - size];
+            Buffer.BlockCopy(bytesArray, 0, ret, 0, size);
+            Buffer.BlockCopy(bytesArray, size, newArray, 0, bytesArray.Length - size);
+            return ret;
+        }
+
         public static byte[] ConcatBytes(byte[] first, byte[] second)
         {
             if (first == null)

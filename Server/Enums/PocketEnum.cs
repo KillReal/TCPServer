@@ -16,16 +16,14 @@ namespace Server
         SplittedPocketEnd = 8,
         GameAction = 9,
         Error = 10,
-        Init = 11
+        Init = 11,
+        PlayState = 12,
+        EndGame = 13,
+        MaxExistEnum = 14    // Need for valid header
     }
 
     public enum ResponsePocketEnum: int
     {
-        // Changed  !
-        //
-        //
-        //
-        //
         SelectUnit = 20,
         MoveUnit = 21,
         Attack = 22,
