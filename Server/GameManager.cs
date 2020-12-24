@@ -31,7 +31,6 @@ namespace Server
 
         public GameManager()
         {
-            PocketHandler.onGameAction += Player_onGameAction;
             games = new List<Game>();
             playerClients = new Dictionary<int, PlayerClient>();
         }
@@ -67,7 +66,7 @@ namespace Server
             clientManager.Send(idClients[1], new NextTurnPocket(playerClients[idClients[1]].game.currentPlayer));
         }
 
-        private void Player_onGameAction(GameActionPocket pocket, int id)
+        public void HandleGameAction(GameActionPocket pocket, int id)
         {
 
             Game game = playerClients[id].game;

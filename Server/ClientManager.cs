@@ -29,10 +29,19 @@ namespace Server
         public void Init(Settings _settings)
         {
             PocketHandler.onPingRecieved += PocketListener_OnPing;
+            PocketHandler.onGameAction += Player_onGameAction;
             ID_list = new List<int>();
             Sessions = new List<Session>();
             settings = _settings;
         }
+
+        private void Player_onGameAction(GameActionPocket pocket, int id)
+        {
+            int sid = GetClient(id).sid;
+            if (sid > -1)
+                Sessions[sid].game.HandleGameAction(pocket, id);
+        }
+
         public struct MyClient
         {
             public int id;
@@ -415,6 +424,7 @@ namespace Server
             MyClient newClient = new MyClient
             {
                 id = id,
+                sid = -1,
                 ip = ((IPEndPoint)socket.RemoteEndPoint).Address.ToString(),
                 name = name,
                 socket = socket,
