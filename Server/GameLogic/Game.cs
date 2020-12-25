@@ -91,10 +91,22 @@ namespace Server.GameLogic
                 case Unit.typeUnit.Scout:
                     u = new Scout(currentPlayer);
                     break;
-                case Unit.typeUnit.Warior:
+                case Unit.typeUnit.Warrior1:
                     u = new Warior(currentPlayer, level);
                     break;
-                case Unit.typeUnit.Shooter:
+                case Unit.typeUnit.Shooter1:
+                    u = new Shooter(currentPlayer, level);
+                    break;
+                case Unit.typeUnit.Warrior2:
+                    u = new Warior(currentPlayer, level);
+                    break;
+                case Unit.typeUnit.Shooter2:
+                    u = new Shooter(currentPlayer, level);
+                    break;
+                case Unit.typeUnit.Warrior3:
+                    u = new Warior(currentPlayer, level);
+                    break;
+                case Unit.typeUnit.Shooter3:
                     u = new Shooter(currentPlayer, level);
                     break;
                 case Unit.typeUnit.Top:
