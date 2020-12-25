@@ -36,8 +36,12 @@ namespace Server.GameLogic
         public enum typeUnit
         {
             Scout,
-            Warior,
-            Shooter,
+            Warrior1,
+            Warrior2,
+            Warrior3,            
+            Shooter1,
+            Shooter2,
+            Shooter3,
             Top
         }
         public int actionPoints;
@@ -61,7 +65,7 @@ namespace Server.GameLogic
             if (owner.gold - 100 < 0)
                 throw new Exception("Not money");
             owner.gold -= 100;
-
+            this.type_unit = typeUnit.Scout;
             this.attack = 2;
             this.defense = 2;
             this.damage = 1;
@@ -96,7 +100,7 @@ namespace Server.GameLogic
                     if (owner.gold - 100 < 0)
                         throw new Exception("Not money");
                     owner.gold -= 100;
-
+                    this.type_unit = typeUnit.Warrior1;
                     this.attack = 6;
                     this.defense = 5;
                     this.damage = 4;
@@ -109,7 +113,7 @@ namespace Server.GameLogic
                     if (owner.gold - 100 < 0)
                         throw new Exception("Not money");
                     owner.gold -= 100;
-
+                    this.type_unit = typeUnit.Warrior2;
                     this.attack = 8;
                     this.defense = 8;
                     this.damage = 10;
@@ -118,9 +122,11 @@ namespace Server.GameLogic
                     this.rangeAttack = 0;
                     this.shootingDamage = 0;
                     break;
-                default:
+                case 3:
+                    if (owner.gold - 100 < 0)
+                        throw new Exception("Not money");
                     owner.gold -= 100;
-
+                    this.type_unit = typeUnit.Warrior3;
                     this.attack = 10;
                     this.defense = 12;
                     this.damage = 16;
@@ -155,8 +161,10 @@ namespace Server.GameLogic
             switch (level)
             {
                 case 1:
+                    if (owner.gold - 100 < 0)
+                        throw new Exception("Not money");
                     owner.gold -= 100;
-
+                    this.type_unit = typeUnit.Shooter1;
                     this.shootingDamage = 8;
                     this.rangeAttack = 3;
                     this.attack = 1;
@@ -166,8 +174,10 @@ namespace Server.GameLogic
                     this.actionPoints = 7;
                     break;
                 case 2:
+                    if (owner.gold - 100 < 0)
+                        throw new Exception("Not money");
                     owner.gold -= 100;
-
+                    this.type_unit = typeUnit.Shooter2;
                     this.shootingDamage = 15;
                     this.rangeAttack = 5;
                     this.attack = 8;
@@ -176,9 +186,11 @@ namespace Server.GameLogic
                     this.health = 20;
                     this.actionPoints = 9;
                     break;
-                default:
+                case 3:
+                    if (owner.gold - 100 < 0)
+                        throw new Exception("Not money");
                     owner.gold -= 100;
-
+                    this.type_unit = typeUnit.Shooter3;
                     this.shootingDamage = 20;
                     this.rangeAttack = 7;
                     this.attack = 13;
