@@ -103,7 +103,8 @@ namespace Server.GameLogic
                     this.defense = 5;
                     this.damage = 4;
                     this.health = 10;
-                    this.actionPoints = 10;
+                    this.MAXactionPoints = 10;
+                    this.actionPoints = this.MAXactionPoints;
                     this.rangeAttack = 0;
                     this.shootingDamage = 0;
                     break;
@@ -116,7 +117,8 @@ namespace Server.GameLogic
                     this.defense = 8;
                     this.damage = 10;
                     this.health = 25;
-                    this.actionPoints = 12;
+                    this.MAXactionPoints = 12;
+                    this.actionPoints = this.MAXactionPoints;
                     this.rangeAttack = 0;
                     this.shootingDamage = 0;
                     break;
@@ -127,7 +129,8 @@ namespace Server.GameLogic
                     this.defense = 12;
                     this.damage = 16;
                     this.health = 40;
-                    this.actionPoints = 13;
+                    this.MAXactionPoints = 13;
+                    this.actionPoints = this.MAXactionPoints;
                     this.rangeAttack = 0;
                     this.shootingDamage = 0;
                     break;
@@ -165,7 +168,8 @@ namespace Server.GameLogic
                     this.defense = 1;
                     this.damage = 2;
                     this.health = 5;
-                    this.actionPoints = 7;
+                    this.MAXactionPoints = 7;
+                    this.actionPoints = this.MAXactionPoints;
                     break;
                 case 2:
                     owner.gold -= 100;
@@ -176,7 +180,8 @@ namespace Server.GameLogic
                     this.defense = 5;
                     this.damage = 6;
                     this.health = 20;
-                    this.actionPoints = 9;
+                    this.MAXactionPoints = 9;
+                    this.actionPoints = this.MAXactionPoints;
                     break;
                 default:
                     owner.gold -= 100;
@@ -187,7 +192,8 @@ namespace Server.GameLogic
                     this.defense = 8;
                     this.damage = 12;
                     this.health = 30;
-                    this.actionPoints = 10;
+                    this.MAXactionPoints = 10;
+                    this.actionPoints = this.MAXactionPoints;
                     break;
             }
         }
@@ -230,7 +236,8 @@ namespace Server.GameLogic
             this.defense = 15;
             this.damage = 20;
             this.health = 45;
-            this.actionPoints = 15;
+            this.MAXactionPoints = 15;
+            this.actionPoints = this.MAXactionPoints;
         }
         override public void atack(GameObj unit)
         {

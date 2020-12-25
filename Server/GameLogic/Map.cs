@@ -90,7 +90,7 @@ namespace Server.GameLogic
     }
 
     [Serializable]
-    public class World 
+    public class _Map 
     {
         public GameObj[,] Map;
         public Town[] towns;

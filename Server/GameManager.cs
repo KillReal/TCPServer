@@ -45,10 +45,12 @@ namespace Server
         public void StartGame(List<int> idClients) // expecting 2 players // OK
         {
             if (idClients.Count != 2) throw new Exception("invalid number of clients");
-            World world;
+            _Map world;
             BinaryFormatter formatter = new BinaryFormatter();
             using (FileStream fs = new FileStream("FuckingWorld", FileMode.OpenOrCreate))
-                world = (World)formatter.Deserialize(fs);            
+            {
+                world = (_Map)formatter.Deserialize(fs);
+            }
             Game game = new Game(world, new Player[] { new Player("0"), new Player("1") });
             games.Add(game);
             playerClients.Add(idClients[0], new PlayerClient()

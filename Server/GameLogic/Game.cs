@@ -7,12 +7,12 @@ namespace Server.GameLogic
 {
     public class Game
     {
-        public World map;
+        public _Map map;
         private Mutex mutexMap;
         public Player[] players;
         public Player currentPlayer;
 
-        public Game(World map, Player[] p) // expecting 2 players // OK
+        public Game(_Map map, Player[] p) // expecting 2 players // OK
         {
             mutexMap = new Mutex();
             this.map = map;
@@ -43,11 +43,11 @@ namespace Server.GameLogic
             mutexMap.WaitOne();
 
             Queue<int> path = PathFinding(currentPlayer.selectUnit.Position, A);
-            if (currentPlayer.selectUnit.actionPoints - path.Count < 0) throw new Exception("Not moving");
             var unit = currentPlayer.selectUnit;
+            // for debug inf actionPoints, on release remove comment
+            //if (unit.actionPoints - path.Count < 0) throw new Exception("Not moving");
 
-            unit.actionPoints = 100; // delete
-            currentPlayer.selectUnit.actionPoints -= path.Count;
+            unit.actionPoints -= path.Count;
 
             map.Map[unit.Position.X, unit.Position.Y] = new GameObj(GameObj.typeObj.empty);
             map.Map[unit.Position.X, unit.Position.Y].Position = unit.Position;
