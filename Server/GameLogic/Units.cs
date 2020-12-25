@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Server.GameLogic
 {
+    [Serializable]
     public class GameObj
     {
         public enum typeObj
@@ -31,6 +32,7 @@ namespace Server.GameLogic
     }
 
     // Units //
+    [Serializable]
     abstract public class Unit : GameObj
     {
         public enum typeUnit

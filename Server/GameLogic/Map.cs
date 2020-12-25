@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 
 namespace Server.GameLogic
 {
+    [Serializable]
     public struct Coord
     {
         public int X;
@@ -31,6 +31,7 @@ namespace Server.GameLogic
         public static bool operator <=(Coord me, int c) => me.X <= c && me.Y <= c;
     }
 
+    [Serializable]
     public class Mine : GameObj
     {
         public enum typeMine
@@ -41,6 +42,11 @@ namespace Server.GameLogic
             crystall
         }
         public typeMine TypeMine;
+        public Mine(typeMine t)
+        {
+            type = typeObj.mine;
+            TypeMine = t;
+        }
         public void mining()
         {
             switch (TypeMine)
@@ -61,11 +67,13 @@ namespace Server.GameLogic
         }
     }
 
+    [Serializable]
     public class Town : GameObj
     {
         public int level;
         public Town()
         {
+            type = typeObj.town;
             level = 1;
         }
         public void upgrade()
@@ -81,53 +89,12 @@ namespace Server.GameLogic
         }
     }
 
-    public class _Map // need FIX
+    [Serializable]
+    public class World 
     {
         public GameObj[,] Map;
-        public List<Town> towns;
+        public Town[] towns;
         private Coord[,] SpawnPos;
-        public _Map(string fileMap) // OK
-        {
-            using (StreamReader fs = new StreamReader(fileMap))
-            {
-                string[] s = fs.ReadLine().Split(' ');
-                Map = new GameObj[int.Parse(s[1]), int.Parse(s[0])];
-                towns = new List<Town>();
-                for (int y = 0; y < Map.GetUpperBound(1) + 1; y++)
-                {
-                    s = fs.ReadLine().Split(' ');
-                    for (int x = 0; x < Map.GetUpperBound(0) + 1; x++)
-                    {
-                        switch ((GameObj.typeObj)int.Parse(s[x]))
-                        {
-                            case GameObj.typeObj.empty:
-                            case GameObj.typeObj.block:
-                                Map[x, y] = new GameObj();
-                                break;
-                            case GameObj.typeObj.mine:
-                                Map[x, y] = new Mine();
-                                break;
-                            case GameObj.typeObj.town:
-                                Map[x, y] = new Town();
-                                towns.Add((Town)Map[x, y]);
-                                break;
-                        }
-                        Map[x, y].type = (GameObj.typeObj)int.Parse(s[x]);
-                        Map[x, y].Position = new Coord(x, y);
-                    }
-                }
-                SpawnPos = new Coord[2, 3];
-                for (int i = 0; i < 2; i++)
-                {
-                    s = fs.ReadLine().Split(';');
-                    for (int j = 0; j < 3; j++)
-                    {
-                        string[] ss = s[j].Trim().Split(' ');
-                        SpawnPos[i, j] = new Coord(int.Parse(ss[0]), int.Parse(ss[1]));
-                    }
-                }
-            }
-        }
 
         public void SpawnUnit(Unit u) // OK
         {

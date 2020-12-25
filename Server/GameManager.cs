@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using Server.GameLogic;
 using Server.Pockets;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 namespace Server
 {
@@ -18,7 +20,7 @@ namespace Server
         public ClientManager clientManager;
         public List<Game> games;
         public Dictionary<int, PlayerClient> playerClients;
-        private const string map = @"..\..\..\Resources\Map.txt"; // path to the map file (for now one map)
+        //private const string map = @"..\..\..\Resources\Map.txt"; // path to the map file (for now one map)
         public enum Buttons
         {
             Left = 1,
@@ -43,8 +45,11 @@ namespace Server
         public void StartGame(List<int> idClients) // expecting 2 players // OK
         {
             if (idClients.Count != 2) throw new Exception("invalid number of clients");
-
-            Game game = new Game(new _Map(map), new Player[] { new Player("0"), new Player("1") });
+            World world;
+            BinaryFormatter formatter = new BinaryFormatter();
+            using (FileStream fs = new FileStream("FuckingWorld", FileMode.OpenOrCreate))
+                world = (World)formatter.Deserialize(fs);            
+            Game game = new Game(world, new Player[] { new Player("0"), new Player("1") });
             games.Add(game);
             playerClients.Add(idClients[0], new PlayerClient()
             {

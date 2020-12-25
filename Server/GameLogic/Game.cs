@@ -7,12 +7,12 @@ namespace Server.GameLogic
 {
     public class Game
     {
-        public _Map map;
+        public World map;
         private Mutex mutexMap;
         public Player[] players;
         public Player currentPlayer;
 
-        public Game(_Map map, Player[] p) // expecting 2 players // OK
+        public Game(World map, Player[] p) // expecting 2 players // OK
         {
             mutexMap = new Mutex();
             this.map = map;
