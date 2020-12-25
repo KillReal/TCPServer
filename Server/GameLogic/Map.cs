@@ -8,7 +8,7 @@ namespace Server.GameLogic
     public struct Coord
     {
         public int X;
-        public int Y; 
+        public int Y;
         public Coord(int x, int y)
         {
             X = x;
@@ -21,9 +21,9 @@ namespace Server.GameLogic
         public static bool operator ==(Coord me, int c) => me.X == c && me.Y == c;
         public static bool operator !=(Coord c1, Coord c2) => c1.X != c2.X && c1.Y != c2.Y;
         public static bool operator !=(Coord me, int c) => me.X != c && me.Y != c;
-        public static bool operator >(Coord c1, Coord c2)  => c1.X >  c2.X && c1.Y >  c2.Y;
+        public static bool operator >(Coord c1, Coord c2) => c1.X > c2.X && c1.Y > c2.Y;
         public static bool operator >(Coord me, int c) => me.X > c && me.Y > c;
-        public static bool operator <(Coord c1, Coord c2)  => c1.X <  c2.X && c1.Y <  c2.Y;
+        public static bool operator <(Coord c1, Coord c2) => c1.X < c2.X && c1.Y < c2.Y;
         public static bool operator <(Coord me, int c) => me.X < c && me.Y < c;
         public static bool operator >=(Coord c1, Coord c2) => c1.X >= c2.X && c1.Y >= c2.Y;
         public static bool operator >=(Coord me, int c) => me.X >= c && me.Y >= c;
@@ -93,10 +93,10 @@ namespace Server.GameLogic
                 string[] s = fs.ReadLine().Split(' ');
                 Map = new GameObj[int.Parse(s[1]), int.Parse(s[0])];
                 towns = new List<Town>();
-                for (int y = 0; y < Map.GetUpperBound(1) + 1; y++) 
+                for (int y = 0; y < Map.GetUpperBound(1) + 1; y++)
                 {
                     s = fs.ReadLine().Split(' ');
-                    for (int x = 0; x < Map.GetUpperBound(0) + 1; x++) 
+                    for (int x = 0; x < Map.GetUpperBound(0) + 1; x++)
                     {
                         switch ((GameObj.typeObj)int.Parse(s[x]))
                         {

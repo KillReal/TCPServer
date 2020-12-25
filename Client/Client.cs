@@ -20,7 +20,7 @@ namespace Client
         static IPAddress ipAddr;
         public static void SendSplittedPocket(BasePocket pocket)
         {
-            byte[] data = Utils.ConcatBytes(new Header(332, (int)DateTime.Now.Ticks, pocket.GetType(), pocket.ToBytes().Length), pocket);
+            byte[] data = Utils.ConcatBytes(new Header((int)DateTime.Now.Ticks, pocket.GetType(), pocket.ToBytes().Length), pocket);
             int split_count = (data.Length / 20 + 1);
             bool first = true;
             do
@@ -36,7 +36,7 @@ namespace Client
                 }
                 if (split_count == 1)
                     pocket_enum = (int)PocketEnum.SplittedPocketEnd;
-                Header header = new Header(332, (int)DateTime.Now.Ticks, pocket_enum, data_part.Length);
+                Header header = new Header((int)DateTime.Now.Ticks, pocket_enum, data_part.Length);
                 data_part = Utils.ConcatBytes(header.ToBytes(), data_part);
                 SendToServer(server, data_part);
                 //Thread.Sleep(10);
@@ -47,7 +47,7 @@ namespace Client
         public static void SendToServer(Socket server, BasePocket pocket)
         {
             byte[] data = pocket.ToBytes();
-            byte[] header = new Header(332, (int)DateTime.Now.Ticks, pocket.GetType(), data.Length).ToBytes();
+            byte[] header = new Header((int)DateTime.Now.Ticks, pocket.GetType(), data.Length).ToBytes();
             data = Utils.ConcatBytes(header, data);
             data = Encryption.Encrypt(data);
             try
@@ -138,6 +138,14 @@ namespace Client
                     _listenThread = new Thread(ListenForPockets);
                     _listenThread.Start(server);
                     SendToServer(server, pocket);
+                }
+                else if (message == "play")
+                {
+                    SendToServer(server, new PlayStatePocket(0, 3));
+                }
+                else if (message == "stop play")
+                {
+                    SendToServer(server, new PlayStatePocket(0, 5));    
                 }
                 else if (message != "exit")
                 {

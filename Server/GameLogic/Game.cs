@@ -158,19 +158,19 @@ namespace Server.GameLogic
                     if (x != 0 && y != 0)
                         matrix[top, top - columns - 1] = Map[x - 1, y - 1].type == 0 ? 2 : inf; // лево вверх
                     if (y != 0)
-                        matrix[top, top - columns]     = Map[x, y - 1].type == 0 ? 1 : inf; // вверх
+                        matrix[top, top - columns] = Map[x, y - 1].type == 0 ? 1 : inf; // вверх
                     if (x != columns - 1 && y != 0)
                         matrix[top, top - columns + 1] = Map[x + 1, y - 1].type == 0 ? 2 : inf; // вправо вверх
                     if (x != columns - 1)
-                        matrix[top, top + 1]           = Map[x + 1, y].type == 0 ? 1 : inf; // вправо
+                        matrix[top, top + 1] = Map[x + 1, y].type == 0 ? 1 : inf; // вправо
                     if (x != columns - 1 && y != lines - 1)
                         matrix[top, top + columns + 1] = Map[x + 1, y + 1].type == 0 ? 2 : inf; // вправо вниз
                     if (y != lines - 1)
-                        matrix[top, top + columns]     = Map[x, y + 1].type == 0 ? 1 : inf; // вниз
+                        matrix[top, top + columns] = Map[x, y + 1].type == 0 ? 1 : inf; // вниз
                     if (x != 0 && y != lines - 1)
                         matrix[top, top + columns - 1] = Map[x - 1, y + 1].type == 0 ? 2 : inf; // влево вниз
                     if (x != 0)
-                        matrix[top, top - 1]           = Map[x - 1, y].type == 0 ? 1 : inf; // влево
+                        matrix[top, top - 1] = Map[x - 1, y].type == 0 ? 1 : inf; // влево
                 }
 
             int topS = posA.Y * columns + posA.X;

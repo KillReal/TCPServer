@@ -1,4 +1,4 @@
-﻿using Server.Enums;
+﻿
 using Server.Pockets;
 using Server.GameLogic;
 using System;
@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace Server
 {
@@ -18,27 +19,52 @@ namespace Server
         public static Action<int> onClientLostConnection;
 
         public List<int> ID_list;
+        public List<Session> Sessions;
+        public struct Session
+        {
+            public List<int> players;
+            public GameManager game;
+        };
 
         public void Init(Settings _settings)
         {
             PocketHandler.onPingRecieved += PocketListener_OnPing;
+            PocketHandler.onGameAction += Player_onGameAction;
             ID_list = new List<int>();
+            Sessions = new List<Session>();
             settings = _settings;
         }
+
+        private void Player_onGameAction(GameActionPocket pocket, int id)
+        {
+            int sid = GetClient(id).sid;
+            if (sid > -1)
+                Sessions[sid].game.HandleGameAction(pocket, id);
+        }
+
         public struct MyClient
         {
             public int id;
+            public int sid;
+            public string ip;
             public string name;
             public Socket socket;
             public bool callback;
             public int pocket_id;
             public byte[] buffer;
             public byte[] send_buffer;
+            public int last_state;
             public int state;
             public int ping;
             public Timer timer;
         };
         public ConcurrentDictionary<long, MyClient> _clients = new ConcurrentDictionary<long, MyClient>();
+        public List<Settings.Client> _history = new List<Settings.Client>();
+
+        public string GetClientIP(int id)
+        {
+            return GetClient(id).ip;
+        }
 
         public bool GetClientCallback(int id)
         {
@@ -58,6 +84,8 @@ namespace Server
             int id = 0;
             while (ID_list.Contains(id))
                 id++;
+            if (id >= settings.MaxClients)
+                return -1;
             return id;
         }
 
@@ -67,11 +95,16 @@ namespace Server
             return client.pocket_id;
         }
 
+        public string GetHistoryClientInfo(int id)
+        {
+            Settings.Client client = _history[id];
+            return $"[{id}]   Name: {client.name}   Ip: {client.ip}";
+        }
+
         public string GetClientInfo(int id)
         {
             MyClient client = GetClient(id);
-            return "[" + id.ToString() + "]   Name: " + client.name + "   State: " + Enum.GetName(typeof(ClientStateEnum), client.state) + 
-                "   Callback: " + client.callback + "   Ping: " + client.ping + " ms";
+            return $"[id:{id}][sid:{client.sid}]   Name: {client.name}   State: {Enum.GetName(typeof(ClientStateEnum), client.state)}   Callback:  {client.callback}   Ping: {client.ping} ms   Ip: {client.ip}";
         }
 
         private MyClient GetClient(int id)
@@ -93,7 +126,6 @@ namespace Server
                 }
                 else if (client.socket != null && client.send_buffer != null)
                 {
-                    Console.WriteLine("Resended " + client.send_buffer.Length + " bytes");
                     client.socket.Send(client.send_buffer);
                 }
                     
@@ -115,6 +147,7 @@ namespace Server
                 return;
             if (client.state >= (int)ClientStateEnum.Connected && !forceConnected)
             {
+                client.last_state = client.state;
                 client.state = (int)ClientStateEnum.Disconnected;
                 client.socket = null;
                 _clients[id] = client;
@@ -122,10 +155,76 @@ namespace Server
             }
             else
             {
-                client.state = (int)ClientStateEnum.Connected;
+                if (client.last_state > 0)
+                    client.state = client.last_state;
+                else
+                    client.state = (int)ClientStateEnum.Connected;
                 _clients[id] = client;
                 UpdateAcceptState(id, true);
             }
+        }
+
+        public void DeleteClientFromSession(int id)
+        {
+            for (int i = 0; i < Sessions.Count; i++)
+            {
+                if (Sessions[i].players.Contains(id))
+                {
+                    Sessions[i].players.Remove(id);
+                    MyClient client = GetClient(id);
+                    client.sid = -1;
+                    client.state = (int)ClientStateEnum.Connected;
+                    _clients[id] = client;
+                    Console.WriteLine($"[SERVER]: Player '{GetClientName(id)}' left from session '{i}'");
+                }
+                if (Sessions[i].players.Count == 0)
+                {
+                    Sessions.RemoveAt(i);
+                    Console.WriteLine($"[SERVER]: Session '{i}' is ends up");
+                }
+            }
+        }
+
+        public int AddClientToSession(int id)
+        {
+            bool found_open_session = false;
+            for (int i = 0; i < Sessions.Count; i++)
+            {
+                if (Sessions[i].players.Count < settings.MaxSessionClients)
+                {
+                    Sessions[i].players.Add(id);
+                    MyClient client = GetClient(id);
+                    client.sid = i;
+                    client.state = (int)ClientStateEnum.Playing;
+                    _clients[id] = client;
+                    Console.WriteLine($"[SERVER]: Player '{GetClientName(id)}' is joined session '{i}'");
+                    found_open_session = true;
+                    if (Sessions[i].players.Count == settings.MaxSessionClients)
+                    {
+                        Console.Write($"[SERVER]: Session '{i}' begin game (");
+                        for (int j = 0; j < Sessions[i].players.Count; j++)
+                            Console.Write($"'{GetClientName(Sessions[i].players[j])}'");
+                        Console.WriteLine(")");
+                        return i;                     
+                    }
+                }
+            }
+            if (!found_open_session)
+            {
+                Console.WriteLine($"[SERVER]: Session '{Sessions.Count}' is opened by '{GetClientName(id)}'");
+                Session new_session = new Session
+                {
+                    players = new List<int> { id },
+                    game = new GameManager()
+                };
+                new_session.game.Init(this);
+                Sessions.Add(new_session);
+                MyClient client = GetClient(id);
+                client.sid = Sessions.Count - 1;
+                client.state = (int)ClientStateEnum.Preparing;
+                _clients[id] = client;
+            }
+            return -1;
         }
 
         public void UpdateAcceptState(int id, bool accept)
@@ -172,7 +271,7 @@ namespace Server
 
         public void SendSplittedPocket(int id, BasePocket pocket)
         {
-            byte[] data = Utils.ConcatBytes(new Header(settings.PocketHash, (int)DateTime.Now.Ticks, pocket.GetType(), pocket.ToBytes().Length), pocket);
+            byte[] data = Utils.ConcatBytes(new Header((int)DateTime.Now.Ticks, pocket.GetType(), pocket.ToBytes().Length), pocket);
             int split_count = (data.Length / settings.MaxPocketSize + 1);
             bool first = true;
             do
@@ -188,7 +287,7 @@ namespace Server
                 }
                 if (split_count == 1)
                     pocket_enum = (int)PocketEnum.SplittedPocketEnd;
-                Header header = new Header(settings.PocketHash, (int)DateTime.Now.Ticks, pocket_enum, data_part.Length);
+                Header header = new Header((int)DateTime.Now.Ticks, pocket_enum, data_part.Length);
                 data_part = Utils.ConcatBytes(header.ToBytes(), data_part);
                 while (!GetClientCallback(id))
                     Thread.Sleep(10);
@@ -200,7 +299,8 @@ namespace Server
 
         public void SendAccepted(int id, int pocket_id)
         {
-            Send(id, new AcceptPocket(pocket_id));
+            if (ID_list.Contains(id))
+                Send(id, new AcceptPocket(pocket_id));
         }
 
         private void SendTask(int id, byte[] data, int data_id, bool wait_accept)
@@ -236,10 +336,10 @@ namespace Server
                 return;
             int data_id = (int)DateTime.Now.Ticks;
             byte[] data = pocket.ToBytes();
-            byte[] header = new Header(settings.PocketHash, data_id, pocket.GetType(), data.Length).ToBytes();
+            byte[] header = new Header(data_id, pocket.GetType(), data.Length).ToBytes();
             data = Utils.ConcatBytes(header, data);
             data = Encryption.Encrypt(data);
-           // if (data.Length > _settings.MaxPocketSize)  //For client testing
+            //if (data.Length > _settings.MaxPocketSize)  //For client testing
                 //SendSplittedPocket(id, data);
             //else
                 (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
@@ -297,7 +397,7 @@ namespace Server
         {
             do
             {
-                Thread.Sleep(settings.PingTimerFreq);
+                Thread.Sleep(settings.PingFreq);
                 MyClient client = GetClient(id);
                 if (client.callback)
                     Send(id, new PingPocket((int)DateTime.Now.Ticks, client.ping));
@@ -306,7 +406,7 @@ namespace Server
 
         private void LaunchBackgroundWorkers(int id)
         {
-           // (new Task(() => ClientPinger(id))).Start(); For client testing
+            (new Task(() => ClientPinger(id))).Start();
         }
 
         public void UpdateClientSocket(int id, Socket new_socket)
@@ -324,6 +424,8 @@ namespace Server
             MyClient newClient = new MyClient
             {
                 id = id,
+                sid = -1,
+                ip = ((IPEndPoint)socket.RemoteEndPoint).Address.ToString(),
                 name = name,
                 socket = socket,
                 callback = true,
@@ -338,6 +440,7 @@ namespace Server
         {
             _clients.TryGetValue(id, out MyClient client);
             client.socket = socket;
+            client.ip = ((IPEndPoint)socket.RemoteEndPoint).Address.ToString();
             _clients[id] = client;
             ToggleConnectionState(id, true);
             LaunchBackgroundWorkers(id);
@@ -352,6 +455,7 @@ namespace Server
                 client.timer = null;
             }
             Socket temp_socket = client.socket;
+            _history.Add(new Settings.Client { name = client.name, ip = client.ip});
             _clients.TryRemove(id, out _);
             ID_list.Remove(id);
             if (temp_socket != null)

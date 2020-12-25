@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using Server.GameLogic;
 using Server.Pockets;
-using Server.Enums;
 
 namespace Server
-{  
+{
     public struct PlayerClient
     {
         public int idClient;
@@ -32,7 +31,6 @@ namespace Server
 
         public GameManager()
         {
-            PocketHandler.onGameAction += Player_onGameAction;
             games = new List<Game>();
             playerClients = new Dictionary<int, PlayerClient>();
         }
@@ -48,13 +46,15 @@ namespace Server
 
             Game game = new Game(new _Map(map), new Player[] { new Player("0"), new Player("1") });
             games.Add(game);
-            playerClients.Add(idClients[0], new PlayerClient() {
+            playerClients.Add(idClients[0], new PlayerClient()
+            {
                 idClient = idClients[0],
                 idAponent = idClients[1],
                 game = game,
                 playerInGame = game.players[0],
             });
-            playerClients.Add(idClients[1], new PlayerClient() {
+            playerClients.Add(idClients[1], new PlayerClient()
+            {
                 idClient = idClients[1],
                 idAponent = idClients[0],
                 game = game,
@@ -66,7 +66,7 @@ namespace Server
             clientManager.Send(idClients[1], new NextTurnPocket(playerClients[idClients[1]].game.currentPlayer));
         }
 
-        private void Player_onGameAction(GameActionPocket pocket, int id)
+        public void HandleGameAction(GameActionPocket pocket, int id)
         {
 
             Game game = playerClients[id].game;

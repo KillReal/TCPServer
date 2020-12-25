@@ -17,7 +17,9 @@ namespace Server
         GameAction = 9,
         Error = 10,
         Init = 11,
-        EndGame = 12,
+        PlayState = 12,
+        EndGame = 13,
+        MaxExistEnum = 14    // Need for valid header
     }
 
     public enum ResponsePocketEnum: int

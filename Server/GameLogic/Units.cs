@@ -48,7 +48,7 @@ namespace Server.GameLogic
             actionPoints = MAXactionPoints;
         }
         abstract public void atack(GameObj unit);
-        public Unit(Player owner) : base(typeObj.unit) 
+        public Unit(Player owner) : base(typeObj.unit)
         {
             this.owner = owner;
         }
@@ -76,11 +76,11 @@ namespace Server.GameLogic
 
             if (this.attack == unit.defense)
                 unit.health -= this.damage;
-            else 
+            else
                 if (this.attack > unit.defense)
-                    unit.health -= (int)(this.damage * ((unit.defense - this.attack) * 0.5));
-                else
-                    unit.health -= (int)(this.damage * (1 / ((unit.defense - this.attack) * 0.4)));
+                unit.health -= (int)(this.damage * ((unit.defense - this.attack) * 0.5));
+            else
+                unit.health -= (int)(this.damage * (1 / ((unit.defense - this.attack) * 0.4)));
         }
     }
 
@@ -103,7 +103,7 @@ namespace Server.GameLogic
                     this.health = 10;
                     this.actionPoints = 10;
                     this.rangeAttack = 0;
-                    this.shootingDamage= 0;
+                    this.shootingDamage = 0;
                     break;
                 case 2:
                     if (owner.gold - 100 < 0)

@@ -16,6 +16,17 @@ namespace Server
         SplittedPocketEnd = 8,
         GameAction = 9,
         Error = 10,
-        Init = 11
+        Init = 11,
+        PlayState = 12,
+        MaxExistEnum = 13    // Need for valid header
+
+
+        /*  Disconnected = 0,
+            Connected = 1,
+            Preparing = 2,
+            Ready = 3,
+            Playing = 4,
+            Exiting = 5
+        */
     }
 }

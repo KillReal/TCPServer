@@ -27,7 +27,6 @@ namespace Server.Pockets
             pc.WriteInt32(path.Count);
             foreach (int item in path)
                 pc.WriteInt32(item);
-            
             return pc.GetBytes();
         }
 
