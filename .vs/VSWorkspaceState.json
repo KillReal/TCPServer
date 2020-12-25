@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Server"
+    "\\Server",
+    "\\Server\\GameLogic"
   ],
   "SelectedNode": "\\Server\\ClientManager.cs",
   "PreviewInSolutionExplorer": false

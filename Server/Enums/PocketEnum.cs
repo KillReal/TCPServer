@@ -32,5 +32,6 @@ namespace Server
         Market = 25,
         CaptureMine = 26,
         nextTurn = 27,
+        Resources = 28,
     }
 }

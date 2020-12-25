@@ -6,7 +6,7 @@ using Server.PocketFramework;
 
 namespace Server.Pockets
 {
-    class MoveUnitPocket : BasePocket
+    class MoveUnitPocket : BasePocket // CHANGED!!!
     {
         public Unit unit;
         public Queue<int> path;
@@ -23,6 +23,7 @@ namespace Server.Pockets
             pc.WriteInt32(unit.owner.id);
             pc.WriteInt32(unit.Position.X);
             pc.WriteInt32(unit.Position.Y);
+            pc.WriteInt32(path.Count); // Cost path (it is not length path)
             pc.WriteInt32(path.Count);
             foreach (int item in path)
                 pc.WriteInt32(item);
