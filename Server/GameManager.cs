@@ -46,11 +46,9 @@ namespace Server
         {
             if (idClients.Count != 2) throw new Exception("invalid number of clients");
             _Map world;
-            BinaryFormatter formatter = new BinaryFormatter();
             using (FileStream fs = new FileStream("FuckingWorld", FileMode.OpenOrCreate))
-            {
-                world = (_Map)formatter.Deserialize(fs);
-            }
+                world = (_Map)new BinaryFormatter().Deserialize(fs);
+            
             Game game = new Game(world, new Player[] { new Player("0"), new Player("1") });
             games.Add(game);
             playerClients.Add(idClients[0], new PlayerClient()
@@ -109,13 +107,21 @@ namespace Server
                                 data = new SelectUnitPocket(game.currentPlayer.selectUnit);
                                 break;
                             case GameObj.typeObj.unit when pocket.Button == Buttons.Right: // OK
-                                GameObj[] gm = game.Attack((Unit)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
-                                data = new AttackPocket(gm[0], gm[1]);
+                                {
+                                    Unit unitA;
+                                    Unit unitD;
+                                    (unitA, unitD) = game.Attack((Unit)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
+                                    data = new AttackPocket(unitA, unitD);
+                                }
                                 break;
                             case GameObj.typeObj.town when pocket.Button == Buttons.Right:
-                                GameObj[] g = game.Attack((Town)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
-                                if (g[1].health == 0)
-                                    data = new EndGamePocket(game.currentPlayer, 1);
+                                {
+                                    Town town;
+                                    Unit unit;
+                                    (unit, town) = game.Attack((Town)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
+                                    if (town.health == 0)
+                                        data = new EndGamePocket(game.currentPlayer, 1);
+                                }
                                 break;
                             case GameObj.typeObj.mine when pocket.Button == Buttons.Right:  // OK
                                 data = new CaptureMinePocket(game.CaptureMine((Mine)game.map.Map[pocket.Coord.X, pocket.Coord.Y]));

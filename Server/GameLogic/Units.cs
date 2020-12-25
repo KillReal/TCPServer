@@ -56,6 +56,7 @@ namespace Server.GameLogic
         }
     }
 
+    [Serializable]
     public class Scout : Unit
     {
         public Scout(Player owner) : base(owner)
@@ -86,6 +87,7 @@ namespace Server.GameLogic
         }
     }
 
+    [Serializable]
     public class Warior : Unit
     {
         public int level;
@@ -151,6 +153,7 @@ namespace Server.GameLogic
         }
     }
 
+    [Serializable]
     public class Shooter : Unit
     {
         public int level;
@@ -224,6 +227,7 @@ namespace Server.GameLogic
         }
     }
 
+    [Serializable]
     public class Top : Unit
     {
         public Top(Player owner) : base(owner)
