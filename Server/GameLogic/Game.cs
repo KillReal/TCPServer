@@ -10,23 +10,23 @@ namespace Server.GameLogic
     [Serializable]
     public class Game
     {
-        public _Map map;
+        public World world;
         private Mutex mutexMap;
         public Player[] players;
         public Player currentPlayer;
 
-        public Game(_Map map, Player[] p) // expecting 2 players // OK
+        public Game(World world, Player[] p) // expecting 2 players // OK
         {
             mutexMap = new Mutex();
-            this.map = map;
+            this.world = world;
             players = p;
 
-            players[0].town = map.towns[0];
+            players[0].town = world.towns[0];
             players[0].NextTurn += players[0].town.nextTurn;
             players[0].town.owner = players[0];
             players[0].id = 0;
 
-            players[1].town = map.towns[1];
+            players[1].town = world.towns[1];
             players[1].NextTurn += players[1].town.nextTurn;
             players[1].town.owner = players[1];
             players[1].id = 1;
@@ -54,9 +54,9 @@ namespace Server.GameLogic
 
             unit.actionPoints -= path.Count;
 
-            map.Map[unit.Position.X, unit.Position.Y] = new GameObj(GameObj.typeObj.empty);
-            map.Map[unit.Position.X, unit.Position.Y].Position = unit.Position;
-            map.Map[A.X, A.Y] = unit;
+            world.Map[unit.Position.X, unit.Position.Y] = new GameObj(GameObj.typeObj.empty);
+            world.Map[unit.Position.X, unit.Position.Y].Position = unit.Position;
+            world.Map[A.X, A.Y] = unit;
             unit.Position = A;
 
             mutexMap.ReleaseMutex();
@@ -75,7 +75,7 @@ namespace Server.GameLogic
                 var o = new GameObj();
                 o.type = GameObj.typeObj.empty;
                 o.Position = p;
-                map.Map[p.X, p.Y] = o;
+                world.Map[p.X, p.Y] = o;
             }
             mutexMap.ReleaseMutex();
             return (currentPlayer.selectUnit, unit);
@@ -112,7 +112,7 @@ namespace Server.GameLogic
                     break;
             }
             u.owner = currentPlayer;
-            map.SpawnUnit(u);
+            world.SpawnUnit(u);
             currentPlayer.NextTurn += u.NextTurn;
             mutexMap.ReleaseMutex();
             return u;
@@ -147,7 +147,7 @@ namespace Server.GameLogic
 
         private Queue<int> PathFinding(Coord posA, Coord posB) // OK (can be optimal)
         {
-            GameObj[,] Map = map.Map;
+            GameObj[,] Map = world.Map;
             const int inf = 1000000;
             int lines = Map.GetUpperBound(1) + 1;
             int columns = Map.GetUpperBound(0) + 1;

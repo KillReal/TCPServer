@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 namespace Server.GameLogic
 {
@@ -90,7 +92,7 @@ namespace Server.GameLogic
     }
 
     [Serializable]
-    public class _Map 
+    public class World 
     {
         public GameObj[,] Map;
         public Town[] towns;
