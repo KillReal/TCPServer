@@ -43,10 +43,10 @@ namespace Server.GameLogic
             mutexMap.WaitOne();
 
             Queue<int> path = PathFinding(currentPlayer.selectUnit.Position, A);
-            if (currentPlayer.selectUnit.actionPoints - path.Count < 0) throw new Exception("Not moving");
             var unit = currentPlayer.selectUnit;
-
             unit.actionPoints = 100; // delete
+            if (unit.actionPoints - path.Count < 0) throw new Exception("Not moving");
+
             currentPlayer.selectUnit.actionPoints -= path.Count;
 
             map.Map[unit.Position.X, unit.Position.Y] = new GameObj(GameObj.typeObj.empty);
@@ -83,7 +83,7 @@ namespace Server.GameLogic
             return new GameObj[] { currentPlayer.selectUnit, obj };
         }
 
-        public Unit SpawnUnit(Unit.typeUnit id, int level = 1) // interface buttons // OK
+        public Unit SpawnUnit(Unit.typeUnit id) // interface buttons // OK
         {
             Unit u;
             switch (id)
@@ -92,22 +92,22 @@ namespace Server.GameLogic
                     u = new Scout(currentPlayer);
                     break;
                 case Unit.typeUnit.Warrior1:
-                    u = new Warior(currentPlayer, level);
+                    u = new Warior(currentPlayer, (int)id);
                     break;
                 case Unit.typeUnit.Shooter1:
-                    u = new Shooter(currentPlayer, level);
+                    u = new Shooter(currentPlayer, (int)id);
                     break;
                 case Unit.typeUnit.Warrior2:
-                    u = new Warior(currentPlayer, level);
+                    u = new Warior(currentPlayer, (int)id);
                     break;
                 case Unit.typeUnit.Shooter2:
-                    u = new Shooter(currentPlayer, level);
+                    u = new Shooter(currentPlayer, (int)id);
                     break;
                 case Unit.typeUnit.Warrior3:
-                    u = new Warior(currentPlayer, level);
+                    u = new Warior(currentPlayer, (int)id);
                     break;
                 case Unit.typeUnit.Shooter3:
-                    u = new Shooter(currentPlayer, level);
+                    u = new Shooter(currentPlayer, (int)id);
                     break;
                 case Unit.typeUnit.Top:
                     u = new Top(currentPlayer);
