@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using Server.GameLogic;
 using Server.Pockets;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 namespace Server
 {
@@ -18,7 +20,7 @@ namespace Server
         public ClientManager clientManager;
         public List<Game> games;
         public Dictionary<int, PlayerClient> playerClients;
-        private const string map = @"..\..\..\Resources\Map.txt"; // path to the map file (for now one map)
+        //private const string map = @"..\..\..\Resources\Map.txt"; // path to the map file (for now one map)
         public enum Buttons
         {
             Left = 1,
@@ -43,8 +45,11 @@ namespace Server
         public void StartGame(List<int> idClients) // expecting 2 players // OK
         {
             if (idClients.Count != 2) throw new Exception("invalid number of clients");
+            World world;
+            using (FileStream fs = new FileStream(@"..\..\..\Resources\World", FileMode.OpenOrCreate))
+                world = (World)new BinaryFormatter().Deserialize(fs);
 
-            Game game = new Game(new _Map(map), new Player[] { new Player("0"), new Player("1") });
+            Game game = new Game(world, new Player[] { new Player("0"), new Player("1") });
             games.Add(game);
             playerClients.Add(idClients[0], new PlayerClient()
             {
@@ -64,6 +69,9 @@ namespace Server
             clientManager.Send(idClients[1], new InitGamePocket(playerClients[idClients[1]].playerInGame));
             clientManager.Send(idClients[0], new NextTurnPocket(playerClients[idClients[0]].game.currentPlayer));
             clientManager.Send(idClients[1], new NextTurnPocket(playerClients[idClients[1]].game.currentPlayer));
+            clientManager.Send(idClients[0], new PlayerResourcesPocket(game.players[0]));
+            clientManager.Send(idClients[1], new PlayerResourcesPocket(game.players[1]));
+
         }
 
         public void HandleGameAction(GameActionPocket pocket, int id)
@@ -77,41 +85,60 @@ namespace Server
                 {
                     case Buttons.SpawnUnit: // OK
                         data = new SpawnUnitPocket(game.SpawnUnit((Unit.typeUnit)pocket.Param));
+                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.UpgradeTown: // OK
                         game.UpgradeTown();
                         data = new UpgradeTownPocket(game.currentPlayer.town);
+                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.Market:
                         game.Market();
                         data = new MarketPocket(game.currentPlayer);
+                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.NextTurn: // OK
                         game.nextTurn();
                         data = new NextTurnPocket(game.currentPlayer);
+                        clientManager.Send(playerClients[id].idAponent, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.Left:
                     case Buttons.Right:
-                        switch (game.map.Map[pocket.Coord.X, pocket.Coord.Y].type)
+                        switch (game.world.Map[pocket.Coord.X, pocket.Coord.Y].type)
                         {
                             case GameObj.typeObj.empty when pocket.Button == Buttons.Left: // OK
                                 data = new MoveUnitPocket(game.currentPlayer.selectUnit, game.MoveUnit(new Coord(pocket.Coord.X, pocket.Coord.Y)));
                                 break;
                             case GameObj.typeObj.unit when pocket.Button == Buttons.Left:  // OK
-                                game.SelectUnit((Unit)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
+                                game.SelectUnit((Unit)game.world.Map[pocket.Coord.X, pocket.Coord.Y]);
                                 data = new SelectUnitPocket(game.currentPlayer.selectUnit);
                                 break;
                             case GameObj.typeObj.unit when pocket.Button == Buttons.Right: // OK
-                                GameObj[] gm = game.Attack((Unit)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
-                                data = new AttackPocket(gm[0], gm[1]);
+                                {
+                                    Unit unitA;
+                                    Unit unitD;
+                                    (unitA, unitD) = game.Attack((Unit)game.world.Map[pocket.Coord.X, pocket.Coord.Y]);
+                                    data = new AttackPocket(unitA, unitD);
+                                }
                                 break;
                             case GameObj.typeObj.town when pocket.Button == Buttons.Right:
-                                GameObj[] g = game.Attack((Town)game.map.Map[pocket.Coord.X, pocket.Coord.Y]);
-                                if (g[1].health == 0)
-                                    data = new EndGamePocket(game.currentPlayer, 1);
+                                {
+                                    Town town;
+                                    Unit unit;
+                                    (unit, town) = game.Attack((Town)game.world.Map[pocket.Coord.X, pocket.Coord.Y]);
+                                    if (town.health == 0)
+                                    {
+                                        data = new EndGamePocket(game.currentPlayer, 1);
+                                        // END GAME... (below code, send packet on end game!!!)   
+                                    }
+                                    else
+                                    {
+                                        data = new AttackPocket(unit, town);
+                                    }
+                                }
                                 break;
                             case GameObj.typeObj.mine when pocket.Button == Buttons.Right:  // OK
-                                data = new CaptureMinePocket(game.CaptureMine((Mine)game.map.Map[pocket.Coord.X, pocket.Coord.Y]));
+                                data = new CaptureMinePocket(game.CaptureMine((Mine)game.world.Map[pocket.Coord.X, pocket.Coord.Y]));
                                 break;
                             default:
                                 throw new Exception("block!"); // OK

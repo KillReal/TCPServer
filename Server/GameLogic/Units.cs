@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Server.GameLogic
 {
+    [Serializable]
     public class GameObj
     {
         public enum typeObj
@@ -31,6 +32,7 @@ namespace Server.GameLogic
     }
 
     // Units //
+    [Serializable]
     abstract public class Unit : GameObj
     {
         public enum typeUnit
@@ -58,6 +60,7 @@ namespace Server.GameLogic
         }
     }
 
+    [Serializable]
     public class Scout : Unit
     {
         public Scout(Player owner) : base(owner)
@@ -88,6 +91,7 @@ namespace Server.GameLogic
         }
     }
 
+    [Serializable]
     public class Warior : Unit
     {
         public int level;
@@ -108,13 +112,13 @@ namespace Server.GameLogic
                     this.damage = 4;
                     this.health = 10;
                     this.MAXactionPoints = 10;
+                    this.actionPoints = this.MAXactionPoints;
                     this.rangeAttack = 0;
                     this.shootingDamage = 0;
                     break;
                 case 3:
                     if (level > 1)
                     {
-
                         if (owner.gold - 100 < 0)
                             throw new Exception("Not money");
                         owner.gold -= 100;
@@ -124,6 +128,7 @@ namespace Server.GameLogic
                         this.damage = 10;
                         this.health = 25;
                         this.MAXactionPoints = 12;
+                        this.actionPoints = this.MAXactionPoints;
                         this.rangeAttack = 0;
                         this.shootingDamage = 0;
                     }
@@ -131,7 +136,6 @@ namespace Server.GameLogic
                 case 5:
                     if (level > 2)
                     {
-
                         if (owner.gold - 100 < 0)
                             throw new Exception("Not money");
                         owner.gold -= 100;
@@ -141,6 +145,7 @@ namespace Server.GameLogic
                         this.damage = 16;
                         this.health = 40;
                         this.MAXactionPoints = 13;
+                        this.actionPoints = this.MAXactionPoints;
                         this.rangeAttack = 0;
                         this.shootingDamage = 0;
                     }
@@ -162,6 +167,7 @@ namespace Server.GameLogic
         }
     }
 
+    [Serializable]
     public class Shooter : Unit
     {
         public int level;
@@ -184,11 +190,11 @@ namespace Server.GameLogic
                     this.damage = 2;
                     this.health = 5;
                     this.MAXactionPoints = 7;
+                    this.actionPoints = this.MAXactionPoints;
                     break;
                 case 4:
                     if (level > 1)
                     {
-
                         if (owner.gold - 100 < 0)
                             throw new Exception("Not money");
                         owner.gold -= 100;
@@ -200,6 +206,7 @@ namespace Server.GameLogic
                         this.damage = 6;
                         this.health = 20;
                         this.MAXactionPoints = 9;
+                        this.actionPoints = this.MAXactionPoints;
                     }
                     break;
                 case 6:
@@ -216,6 +223,7 @@ namespace Server.GameLogic
                         this.damage = 12;
                         this.health = 30;
                         this.MAXactionPoints = 10;
+                        this.actionPoints = this.MAXactionPoints;
                     }
                     break;
             }
@@ -247,6 +255,7 @@ namespace Server.GameLogic
         }
     }
 
+    [Serializable]
     public class Top : Unit
     {
         public Top(Player owner) : base(owner)
@@ -261,6 +270,7 @@ namespace Server.GameLogic
             this.damage = 20;
             this.health = 45;
             this.MAXactionPoints = 15;
+            this.actionPoints = this.MAXactionPoints;
         }
         override public void atack(GameObj unit)
         {
