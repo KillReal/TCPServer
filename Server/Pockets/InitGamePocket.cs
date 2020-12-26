@@ -24,7 +24,6 @@ namespace Server.Pockets
         {
             PocketConstructor pc = new PocketConstructor();
             pc.WriteInt32(player.id);
-            // resources player?
             return pc.GetBytes();
         }
 

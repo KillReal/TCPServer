@@ -69,6 +69,9 @@ namespace Server
             clientManager.Send(idClients[1], new InitGamePocket(playerClients[idClients[1]].playerInGame));
             clientManager.Send(idClients[0], new NextTurnPocket(playerClients[idClients[0]].game.currentPlayer));
             clientManager.Send(idClients[1], new NextTurnPocket(playerClients[idClients[1]].game.currentPlayer));
+            clientManager.Send(idClients[0], new PlayerResourcesPocket(game.players[0]));
+            clientManager.Send(idClients[1], new PlayerResourcesPocket(game.players[1]));
+
         }
 
         public void HandleGameAction(GameActionPocket pocket, int id)
@@ -82,18 +85,22 @@ namespace Server
                 {
                     case Buttons.SpawnUnit: // OK
                         data = new SpawnUnitPocket(game.SpawnUnit((Unit.typeUnit)pocket.Param));
+                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.UpgradeTown: // OK
                         game.UpgradeTown();
                         data = new UpgradeTownPocket(game.currentPlayer.town);
+                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.Market:
                         game.Market();
                         data = new MarketPocket(game.currentPlayer);
+                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.NextTurn: // OK
                         game.nextTurn();
                         data = new NextTurnPocket(game.currentPlayer);
+                        clientManager.Send(playerClients[id].idAponent, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.Left:
                     case Buttons.Right:
