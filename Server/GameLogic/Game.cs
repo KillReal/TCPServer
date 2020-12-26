@@ -24,11 +24,13 @@ namespace Server.GameLogic
             players[0].town = world.towns[0];
             players[0].NextTurn += players[0].town.nextTurn;
             players[0].town.owner = players[0];
+            players[0].town.level = 0;
             players[0].id = 0;
 
             players[1].town = world.towns[1];
             players[1].NextTurn += players[1].town.nextTurn;
             players[1].town.owner = players[1];
+            players[1].town.level = 0;
             players[1].id = 1;
 
             currentPlayer = players[0];

@@ -117,38 +117,33 @@ namespace Server.GameLogic
                     this.shootingDamage = 0;
                     break;
                 case 3:
-                    if (level > 1)
-                    {
-                        if (owner.gold - 100 < 0)
-                            throw new Exception("Not money");
-                        owner.gold -= 100;
-                        this.type_unit = typeUnit.Warrior2;
-                        this.attack = 8;
-                        this.defense = 8;
-                        this.damage = 10;
-                        this.health = 25;
-                        this.MAXactionPoints = 12;
-                        this.actionPoints = this.MAXactionPoints;
-                        this.rangeAttack = 0;
-                        this.shootingDamage = 0;
-                    }
+                    if (owner.town.level < 1) throw new Exception("Town level not 1");
+                    if (owner.gold - 100 < 0) throw new Exception("Not money");
+                    owner.gold -= 100;
+                    this.type_unit = typeUnit.Warrior2;
+                    this.attack = 8;
+                    this.defense = 8;
+                    this.damage = 10;
+                    this.health = 25;
+                    this.MAXactionPoints = 12;
+                    this.actionPoints = this.MAXactionPoints;
+                    this.rangeAttack = 0;
+                    this.shootingDamage = 0;
+                    
                     break;
                 case 5:
-                    if (level > 2)
-                    {
-                        if (owner.gold - 100 < 0)
-                            throw new Exception("Not money");
-                        owner.gold -= 100;
-                        this.type_unit = typeUnit.Warrior3;
-                        this.attack = 10;
-                        this.defense = 12;
-                        this.damage = 16;
-                        this.health = 40;
-                        this.MAXactionPoints = 13;
-                        this.actionPoints = this.MAXactionPoints;
-                        this.rangeAttack = 0;
-                        this.shootingDamage = 0;
-                    }
+                    if (owner.town.level < 2) throw new Exception("Town level not 2");
+                    if (owner.gold - 100 < 0) throw new Exception("Not money");
+                    owner.gold -= 100;
+                    this.type_unit = typeUnit.Warrior3;
+                    this.attack = 10;
+                    this.defense = 12;
+                    this.damage = 16;
+                    this.health = 40;
+                    this.MAXactionPoints = 13;
+                    this.actionPoints = this.MAXactionPoints;
+                    this.rangeAttack = 0;
+                    this.shootingDamage = 0;
                     break;
             }
         }
@@ -179,8 +174,7 @@ namespace Server.GameLogic
             switch (id)
             {
                 case 2:
-                    if (owner.gold - 100 < 0)
-                        throw new Exception("Not money");
+                    if (owner.gold - 100 < 0) throw new Exception("Not money");
                     owner.gold -= 100;
                     this.type_unit = typeUnit.Shooter1;
                     this.shootingDamage = 8;
@@ -193,38 +187,36 @@ namespace Server.GameLogic
                     this.actionPoints = this.MAXactionPoints;
                     break;
                 case 4:
-                    if (level > 1)
-                    {
-                        if (owner.gold - 100 < 0)
-                            throw new Exception("Not money");
-                        owner.gold -= 100;
-                        this.type_unit = typeUnit.Shooter2;
-                        this.shootingDamage = 15;
-                        this.rangeAttack = 5;
-                        this.attack = 8;
-                        this.defense = 5;
-                        this.damage = 6;
-                        this.health = 20;
-                        this.MAXactionPoints = 9;
-                        this.actionPoints = this.MAXactionPoints;
-                    }
+                    if (level < 1) throw new Exception("Town level not 1");
+                    if (owner.gold - 100 < 0) throw new Exception("Not money");
+
+                    owner.gold -= 100;
+                    this.type_unit = typeUnit.Shooter2;
+                    this.shootingDamage = 15;
+                    this.rangeAttack = 5;
+                    this.attack = 8;
+                    this.defense = 5;
+                    this.damage = 6;
+                    this.health = 20;
+                    this.MAXactionPoints = 9;
+                    this.actionPoints = this.MAXactionPoints;
+                    
                     break;
                 case 6:
-                    if (level > 2)
-                    {
-                        if (owner.gold - 100 < 0)
-                            throw new Exception("Not money");
-                        owner.gold -= 100;
-                        this.type_unit = typeUnit.Shooter3;
-                        this.shootingDamage = 20;
-                        this.rangeAttack = 7;
-                        this.attack = 13;
-                        this.defense = 8;
-                        this.damage = 12;
-                        this.health = 30;
-                        this.MAXactionPoints = 10;
-                        this.actionPoints = this.MAXactionPoints;
-                    }
+                    if (level < 2) throw new Exception("Town level not 2");
+                    if (owner.gold - 100 < 0) throw new Exception("Not money");
+
+                    owner.gold -= 100;
+                    this.type_unit = typeUnit.Shooter3;
+                    this.shootingDamage = 20;
+                    this.rangeAttack = 7;
+                    this.attack = 13;
+                    this.defense = 8;
+                    this.damage = 12;
+                    this.health = 30;
+                    this.MAXactionPoints = 10;
+                    this.actionPoints = this.MAXactionPoints;
+                    
                     break;
             }
         }
@@ -260,8 +252,10 @@ namespace Server.GameLogic
     {
         public Top(Player owner) : base(owner)
         {
-            owner.gold -= 100;
+            if (owner.town.level < 2) throw new Exception("Town level not 2");
+            if (owner.gold - 100 < 0) throw new Exception("Not money");
 
+            owner.gold -= 100;
             this.type_unit = typeUnit.Top;
             this.shootingDamage = 15;
             this.rangeAttack = 5;

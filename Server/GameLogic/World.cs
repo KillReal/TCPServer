@@ -76,7 +76,7 @@ namespace Server.GameLogic
         public Town()
         {
             type = typeObj.town;
-            level = 1;
+            level = 0;
         }
         public void upgrade()
         {
