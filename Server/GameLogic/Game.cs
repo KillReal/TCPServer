@@ -89,7 +89,7 @@ namespace Server.GameLogic
             return (currentPlayer.selectUnit, town);
         }
 
-        public Unit SpawnUnit(Unit.typeUnit id, int level = 1) // interface buttons // OK
+        public Unit SpawnUnit(Unit.typeUnit id) // interface buttons // OK
         {
             mutexMap.WaitOne();
             Unit u;
@@ -98,11 +98,23 @@ namespace Server.GameLogic
                 case Unit.typeUnit.Scout:
                     u = new Scout(currentPlayer);
                     break;
-                case Unit.typeUnit.Warior:
-                    u = new Warior(currentPlayer, level);
+                case Unit.typeUnit.Warrior1:
+                    u = new Warior(currentPlayer, (int)id);
                     break;
-                case Unit.typeUnit.Shooter:
-                    u = new Shooter(currentPlayer, level);
+                case Unit.typeUnit.Shooter1:
+                    u = new Shooter(currentPlayer, (int)id);
+                    break;
+                case Unit.typeUnit.Warrior2:
+                    u = new Warior(currentPlayer, (int)id);
+                    break;
+                case Unit.typeUnit.Shooter2:
+                    u = new Shooter(currentPlayer, (int)id);
+                    break;
+                case Unit.typeUnit.Warrior3:
+                    u = new Warior(currentPlayer, (int)id);
+                    break;
+                case Unit.typeUnit.Shooter3:
+                    u = new Shooter(currentPlayer, (int)id);
                     break;
                 case Unit.typeUnit.Top:
                     u = new Top(currentPlayer);
