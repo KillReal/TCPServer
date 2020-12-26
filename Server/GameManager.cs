@@ -46,7 +46,7 @@ namespace Server
         {
             if (idClients.Count != 2) throw new Exception("invalid number of clients");
             World world;
-            using (FileStream fs = new FileStream("World", FileMode.OpenOrCreate))
+            using (FileStream fs = new FileStream(@"..\..\..\Resources\World", FileMode.OpenOrCreate))
                 world = (World)new BinaryFormatter().Deserialize(fs);
 
             Game game = new Game(world, new Player[] { new Player("0"), new Player("1") });
