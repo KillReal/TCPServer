@@ -24,9 +24,9 @@ namespace Server.GameLogic
         public static bool operator !=(Coord c1, Coord c2) => c1.X != c2.X && c1.Y != c2.Y;
         public static bool operator !=(Coord me, int c) => me.X != c && me.Y != c;
         public static bool operator >(Coord c1, Coord c2) => c1.X > c2.X && c1.Y > c2.Y;
-        public static bool operator >(Coord me, int c) => me.X > c && me.Y > c;
+        public static bool operator >(Coord me, double c) => Math.Sqrt(Math.Pow(me.X, 2) + Math.Pow(me.Y, 2)) > c;
         public static bool operator <(Coord c1, Coord c2) => c1.X < c2.X && c1.Y < c2.Y;
-        public static bool operator <(Coord me, int c) => me.X < c && me.Y < c;
+        public static bool operator <(Coord me, double c) => Math.Sqrt(Math.Pow(me.X, 2) + Math.Pow(me.Y, 2)) < c;
         public static bool operator >=(Coord c1, Coord c2) => c1.X >= c2.X && c1.Y >= c2.Y;
         public static bool operator >=(Coord me, int c) => me.X >= c && me.Y >= c;
         public static bool operator <=(Coord c1, Coord c2) => c1.X <= c2.X && c1.Y <= c2.Y;

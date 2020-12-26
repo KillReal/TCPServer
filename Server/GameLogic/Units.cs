@@ -79,7 +79,7 @@ namespace Server.GameLogic
         override public void atack(GameObj unit)
         {
             Coord range = (this.Position - unit.Position).ABS;
-            if (range > 1) throw new Exception("long range");
+            if (range > 1.5) throw new Exception("long range");
 
             if (this.attack == unit.defense)
                 unit.health -= this.damage;
@@ -155,7 +155,7 @@ namespace Server.GameLogic
         override public void atack(GameObj unit)
         {
             Coord range = (this.Position - unit.Position).ABS;
-            if (range > 1) throw new Exception("long range");
+            if (range > 1.5) throw new Exception("long range");
 
             if (this.attack == unit.defense)
                 unit.health -= this.damage;
@@ -232,7 +232,7 @@ namespace Server.GameLogic
         {
             Coord range = (this.Position - unit.Position).ABS;
             if (range > rangeAttack) throw new Exception("long range");
-            if (range > 1)
+            if (range < 1.5)
             {
                 if (this.attack == unit.defense)
                     unit.health -= this.damage;
@@ -276,7 +276,7 @@ namespace Server.GameLogic
         {
             Coord range = (this.Position - unit.Position).ABS;
             if (range > rangeAttack) throw new Exception("long range");
-            if (range > 1)
+            if (range < 1.5)
             {
                 if (this.attack == unit.defense)
                     unit.health -= this.damage;

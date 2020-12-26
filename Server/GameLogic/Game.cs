@@ -141,7 +141,7 @@ namespace Server.GameLogic
         {
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             Coord c = (currentPlayer.selectUnit.Position - mine.Position).ABS;
-            if (c > 1) throw new Exception("out of range");
+            if (c > 1.5) throw new Exception("out of range");
             mine.owner = currentPlayer;
             currentPlayer.NextTurn += mine.mining;
             return mine;
