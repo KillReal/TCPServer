@@ -304,10 +304,9 @@ namespace Server
                 Header header = new Header((int)DateTime.Now.Ticks, pocket_enum, data_part.Length);
                 data_part = Utils.ConcatBytes(header.ToBytes(), data_part);
                 while (!GetClientCallback(id))
-                    Thread.Sleep(10);
+                    Thread.Sleep(5);
                 SendRawBytes(id, data_part, true);
                 split_count--;
-                Thread.Sleep(5);
             } while (GetSocket(id) != null && split_count > 0);
         }
 
@@ -338,7 +337,7 @@ namespace Server
                     }
                     return;
                 }
-                Thread.Sleep(100);
+                Thread.Sleep(5);
             }
         }
 

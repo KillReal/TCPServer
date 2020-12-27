@@ -94,7 +94,7 @@ namespace Server
                 if (clientManager.GetLastPocketID(client_id) == header.Id)
                     return Utils.SplitBytes(ref data, header.Size + Header.GetLenght());
                 if (data.Length < Header.GetLenght() || data.Length < Header.GetLenght() + header.Size)
-                    return data;
+                    return null;
                 Utils.SplitBytes(ref data, Header.GetLenght());
                 var typeEnum = (PocketEnum)header.Type;
                 if (typeEnum == PocketEnum.MessageAccepted)
