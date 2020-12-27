@@ -6,16 +6,11 @@ using Server.PocketFramework;
 
 namespace Server.Pockets
 {
-    class NextTurnPocket : BasePocket // CHANGED!!!
+    class PlayerResourcesPocket: BasePocket
     {
         public Player player;
 
-        public static int GetLenght()
-        {
-            return sizeof(int);
-        }
-
-        public NextTurnPocket(Player player)
+        public PlayerResourcesPocket(Player player)
         {
             this.player = player;
         }
@@ -25,8 +20,6 @@ namespace Server.Pockets
             PocketConstructor pc = new PocketConstructor();
 
             pc.WriteInt32(player.id);
-            //pc.WriteInt32(player.selectUnit); 
-
             pc.WriteInt32(player.gold);
             pc.WriteInt32(player.wood);
             pc.WriteInt32(player.rock);
@@ -37,7 +30,7 @@ namespace Server.Pockets
 
         public override int GetType()
         {
-            return (int)ResponsePocketEnum.nextTurn;
+            return (int)ResponsePocketEnum.Resources;
         }
     }
 }
