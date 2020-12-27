@@ -65,9 +65,10 @@ namespace Server.GameLogic
     {
         public Scout(Player owner) : base(owner)
         {
-            if (owner.gold - 100 < 0)
-                throw new Exception("Not money");
-            owner.gold -= 100;
+            if (owner.gold - 50 < 0) throw new Exception("Not gold");
+
+            owner.gold -= 50;
+
             this.type_unit = typeUnit.Scout;
             this.attack = 2;
             this.defense = 2;
@@ -78,6 +79,8 @@ namespace Server.GameLogic
         }
         override public void atack(GameObj unit)
         {
+            if (actionPoints == 0) throw new Exception("not actionPoints");
+            actionPoints = 0;
             Coord range = (this.Position - unit.Position).ABS;
             if (range > 1.5) throw new Exception("long range");
 
@@ -103,9 +106,10 @@ namespace Server.GameLogic
             switch (id)
             {
                 case 1:
-                    if (owner.gold - 100 < 0)
-                        throw new Exception("Not money");
+                    if (owner.gold - 100 < 0) throw new Exception("Not gold");
+
                     owner.gold -= 100;
+
                     this.type_unit = typeUnit.Warrior1;
                     this.attack = 6;
                     this.defense = 5;
@@ -118,8 +122,13 @@ namespace Server.GameLogic
                     break;
                 case 3:
                     if (owner.town.level < 1) throw new Exception("Town level not 1");
-                    if (owner.gold - 100 < 0) throw new Exception("Not money");
-                    owner.gold -= 100;
+
+                    if (owner.gold - 150 < 0) throw new Exception("Not gold");
+                    if (owner.wood - 1 < 0) throw new Exception("Not wood");
+
+                    owner.gold -= 150;
+                    owner.wood -= 1;
+
                     this.type_unit = typeUnit.Warrior2;
                     this.attack = 8;
                     this.defense = 8;
@@ -133,8 +142,15 @@ namespace Server.GameLogic
                     break;
                 case 5:
                     if (owner.town.level < 2) throw new Exception("Town level not 2");
-                    if (owner.gold - 100 < 0) throw new Exception("Not money");
-                    owner.gold -= 100;
+
+                    if (owner.gold - 200 < 0) throw new Exception("Not gold");
+                    if (owner.wood - 2 < 0) throw new Exception("Not wood");
+                    if (owner.rock - 1 < 0) throw new Exception("Not rock");
+
+                    owner.gold -= 200;
+                    owner.wood -= 2;
+                    owner.rock -= 1;
+
                     this.type_unit = typeUnit.Warrior3;
                     this.attack = 10;
                     this.defense = 12;
@@ -149,6 +165,8 @@ namespace Server.GameLogic
         }
         override public void atack(GameObj unit)
         {
+            if (actionPoints == 0) throw new Exception("not actionPoints");
+            actionPoints = 0;
             Coord range = (this.Position - unit.Position).ABS;
             if (range > 1.5) throw new Exception("long range");
 
@@ -174,8 +192,10 @@ namespace Server.GameLogic
             switch (id)
             {
                 case 2:
-                    if (owner.gold - 100 < 0) throw new Exception("Not money");
-                    owner.gold -= 100;
+                    if (owner.gold - 150 < 0) throw new Exception("Not gold");
+
+                    owner.gold -= 150;
+
                     this.type_unit = typeUnit.Shooter1;
                     this.shootingDamage = 8;
                     this.rangeAttack = 3;
@@ -188,9 +208,13 @@ namespace Server.GameLogic
                     break;
                 case 4:
                     if (level < 1) throw new Exception("Town level not 1");
-                    if (owner.gold - 100 < 0) throw new Exception("Not money");
 
-                    owner.gold -= 100;
+                    if (owner.gold - 200 < 0) throw new Exception("Not gold");
+                    if (owner.wood - 2 < 0) throw new Exception("Not wood");
+
+                    owner.gold -= 200;
+                    owner.wood -= 2;
+
                     this.type_unit = typeUnit.Shooter2;
                     this.shootingDamage = 15;
                     this.rangeAttack = 5;
@@ -204,9 +228,15 @@ namespace Server.GameLogic
                     break;
                 case 6:
                     if (level < 2) throw new Exception("Town level not 2");
-                    if (owner.gold - 100 < 0) throw new Exception("Not money");
 
-                    owner.gold -= 100;
+                    if (owner.gold - 300 < 0) throw new Exception("Not gold");
+                    if (owner.wood - 2 < 0) throw new Exception("Not wood");
+                    if (owner.rock - 2 < 0) throw new Exception("Not rock");
+
+                    owner.gold -= 300;
+                    owner.wood -= 2;
+                    owner.rock -= 2;
+
                     this.type_unit = typeUnit.Shooter3;
                     this.shootingDamage = 20;
                     this.rangeAttack = 7;
@@ -222,6 +252,8 @@ namespace Server.GameLogic
         }
         override public void atack(GameObj unit)
         {
+            if (actionPoints == 0) throw new Exception("not actionPoints");
+            actionPoints = 0;
             Coord range = (this.Position - unit.Position).ABS;
             if (range > rangeAttack) throw new Exception("long range");
             if (range < 1.5)
@@ -253,9 +285,17 @@ namespace Server.GameLogic
         public Top(Player owner) : base(owner)
         {
             if (owner.town.level < 2) throw new Exception("Town level not 2");
-            if (owner.gold - 100 < 0) throw new Exception("Not money");
 
-            owner.gold -= 100;
+            if (owner.gold - 400 < 0) throw new Exception("Not gold");
+            if (owner.wood - 2 < 0) throw new Exception("Not wood");
+            if (owner.rock - 2 < 0) throw new Exception("Not rock");
+            if (owner.crystall - 1 < 0) throw new Exception("Not crystall");
+
+            owner.gold -= 400;
+            owner.wood -= 2;
+            owner.rock -= 2;
+            owner.crystall -= 1;
+
             this.type_unit = typeUnit.Top;
             this.shootingDamage = 15;
             this.rangeAttack = 5;
@@ -268,6 +308,8 @@ namespace Server.GameLogic
         }
         override public void atack(GameObj unit)
         {
+            if (actionPoints == 0) throw new Exception("not actionPoints");
+            actionPoints = 0;
             Coord range = (this.Position - unit.Position).ABS;
             if (range > rangeAttack) throw new Exception("long range");
             if (range < 1.5)

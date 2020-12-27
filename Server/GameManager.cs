@@ -40,6 +40,7 @@ namespace Server
         public void Init(ClientManager _clientManager)
         {
             clientManager = _clientManager;
+            PocketHandler.onGameAction += HandleGameAction;
         }
 
         public void StartGame(List<int> idClients) // expecting 2 players // OK
@@ -71,7 +72,6 @@ namespace Server
             clientManager.Send(idClients[1], new NextTurnPocket(playerClients[idClients[1]].game.currentPlayer));
             clientManager.Send(idClients[0], new PlayerResourcesPocket(game.players[0]));
             clientManager.Send(idClients[1], new PlayerResourcesPocket(game.players[1]));
-
         }
 
         public void HandleGameAction(GameActionPocket pocket, int id)
