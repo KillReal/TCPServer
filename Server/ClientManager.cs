@@ -15,24 +15,25 @@ namespace Server
 {
     public class ClientManager
     {
-        private static Settings settings;
+        private static Options options;
         public static Action<int> onClientLostConnection;
 
         public List<int> ID_list;
         public List<Session> Sessions;
         public struct Session
         {
+            public int id;
             public List<int> players;
             public GameManager game;
         };
 
-        public void Init(Settings _settings)
+        public void Init(Options _settings)
         {
             PocketHandler.onPingRecieved += PocketListener_OnPing;
             PocketHandler.onGameAction += Player_onGameAction;
             ID_list = new List<int>();
             Sessions = new List<Session>();
-            settings = _settings;
+            options = _settings;
         }
 
         private void Player_onGameAction(GameActionPocket pocket, int id)
@@ -59,7 +60,6 @@ namespace Server
             public Timer timer;
         };
         public ConcurrentDictionary<long, MyClient> _clients = new ConcurrentDictionary<long, MyClient>();
-        public List<Settings.Client> _history = new List<Settings.Client>();
 
         public string GetClientIP(int id)
         {
@@ -84,7 +84,7 @@ namespace Server
             int id = 0;
             while (ID_list.Contains(id))
                 id++;
-            if (id >= settings.MaxClients)
+            if (id >= options.MaxClients)
                 return -1;
             return id;
         }
@@ -95,16 +95,10 @@ namespace Server
             return client.pocket_id;
         }
 
-        public string GetHistoryClientInfo(int id)
-        {
-            Settings.Client client = _history[id];
-            return $"[{id}]   Name: {client.name}   Ip: {client.ip}";
-        }
-
         public string GetClientInfo(int id)
         {
             MyClient client = GetClient(id);
-            return $"[id:{id}][sid:{client.sid}]   Name: {client.name}   State: {Enum.GetName(typeof(ClientStateEnum), client.state)}   Callback:  {client.callback}   Ping: {client.ping} ms   Ip: {client.ip}";
+            return $"[id={id}][sid={client.sid}]   Name: {client.name}   State: {Enum.GetName(typeof(ClientStateEnum), client.state)}   Callback:  {client.callback}   Ping: {client.ping} ms   Ip: {client.ip}";
         }
 
         private MyClient GetClient(int id)
@@ -115,8 +109,8 @@ namespace Server
 
         private void WaitForClientDelete(int id)
         {
-            Console.WriteLine("[SERVER]: '{0}' doesn't responding, wait {1} sec reconnect timeout....", GetClientName(id), settings.ReconnectionTimeOut);
-            for (int i = 0; i < settings.ReconnectionTimeOut; i++)
+            DataManager.LogLine($"[SERVER]: '{GetClientName(id)}' doesn't responding, wait {options.ReconnectionTimeOut} sec reconnect timeout....");
+            for (int i = 0; i < options.ReconnectionTimeOut; i++)
             {
                 MyClient client = GetClient(id);
                 if (client.callback)
@@ -128,6 +122,8 @@ namespace Server
                 {
                     client.socket.Send(client.send_buffer);
                 }
+                else if (!PocketListener.continueListen)
+                    return;
                     
                 Thread.Sleep(1000);
             }
@@ -137,6 +133,12 @@ namespace Server
         private void WaitForClientAccept(object obj)
         {
             int id = (int)obj;
+            for (int i = 0; i < options.ConnectionTimeOut; i++)
+            {
+                if (GetClient(id).callback)
+                    return;
+                Thread.Sleep(1000);
+            }
             WaitForClientDelete(id);
         }
 
@@ -175,12 +177,18 @@ namespace Server
                     client.sid = -1;
                     client.state = (int)ClientStateEnum.Connected;
                     _clients[id] = client;
-                    Console.WriteLine($"[SERVER]: Player '{GetClientName(id)}' left from session '{i}'");
+                    DataManager.LogLine($"[SERVER]: Player '{GetClientName(id)}' left from session '{i}'");
+                    for (int j = 0; j < Sessions[i].players.Count; j++)
+                    {
+                        client = GetClient(Sessions[i].players[j]);
+                        client.state = (int)ClientStateEnum.Preparing;
+                        _clients[Sessions[i].players[j]] = client;
+                    }
                 }
                 if (Sessions[i].players.Count == 0)
                 {
                     Sessions.RemoveAt(i);
-                    Console.WriteLine($"[SERVER]: Session '{i}' is ends up");
+                    DataManager.LogLine($"[SERVER]: Session '{i}' is ends up");
                 }
             }
         }
@@ -190,37 +198,43 @@ namespace Server
             bool found_open_session = false;
             for (int i = 0; i < Sessions.Count; i++)
             {
-                if (Sessions[i].players.Count < settings.MaxSessionClients)
+                if (Sessions[i].players.Count < options.MaxSessionClients)
                 {
                     Sessions[i].players.Add(id);
                     MyClient client = GetClient(id);
                     client.sid = i;
-                    client.state = (int)ClientStateEnum.Playing;
+                    client.state = (int)ClientStateEnum.Preparing;
                     _clients[id] = client;
-                    Console.WriteLine($"[SERVER]: Player '{GetClientName(id)}' is joined session '{i}'");
+                    DataManager.LogLine($"[SERVER]: Player '{GetClientName(id)}' is joined session '{i}'");
                     found_open_session = true;
-                    if (Sessions[i].players.Count == settings.MaxSessionClients)
+                    if (Sessions[i].players.Count == options.MaxSessionClients)
                     {
-                        Console.Write($"[SERVER]: Session '{i}' begin game (");
+                        DataManager.Log($"[SERVER]: Session '{i}' begin game (");
                         for (int j = 0; j < Sessions[i].players.Count; j++)
-                            Console.Write($"'{GetClientName(Sessions[i].players[j])}'");
-                        Console.WriteLine(")");
+                        {
+                            client = GetClient(Sessions[i].players[j]);
+                            client.state = (int)ClientStateEnum.Playing;
+                            _clients[Sessions[i].players[j]] = client;
+                            DataManager.Log($"'{GetClientName(Sessions[i].players[j])}'");
+                        }
+                        DataManager.LogLine(")");
                         return i;                     
                     }
                 }
             }
             if (!found_open_session)
             {
-                Console.WriteLine($"[SERVER]: Session '{Sessions.Count}' is opened by '{GetClientName(id)}'");
+                DataManager.LogLine($"[SERVER]: Session '{Sessions.Count}' is opened by '{GetClientName(id)}'");
                 Session new_session = new Session
                 {
+                    id = Sessions.Count,
                     players = new List<int> { id },
                     game = new GameManager()
                 };
                 new_session.game.Init(this);
                 Sessions.Add(new_session);
                 MyClient client = GetClient(id);
-                client.sid = Sessions.Count - 1;
+                client.sid = new_session.id;
                 client.state = (int)ClientStateEnum.Preparing;
                 _clients[id] = client;
             }
@@ -234,7 +248,7 @@ namespace Server
             {
                 client.callback = false;
                 if (client.timer == null)
-                    client.timer = new Timer(new TimerCallback(WaitForClientAccept), id, settings.ConnectionTimeOut * 1000, -1);
+                    client.timer = new Timer(new TimerCallback(WaitForClientAccept), id, options.ConnectionTimeOut * 1000, -1);
                 _clients[id] = client;
             }
             else           
@@ -272,13 +286,13 @@ namespace Server
         public void SendSplittedPocket(int id, BasePocket pocket)
         {
             byte[] data = Utils.ConcatBytes(new Header((int)DateTime.Now.Ticks, pocket.GetType(), pocket.ToBytes().Length), pocket);
-            int split_count = (data.Length / settings.MaxPocketSize + 1);
+            int split_count = (data.Length / options.MaxPocketSize + 1);
             bool first = true;
             do
             {
                 byte[] data_part = data;
-                if (data.Length > settings.MaxPocketSize)
-                    data_part = Utils.SplitBytes(ref data, settings.MaxPocketSize);
+                if (data.Length > options.MaxPocketSize)
+                    data_part = Utils.SplitBytes(ref data, options.MaxPocketSize);
                 int pocket_enum = (int)PocketEnum.SplittedPocket;
                 if (first)
                 {
@@ -299,8 +313,7 @@ namespace Server
 
         public void SendAccepted(int id, int pocket_id)
         {
-            if (ID_list.Contains(id))
-                Send(id, new AcceptPocket(pocket_id));
+            Send(id, new AcceptPocket(pocket_id));
         }
 
         private void SendTask(int id, byte[] data, int data_id, bool wait_accept)
@@ -321,8 +334,7 @@ namespace Server
                     }
                     catch
                     {
-                        if (settings.ExceptionPrint)
-                            Console.WriteLine("[ERROR]: Pocket send to '{0}' failed (pid: {1})", client.name, data_id);
+                        DataManager.LogLine($"[ERROR]: Pocket send to '{client.name}' failed (pid: {data_id})", 3);
                     }
                     return;
                 }
@@ -397,7 +409,7 @@ namespace Server
         {
             do
             {
-                Thread.Sleep(settings.PingFreq);
+                Thread.Sleep(options.PingFreq);
                 MyClient client = GetClient(id);
                 if (client.callback)
                     Send(id, new PingPocket((int)DateTime.Now.Ticks, client.ping));
@@ -406,7 +418,7 @@ namespace Server
 
         private void LaunchBackgroundWorkers(int id)
         {
-            (new Task(() => ClientPinger(id))).Start();
+            //(new Task(() => ClientPinger(id))).Start();
         }
 
         public void UpdateClientSocket(int id, Socket new_socket)
@@ -455,11 +467,17 @@ namespace Server
                 client.timer = null;
             }
             Socket temp_socket = client.socket;
-            _history.Add(new Settings.Client { name = client.name, ip = client.ip});
             _clients.TryRemove(id, out _);
             ID_list.Remove(id);
-            if (temp_socket != null)
-                temp_socket.Disconnect(false);
+            try
+            {
+                if (temp_socket != null)
+                    temp_socket.Disconnect(false);
+            }
+            catch (Exception exception)
+            {
+                DataManager.LogLine($"[ERROR]: Client socket disconnection failed ({exception.Message})", 2);
+            }
         }
 
         public int FindClient(Socket client)

@@ -10,19 +10,17 @@ namespace Server
     class PocketListener
     {
         Socket _listener;
-        readonly Settings _settings;
-        ClientManager _clientManager;
+        readonly Options options;
         IPEndPoint _ipEndpoint;
         Thread _listenThread;
-        public static bool _continueListen = true;
+        public static bool continueListen = true;
 
-        public PocketListener(ClientManager clientManager, Settings settings)
+        public PocketListener(Options _options)
         {
-            _settings = settings;
-            _clientManager = clientManager;
-            IPHostEntry ipHost = Dns.GetHostEntry(_settings.HostName);
+            options = _options;
+            IPHostEntry ipHost = Dns.GetHostEntry(options.HostName);
             IPAddress ipAddr = ipHost.AddressList[0];
-            _ipEndpoint = new IPEndPoint(ipAddr, _settings.Port);
+            _ipEndpoint = new IPEndPoint(ipAddr, options.Port);
             _listener = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             _listener.Bind(_ipEndpoint);
             _listener.Listen(10);
@@ -36,7 +34,7 @@ namespace Server
 
         private void ListenForClients()
         { 
-            while (_continueListen)
+            while (continueListen)
             {
                 try
                 {
@@ -46,8 +44,7 @@ namespace Server
                 }
                 catch (Exception exception)
                 {
-                    if (_settings.ExceptionPrint)
-                        Console.WriteLine($"[ERROR]:  {exception.Message } - {exception.InnerException}");
+                    DataManager.LogLine($"[ERROR]:  {exception.Message } - {exception.InnerException}", 2);
                 }
             }
             _listener.Close();
@@ -60,7 +57,7 @@ namespace Server
 
         public void Stop()
         {
-            _continueListen = false;
+            continueListen = false;
             _listener.Close();
             _listenThread.Interrupt();
         }

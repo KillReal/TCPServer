@@ -12,7 +12,7 @@ namespace Server
     class PocketHandler
     {
         private static ClientManager clientManager;
-        private static Settings _settings;
+        private static Options options;
 
         public static Action<ConnectionPocket, Socket, int> OnConnection;
         public static Action<ChatMessagePocket, int> OnChatMessage;
@@ -30,10 +30,10 @@ namespace Server
             FillBytesToCommandsDictionary();
         }
 
-        public static void Init(ClientManager clientManager, Settings settings)
+        public static void Init(ClientManager clientManager, Options _options)
         {
             PocketHandler.clientManager = clientManager;
-            _settings = settings;
+            options = _options;
         }
 
         private static void FillBytesToCommandsDictionary()
@@ -70,16 +70,15 @@ namespace Server
                 }
                 catch (Exception exception)
                 {
-                    if (_settings.ExceptionPrint)
-                        Console.WriteLine($"[ERROR]: {exception.Message} {exception.InnerException}");
+                    DataManager.LogLine($"[ERROR]: {exception.Message} {exception.InnerException}", 2);
                     //if (client.Connected)
                         //client.Send((new ErrorPocket(2, exception.Message).ToBytes()));
                     rest_data = null;
                 }
-            } while (client.Connected && PocketListener._continueListen);
-            if (clientManager.GetClientName(client_id) != "unknown")
+            } while (client.Connected);
+            if (clientManager.GetClientName(client_id) != "unknown" && PocketListener.continueListen)
             {
-                Console.WriteLine($"[SERVER]: Lost connection with '{clientManager.GetClientName(client_id)}'");
+                DataManager.LogLine($"[SERVER]: Lost connection with '{clientManager.GetClientName(client_id)}'");
                 clientManager.ToggleConnectionState(client_id);
             }
             client.Shutdown(SocketShutdown.Both);
@@ -94,12 +93,10 @@ namespace Server
                 Header header = Header.FromBytes(data);
                 if (clientManager.GetLastPocketID(client_id) == header.Id)
                     return Utils.SplitBytes(ref data, header.Size + Header.GetLenght());
-                if (data.Length < header.Size)
+                if (data.Length < Header.GetLenght() || data.Length < Header.GetLenght() + header.Size)
                     return data;
                 Utils.SplitBytes(ref data, Header.GetLenght());
                 var typeEnum = (PocketEnum)header.Type;
-                if ((int)typeEnum < 1 && typeEnum >= PocketEnum.MaxExistEnum)
-                    return null;
                 if (typeEnum == PocketEnum.MessageAccepted)
                     OnMessageAccepted?.Invoke(client_id);
                 else if (typeEnum == PocketEnum.Connection)
@@ -146,6 +143,7 @@ namespace Server
                                 onPlayState?.Invoke((PlayStatePocket)basePocket, client_id);
                                 break;
                             default:
+                                DataManager.LogLine("Wrong pocket");
                                 break;
                         }
                     }

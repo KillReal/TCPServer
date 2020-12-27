@@ -18,6 +18,7 @@ namespace Client
         static Thread _readThread;
         static IPEndPoint ipEndPoint;
         static IPAddress ipAddr;
+        static Random random;
         public static void SendSplittedPocket(BasePocket pocket)
         {
             byte[] data = Utils.ConcatBytes(new Header((int)DateTime.Now.Ticks, pocket.GetType(), pocket.ToBytes().Length), pocket);
@@ -36,7 +37,7 @@ namespace Client
                 }
                 if (split_count == 1)
                     pocket_enum = (int)PocketEnum.SplittedPocketEnd;
-                Header header = new Header((int)DateTime.Now.Ticks, pocket_enum, data_part.Length);
+                Header header = new Header(random.Next(-2100000000, 210000000), pocket_enum, data_part.Length);
                 data_part = Utils.ConcatBytes(header.ToBytes(), data_part);
                 SendToServer(server, data_part);
                 //Thread.Sleep(10);
@@ -47,7 +48,7 @@ namespace Client
         public static void SendToServer(Socket server, BasePocket pocket)
         {
             byte[] data = pocket.ToBytes();
-            byte[] header = new Header((int)DateTime.Now.Ticks, pocket.GetType(), data.Length).ToBytes();
+            byte[] header = new Header(random.Next(-2100000000, 210000000), pocket.GetType(), data.Length).ToBytes();
             data = Utils.ConcatBytes(header, data);
             data = Encryption.Encrypt(data);
             try
@@ -72,7 +73,7 @@ namespace Client
             PocketHandler.onPingPocket += PocketListener_OnPingRecieved;
             PocketHandler.OnConnectionPocket += PocketListener_OnConnection;
             PocketHandler.OnDisconnectionPocket += PocketListener_OnDisconnection;
-
+            random = new Random((int)DateTime.Now.Ticks); 
             Console.Write("Enter client name: ");
             clientName = Console.ReadLine();
             try
@@ -150,10 +151,10 @@ namespace Client
                 else if (message != "exit")
                 {
                     (new Task(() => SendSplittedPocket(new ChatMessagePocket(clientName, message)))).Start();
+                    //SendToServer(server, new ChatMessagePocket(clientName, message));
                 }
                 else
                     continue_work = false;
-                Thread.Sleep(500);
             }
             _listenThread.Interrupt();
             _readThread.Interrupt();
@@ -163,7 +164,7 @@ namespace Client
 
         private static void PocketListener_OnAcception()
         {
-            Console.Write("[CLIENT] <--- [Accepted]\n");
+            //Console.Write("[CLIENT] <--- [Accepted]\n");
         }
 
         private static void PocketListener_OnChatMessage(ChatMessagePocket pocket)
