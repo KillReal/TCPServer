@@ -54,7 +54,7 @@ namespace Server
             {
                 try
                 {
-                    byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[40000];
                     int size = client.Receive(buffer);
                     if (size > 0)
                     {

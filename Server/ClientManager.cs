@@ -24,23 +24,14 @@ namespace Server
         {
             public int id;
             public List<int> players;
-            public GameManager game;
         };
 
         public void Init(Options _settings)
         {
             PocketHandler.onPingRecieved += PocketListener_OnPing;
-            PocketHandler.onGameAction += Player_onGameAction;
             ID_list = new List<int>();
             Sessions = new List<Session>();
             options = _settings;
-        }
-
-        private void Player_onGameAction(GameActionPocket pocket, int id)
-        {
-            int sid = GetClient(id).sid;
-            if (sid > -1)
-                Sessions[sid].game.HandleGameAction(pocket, id);
         }
 
         public struct MyClient
@@ -229,9 +220,7 @@ namespace Server
                 {
                     id = Sessions.Count,
                     players = new List<int> { id },
-                    game = new GameManager()
                 };
-                new_session.game.Init(this);
                 Sessions.Add(new_session);
                 MyClient client = GetClient(id);
                 client.sid = new_session.id;

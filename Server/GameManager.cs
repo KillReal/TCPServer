@@ -37,6 +37,7 @@ namespace Server
 
         public void Init(ClientManager _clientManager)
         {
+            PocketHandler.onGameAction += Player_onGameAction;
             clientManager = _clientManager;
         }
 
@@ -66,7 +67,7 @@ namespace Server
             clientManager.Send(idClients[1], new NextTurnPocket(playerClients[idClients[1]].game.currentPlayer));
         }
 
-        public void HandleGameAction(GameActionPocket pocket, int id)
+        public void Player_onGameAction(GameActionPocket pocket, int id)
         {
 
             Game game = playerClients[id].game;
@@ -77,18 +78,22 @@ namespace Server
                 {
                     case Buttons.SpawnUnit: // OK
                         data = new SpawnUnitPocket(game.SpawnUnit((Unit.typeUnit)pocket.Param));
+                        DataManager.LogLine($"[SESSION]: '{clientManager.GetClientName(id)}' spawned a unit '{Enum.GetName(typeof(Unit.typeUnit), pocket.Param)}");
                         break;
                     case Buttons.UpgradeTown: // OK
                         game.UpgradeTown();
                         data = new UpgradeTownPocket(game.currentPlayer.town);
+                        DataManager.LogLine($"[SESSION]: '{clientManager.GetClientName(id)}' upgraded a town");
                         break;
                     case Buttons.Market:
                         game.Market();
                         data = new MarketPocket(game.currentPlayer);
+                        DataManager.LogLine($"[SESSION]: '{clientManager.GetClientName(id)}' use market");
                         break;
                     case Buttons.NextTurn: // OK
                         game.nextTurn();
                         data = new NextTurnPocket(game.currentPlayer);
+                        DataManager.LogLine($"[SESSION]: '{clientManager.GetClientName(id)}' is ended his turn");
                         break;
                     case Buttons.Left:
                     case Buttons.Right:
