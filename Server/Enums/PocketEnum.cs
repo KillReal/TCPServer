@@ -33,5 +33,6 @@ namespace Server
         CaptureMine         = 26,
         nextTurn            = 27,
         Resources           = 28,
+        AttackTown          = 29,
     }
 }

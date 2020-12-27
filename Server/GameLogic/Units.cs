@@ -85,9 +85,9 @@ namespace Server.GameLogic
                 unit.health -= this.damage;
             else
                 if (this.attack > unit.defense)
-                unit.health -= (int)(this.damage * ((unit.defense - this.attack) * 0.5));
+                unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
             else
-                unit.health -= (int)(this.damage * (1 / ((unit.defense - this.attack) * 0.4)));
+                unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
         }
     }
 
@@ -156,9 +156,9 @@ namespace Server.GameLogic
                 unit.health -= this.damage;
             else
                 if (this.attack > unit.defense)
-                unit.health -= (int)(this.damage * ((unit.defense - this.attack) * 0.5));
+                unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
             else
-                unit.health -= (int)(this.damage * (1 / ((unit.defense - this.attack) * 0.4)));
+                unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
         }
     }
 
@@ -230,9 +230,9 @@ namespace Server.GameLogic
                     unit.health -= this.damage;
                 else
                     if (this.attack > unit.defense)
-                    unit.health -= (int)(this.damage * ((unit.defense - this.attack) * 0.5));
+                    unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
                 else
-                    unit.health -= (int)(this.damage * (1 / ((unit.defense - this.attack) * 0.4)));
+                    unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
             }
             else
             {
@@ -240,9 +240,9 @@ namespace Server.GameLogic
                     unit.health -= this.shootingDamage;
                 else
                     if (this.attack > unit.defense)
-                    unit.health -= (int)(this.shootingDamage * ((unit.defense - this.attack) * 0.5));
+                    unit.health -= (int)(this.shootingDamage * ((this.attack - unit.defense) * 0.5));
                 else
-                    unit.health -= (int)(this.shootingDamage * (1 / ((unit.defense - this.attack) * 0.4)));
+                    unit.health -= (int)(this.shootingDamage * (1 / ((this.attack - unit.defense) * 0.4)));
             }
         }
     }
@@ -276,9 +276,9 @@ namespace Server.GameLogic
                     unit.health -= this.damage;
                 else
                     if (this.attack > unit.defense)
-                    unit.health -= (int)(this.damage * ((unit.defense - this.attack) * 0.5));
+                    unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
                 else
-                    unit.health -= (int)(this.damage * (1 / ((unit.defense - this.attack) * 0.4)));
+                    unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
             }
             else
             {
@@ -286,9 +286,9 @@ namespace Server.GameLogic
                     unit.health -= this.shootingDamage;
                 else
                     if (this.attack > unit.defense)
-                    unit.health -= (int)(this.shootingDamage * ((unit.defense - this.attack) * 0.5));
+                    unit.health -= (int)(this.shootingDamage * ((this.attack - unit.defense) * 0.5));
                 else
-                    unit.health -= (int)(this.shootingDamage * (1 / ((unit.defense - this.attack) * 0.4)));
+                    unit.health -= (int)(this.shootingDamage * (1 / ((this.attack - unit.defense) * 0.4)));
             }
         }
     }

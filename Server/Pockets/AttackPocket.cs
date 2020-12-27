@@ -8,10 +8,10 @@ namespace Server.Pockets
 {
     class AttackPocket : BasePocket // CHANGED!!!
     {
-        public GameObj attacking;
-        public GameObj defending;
+        public Unit attacking;
+        public Unit defending;
 
-        public AttackPocket(GameObj attacking, GameObj defending)
+        public AttackPocket(Unit attacking, Unit defending)
         {
             this.attacking = attacking;
             this.defending = defending;

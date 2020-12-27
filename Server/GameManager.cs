@@ -133,7 +133,7 @@ namespace Server
                                     }
                                     else
                                     {
-                                        data = new AttackPocket(unit, town);
+                                        data = new AttackTownPocket(unit, town);
                                     }
                                 }
                                 break;
