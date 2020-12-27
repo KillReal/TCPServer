@@ -6,33 +6,37 @@ using Server.PocketFramework;
 
 namespace Server.Pockets
 {
-    class MoveUnitPocket : BasePocket // CHANGED!!!
+    class AttackTownPocket : BasePocket
     {
         public Unit unit;
-        public Queue<int> path;
+        public Town town;
 
-        public MoveUnitPocket(Unit unit, Queue<int> path)
+        public AttackTownPocket(Unit unit, Town town)
         {
             this.unit = unit;
-            this.path = path;
+            this.town = town;
         }
 
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
-            pc.WriteInt32(unit.owner.id);
+
+            pc.WriteInt32(unit.owner?.id ?? -1);
             pc.WriteInt32(unit.Position.X);
             pc.WriteInt32(unit.Position.Y);
-            pc.WriteInt32(unit.actionPoints); 
-            pc.WriteInt32(path.Count);
-            foreach (int item in path)
-                pc.WriteInt32(item);
+            pc.WriteInt32(unit.health);
+
+            pc.WriteInt32(town.owner?.id ?? -1);
+            pc.WriteInt32(town.Position.X);
+            pc.WriteInt32(town.Position.Y);
+            pc.WriteInt32(town.health);
+
             return pc.GetBytes();
         }
 
         public override int GetType()
         {
-            return (int)ResponsePocketEnum.MoveUnit;
+            return (int)ResponsePocketEnum.AttackTown;
         }
     }
 }

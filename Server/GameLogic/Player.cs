@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Server.GameLogic
 {
+    [Serializable]
     public class Player
     {
         public string name;
