@@ -15,6 +15,7 @@ namespace Server
     {
         static ClientManager clientManager = new ClientManager();
         static Options options = new Options();
+        static GameManager gameManager = new GameManager();
         static void Main(string[] args)
         {
             PocketHandler.OnMessageAccepted += Client_OnAccept;
@@ -25,6 +26,7 @@ namespace Server
             PocketHandler.onPlayState += Client_OnPlayState;
             options = DataManager.Init(options);
             clientManager.Init(options);
+            gameManager.Init(clientManager);
             PocketListener pocketListener = new PocketListener(options);
             Encryption.Init(options);
             PocketHandler.Init(clientManager, options);
@@ -161,6 +163,7 @@ namespace Server
 
         private static void Client_OnPlayState(PlayStatePocket pocket, int id)
         {
+            DataManager.LogLine($"[SERVER]: '{clientManager.GetClientName(id)}' change PlayState->{Enum.GetName(typeof(ClientStateEnum), pocket.State)}");
             if (pocket.State == (int)ClientStateEnum.Ready)
             {
                 if (pocket.SessionID > 0)
@@ -173,7 +176,7 @@ namespace Server
                 {
                     int session_id = clientManager.AddClientToSession(id);
                     if (session_id > -1)
-                        clientManager.Sessions[session_id].game.StartGame(clientManager.Sessions[session_id].players);
+                        gameManager.StartGame(clientManager.Sessions[session_id].players);
                 }
             }
             else if (pocket.State == (int)ClientStateEnum.Exiting)
