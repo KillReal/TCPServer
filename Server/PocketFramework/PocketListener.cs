@@ -39,6 +39,7 @@ namespace Server
                 try
                 {
                     Socket handler = _listener.Accept();
+                    handler.LingerState = new LingerOption(true, 1);
                     var clientThread = new Thread(HandleClientPocket);
                     clientThread.Start(handler);
                 }
