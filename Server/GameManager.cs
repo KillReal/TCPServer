@@ -93,8 +93,9 @@ namespace Server
                     client.playerInGame.wood = 1000;
                     client.playerInGame.rock = 1000;
                     client.playerInGame.crystall = 1000;
-                    client.playerInGame.town.level = 4;
-                    client.playerInGame.selectUnit.actionPoints = 1000;
+                    client.playerInGame.town.level = 1000;
+                    if (client.playerInGame.selectUnit != null)
+                        client.playerInGame.selectUnit.actionPoints = 1000;
                 }
 
                 switch (pocket.Button)
@@ -104,7 +105,8 @@ namespace Server
                         break;
                     case Buttons.Cheats:
                         client.cheatMode = !client.cheatMode;
-                        throw new Exception("CHEATS MOD ACTIVETED");
+                        if (client.cheatMode) throw new Exception("CHEATS MOD ACTIVETED");
+                        else throw new Exception("CHEATS MOD DE-ACTIVETED");
                         break;
                     case Buttons.SpawnUnit: // OK
                         data = new SpawnUnitPocket(game.SpawnUnit((Unit.typeUnit)pocket.Param));

@@ -35,7 +35,8 @@ namespace Server.GameLogic
             players[1].town.health = 20;
             players[1].id = 1;
 
-            currentPlayer = players[0];
+            currentPlayer = players[1]; 
+            nextTurn(); // problem first turn... (player gold = 100!!)
         }
 
         public void SelectUnit(Unit unit) // click (Left) // OK
