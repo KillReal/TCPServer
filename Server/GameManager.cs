@@ -14,6 +14,7 @@ namespace Server
         public int idAponent;
         public Game game;
         public Player playerInGame;
+        public bool cheatMode;
     }
     public class GameManager
     {
@@ -28,7 +29,9 @@ namespace Server
             SpawnUnit = 3,
             UpgradeTown = 4,
             Market = 5,
-            NextTurn = 6
+            NextTurn = 6,
+            Cheats = 7,
+            GiveUp = 8,
         }
 
         public GameManager()
@@ -58,6 +61,7 @@ namespace Server
                 idAponent = idClients[1],
                 game = game,
                 playerInGame = game.players[0],
+                cheatMode = false
             });
             playerClients.Add(idClients[1], new PlayerClient()
             {
@@ -65,6 +69,7 @@ namespace Server
                 idAponent = idClients[0],
                 game = game,
                 playerInGame = game.players[1],
+                cheatMode = false
             });
             clientManager.Send(idClients[0], new InitGamePocket(playerClients[idClients[0]].playerInGame));
             clientManager.Send(idClients[1], new InitGamePocket(playerClients[idClients[1]].playerInGame));
@@ -77,30 +82,48 @@ namespace Server
         public void HandleGameAction(GameActionPocket pocket, int id)
         {
 
-            Game game = playerClients[id].game;
+            PlayerClient client = playerClients[id];
+            Game game = client.game;
             try
             {
                 BasePocket data = null;
+                if (client.cheatMode)
+                {
+                    client.playerInGame.gold = 1000;
+                    client.playerInGame.wood = 1000;
+                    client.playerInGame.rock = 1000;
+                    client.playerInGame.crystall = 1000;
+                    client.playerInGame.town.level = 4;
+                    client.playerInGame.selectUnit.actionPoints = 1000;
+                }
+
                 switch (pocket.Button)
                 {
+                    case Buttons.GiveUp:
+                        data = new EndGamePocket(playerClients[client.idAponent].playerInGame, 1);
+                        break;
+                    case Buttons.Cheats:
+                        client.cheatMode = !client.cheatMode;
+                        throw new Exception("CHEATS MOD ACTIVETED");
+                        break;
                     case Buttons.SpawnUnit: // OK
                         data = new SpawnUnitPocket(game.SpawnUnit((Unit.typeUnit)pocket.Param));
-                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
+                        clientManager.Send(client.idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.UpgradeTown: // OK
                         game.UpgradeTown();
                         data = new UpgradeTownPocket(game.currentPlayer.town);
-                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
+                        clientManager.Send(client.idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.Market:
                         game.Market();
                         data = new MarketPocket(game.currentPlayer);
-                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
+                        clientManager.Send(client.idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.NextTurn: // OK
                         game.nextTurn();
                         data = new NextTurnPocket(game.currentPlayer);
-                        clientManager.Send(playerClients[id].idAponent, new PlayerResourcesPocket(game.currentPlayer));
+                        clientManager.Send(client.idAponent, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.Left:
                     case Buttons.Right:
@@ -147,8 +170,8 @@ namespace Server
                     default:
                         throw new Exception("undefined");
                 }
-                clientManager.Send(playerClients[id].idClient, data);  // 1
-                clientManager.Send(playerClients[id].idAponent, data); // 2
+                clientManager.Send(client.idClient, data);  // 1
+                clientManager.Send(client.idAponent, data); // 2
             }
             catch (Exception e)
             {
