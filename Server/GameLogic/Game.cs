@@ -45,14 +45,14 @@ namespace Server.GameLogic
             currentPlayer.selectUnit = unit;
             //mutexMap.ReleaseMutex();
         }
-        public Queue<int> MoveUnit(Coord A)  // click (Left) // OK
+        public (Coord, Queue<int>) MoveUnit(Coord A)  // click (Left) // OK
         {
             //mutexMap.WaitOne();
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
 
-
-            Queue<int> path = PathFinding(currentPlayer.selectUnit.Position, A);
             var unit = currentPlayer.selectUnit;
+            Coord start = unit.Position;
+            Queue<int> path = PathFinding(start, A);
             // for debug inf actionPoints, on release remove comment
             if (unit.actionPoints - path.Count < 0) throw new Exception("Not moving");
 
@@ -64,7 +64,7 @@ namespace Server.GameLogic
             unit.Position = A;
 
             //mutexMap.ReleaseMutex();
-            return path;
+            return (start, path);
         }
         public (Unit, Unit) Attack(Unit unit) // click (Right) // OK
         {

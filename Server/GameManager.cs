@@ -8,7 +8,7 @@ using System.IO;
 
 namespace Server
 {
-    public struct PlayerClient
+    public class PlayerClient
     {
         public int idClient;
         public int idAponent;
@@ -124,13 +124,18 @@ namespace Server
                         game.nextTurn();
                         data = new NextTurnPocket(game.currentPlayer);
                         clientManager.Send(client.idAponent, new PlayerResourcesPocket(game.currentPlayer));
+                        if (game.currentPlayer.selectUnit != null)
+                            clientManager.Send(client.idAponent, new SelectUnitPocket(game.currentPlayer.selectUnit));
                         break;
                     case Buttons.Left:
                     case Buttons.Right:
                         switch (game.world.Map[pocket.Coord.X, pocket.Coord.Y].type)
                         {
                             case GameObj.typeObj.empty when pocket.Button == Buttons.Left: // OK
-                                data = new MoveUnitPocket(game.currentPlayer.selectUnit, game.MoveUnit(new Coord(pocket.Coord.X, pocket.Coord.Y)));
+                                Coord coord;
+                                Queue<int> path;
+                                (coord, path) = game.MoveUnit(new Coord(pocket.Coord.X, pocket.Coord.Y));
+                                data = new MoveUnitPocket(game.currentPlayer.selectUnit, path, coord);
                                 break;
                             case GameObj.typeObj.unit when pocket.Button == Buttons.Left:  // OK
                                 game.SelectUnit((Unit)game.world.Map[pocket.Coord.X, pocket.Coord.Y]);
