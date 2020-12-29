@@ -117,7 +117,7 @@ namespace Server.GameLogic
                     health += 10;
                     break;
                 default:
-                    if (level == 3) throw new Exception("Max upgrade");
+                    throw new Exception("Max upgrade");
                     break;
             }
             level++;
@@ -135,17 +135,17 @@ namespace Server.GameLogic
         public Town[] towns;
         private Coord[,] SpawnPos;
 
-        public void SpawnUnit(Unit u) // OK
+        public Coord SpawnUnit(Player p) // OK
         {
             for (int i = 0; i < 3; i++)
             {
-                Coord c = SpawnPos[u.owner.id, i];
+                Coord c = SpawnPos[p.id, i];
                 if (Map[c.X, c.Y].type == GameObj.typeObj.empty)
                 {
-                    u.type = GameObj.typeObj.unit;
-                    Map[c.X, c.Y] = u;
-                    u.Position = new Coord(c.X, c.Y);
-                    return;
+                    //u.type = GameObj.typeObj.unit;
+                    //Map[c.X, c.Y] = u;
+                    //u.Position = new Coord(c.X, c.Y);
+                    return c;
                 }
             }
             throw new Exception("no free places");

@@ -84,13 +84,15 @@ namespace Server.GameLogic
             Coord range = (this.Position - unit.Position).ABS;
             if (range > 1.5) throw new Exception("long range");
 
-            if (this.attack == unit.defense)
-                unit.health -= this.damage;
-            else
-                if (this.attack > unit.defense)
-                unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
-            else
-                unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
+            unit.health -= this.damage;
+
+            //if (this.attack == unit.defense)
+            //    unit.health -= this.damage;
+            //else
+            //    if (this.attack > unit.defense)
+            //    unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
+            //else
+            //    unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
         }
     }
 
@@ -170,13 +172,15 @@ namespace Server.GameLogic
             Coord range = (this.Position - unit.Position).ABS;
             if (range > 1.5) throw new Exception("long range");
 
-            if (this.attack == unit.defense)
-                unit.health -= this.damage;
-            else
-                if (this.attack > unit.defense)
-                unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
-            else
-                unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
+            unit.health -= this.damage;
+
+            //if (this.attack == unit.defense)
+            //    unit.health -= this.damage;
+            //else
+            //    if (this.attack > unit.defense)
+            //    unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
+            //else
+            //    unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
         }
     }
 
@@ -258,23 +262,25 @@ namespace Server.GameLogic
             if (range > rangeAttack) throw new Exception("long range");
             if (range < 1.5)
             {
-                if (this.attack == unit.defense)
-                    unit.health -= this.damage;
-                else
-                    if (this.attack > unit.defense)
-                    unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
-                else
-                    unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
+                unit.health -= this.damage;
+                //if (this.attack == unit.defense)
+                //    unit.health -= this.damage;
+                //else
+                //    if (this.attack > unit.defense)
+                //    unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
+                //else
+                //    unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
             }
             else
             {
-                if (this.attack == unit.defense)
-                    unit.health -= this.shootingDamage;
-                else
-                    if (this.attack > unit.defense)
-                    unit.health -= (int)(this.shootingDamage * ((this.attack - unit.defense) * 0.5));
-                else
-                    unit.health -= (int)(this.shootingDamage * (1 / ((this.attack - unit.defense) * 0.4)));
+                unit.health -= this.shootingDamage;
+                //if (this.attack == unit.defense)
+                //    unit.health -= this.shootingDamage;
+                //else
+                //    if (this.attack > unit.defense)
+                //    unit.health -= (int)(this.shootingDamage * ((this.attack - unit.defense) * 0.5));
+                //else
+                //    unit.health -= (int)(this.shootingDamage * (1 / ((this.attack - unit.defense) * 0.4)));
             }
         }
     }
@@ -314,23 +320,25 @@ namespace Server.GameLogic
             if (range > rangeAttack) throw new Exception("long range");
             if (range < 1.5)
             {
-                if (this.attack == unit.defense)
-                    unit.health -= this.damage;
-                else
-                    if (this.attack > unit.defense)
-                    unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
-                else
-                    unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
+                unit.health -= this.damage;
+                //if (this.attack == unit.defense)
+                //    unit.health -= this.damage;
+                //else
+                //    if (this.attack > unit.defense)
+                //    unit.health -= (int)(this.damage * ((this.attack - unit.defense) * 0.5));
+                //else
+                //    unit.health -= (int)(this.damage * (1 / ((this.attack - unit.defense) * 0.4)));
             }
             else
             {
-                if (this.attack == unit.defense)
-                    unit.health -= this.shootingDamage;
-                else
-                    if (this.attack > unit.defense)
-                    unit.health -= (int)(this.shootingDamage * ((this.attack - unit.defense) * 0.5));
-                else
-                    unit.health -= (int)(this.shootingDamage * (1 / ((this.attack - unit.defense) * 0.4)));
+                unit.health -= this.shootingDamage;
+                //if (this.attack == unit.defense)
+                //    unit.health -= this.shootingDamage;
+                //else
+                //    if (this.attack > unit.defense)
+                //    unit.health -= (int)(this.shootingDamage * ((this.attack - unit.defense) * 0.5));
+                //else
+                //    unit.health -= (int)(this.shootingDamage * (1 / ((this.attack - unit.defense) * 0.4)));
             }
         }
     }

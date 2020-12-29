@@ -33,7 +33,7 @@ namespace Server
             Cheats = 7,
             GiveUp = 8,
         }
-
+        
         public GameManager()
         {
             games = new List<Game>();
@@ -184,6 +184,11 @@ namespace Server
             {
                 clientManager.Send(id, new ErrorPocket(228, e.Message)); // add type Exception
             }
+        }
+
+        public void endGame(List<int> idClients)
+        {
+
         }
 
         public void checkClient(int id)

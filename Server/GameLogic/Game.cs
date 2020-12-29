@@ -90,49 +90,53 @@ namespace Server.GameLogic
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             if (town.owner == currentPlayer) throw new Exception("your object");
 
-            currentPlayer.selectUnit.atack(town);
+            //currentPlayer.selectUnit.atack(town);
+            town.health--;
             return (currentPlayer.selectUnit, town);
         }
 
         public Unit SpawnUnit(Unit.typeUnit id) // interface buttons // OK
         {
-                //mutexMap.WaitOne();
-                Unit u;
-                switch (id)
-                {
-                    case Unit.typeUnit.Scout:
-                        u = new Scout(currentPlayer);
-                        break;
-                    case Unit.typeUnit.Warrior1:
-                        u = new Warior(currentPlayer, (int)id);
-                        break;
-                    case Unit.typeUnit.Shooter1:
-                        u = new Shooter(currentPlayer, (int)id);
-                        break;
-                    case Unit.typeUnit.Warrior2:
-                        u = new Warior(currentPlayer, (int)id);
-                        break;
-                    case Unit.typeUnit.Shooter2:
-                        u = new Shooter(currentPlayer, (int)id);
-                        break;
-                    case Unit.typeUnit.Warrior3:
-                        u = new Warior(currentPlayer, (int)id);
-                        break;
-                    case Unit.typeUnit.Shooter3:
-                        u = new Shooter(currentPlayer, (int)id);
-                        break;
-                    case Unit.typeUnit.Top:
-                        u = new Top(currentPlayer);
-                        break;
-                    default:
-                        u = new Scout(currentPlayer);
-                        break;
-                }
-                u.owner = currentPlayer;
-                world.SpawnUnit(u);
-                currentPlayer.NextTurn += u.NextTurn;
-                //mutexMap.ReleaseMutex();
-                return u;
+            //mutexMap.WaitOne();
+            Coord pos = world.SpawnUnit(currentPlayer);
+            Unit u;
+            switch (id)
+            {
+                case Unit.typeUnit.Scout:
+                    u = new Scout(currentPlayer);
+                    break;
+                case Unit.typeUnit.Warrior1:
+                    u = new Warior(currentPlayer, (int)id);
+                    break;
+                case Unit.typeUnit.Shooter1:
+                    u = new Shooter(currentPlayer, (int)id);
+                    break;
+                case Unit.typeUnit.Warrior2:
+                    u = new Warior(currentPlayer, (int)id);
+                    break;
+                case Unit.typeUnit.Shooter2:
+                    u = new Shooter(currentPlayer, (int)id);
+                    break;
+                case Unit.typeUnit.Warrior3:
+                    u = new Warior(currentPlayer, (int)id);
+                    break;
+                case Unit.typeUnit.Shooter3:
+                    u = new Shooter(currentPlayer, (int)id);
+                    break;
+                case Unit.typeUnit.Top:
+                    u = new Top(currentPlayer);
+                    break;
+                default:
+                    u = new Scout(currentPlayer);
+                    break;
+            }
+            u.Position = pos;
+            u.type = GameObj.typeObj.unit;
+            u.owner = currentPlayer;
+            world.Map[pos.X, pos.Y] = u;
+            currentPlayer.NextTurn += u.NextTurn;
+            //mutexMap.ReleaseMutex();
+            return u;
         }
         public void UpgradeTown() // interface buttons // OK
         {
