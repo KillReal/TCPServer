@@ -34,5 +34,6 @@ namespace Server
         nextTurn            = 27,
         Resources           = 28,
         AttackTown          = 29,
+        READY               = 30,
     }
 }

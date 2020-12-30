@@ -15,6 +15,7 @@ namespace Server
         public Game game;
         public Player playerInGame;
         public bool cheatMode;
+        public bool ready;
     }
     public class GameManager
     {
@@ -32,6 +33,7 @@ namespace Server
             NextTurn = 6,
             Cheats = 7,
             GiveUp = 8,
+            READY = 9,
         }
         
         public GameManager()
@@ -61,7 +63,8 @@ namespace Server
                 idAponent = idClients[1],
                 game = game,
                 playerInGame = game.players[0],
-                cheatMode = false
+                cheatMode = false,
+                ready = false
             });
             playerClients.Add(idClients[1], new PlayerClient()
             {
@@ -69,7 +72,8 @@ namespace Server
                 idAponent = idClients[0],
                 game = game,
                 playerInGame = game.players[1],
-                cheatMode = false
+                cheatMode = false,
+                ready = false
             });
             clientManager.Send(idClients[0], new InitGamePocket(playerClients[idClients[0]].playerInGame));
             clientManager.Send(idClients[1], new InitGamePocket(playerClients[idClients[1]].playerInGame));
@@ -81,9 +85,32 @@ namespace Server
 
         public void HandleGameAction(GameActionPocket pocket, int id)
         {
-
             PlayerClient client = playerClients[id];
             Game game = client.game;
+
+            if (pocket.Button == Buttons.READY)
+            {
+                client.ready = true;
+                if (playerClients[client.idAponent].ready && client.ready)
+                {
+                    clientManager.Send(client.idClient, new ReadyToGamePocket());
+                    clientManager.Send(client.idAponent, new ReadyToGamePocket());
+                }
+                return;
+            }
+
+            if (!(playerClients[client.idAponent].ready && client.ready))
+            {
+                clientManager.Send(id, new ErrorPocket(228, "Your aponent is not ready"));
+                return;
+            }
+
+            if (client.playerInGame != game.currentPlayer)
+            {
+                clientManager.Send(id, new ErrorPocket(228, "NOT our turn!"));
+                return;
+            }
+
             try
             {
                 BasePocket data = null;
