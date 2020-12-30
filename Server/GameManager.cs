@@ -8,17 +8,19 @@ using System.IO;
 
 namespace Server
 {
-    public struct PlayerClient
+    public class PlayerClient
     {
         public int idClient;
         public int idAponent;
         public Game game;
         public Player playerInGame;
+        public bool cheatMode;
+        public bool ready;
     }
     public class GameManager
     {
         public ClientManager clientManager;
-        public List<Game> games;
+        //public List<Game> games;
         public Dictionary<int, PlayerClient> playerClients;
         //private const string map = @"..\..\..\Resources\Map.txt"; // path to the map file (for now one map)
         public enum Buttons
@@ -28,18 +30,22 @@ namespace Server
             SpawnUnit = 3,
             UpgradeTown = 4,
             Market = 5,
-            NextTurn = 6
+            NextTurn = 6,
+            Cheats = 7,
+            GiveUp = 8,
+            READY = 9,
         }
-
+        
         public GameManager()
         {
-            games = new List<Game>();
+            //games = new List<Game>();
             playerClients = new Dictionary<int, PlayerClient>();
         }
 
         public void Init(ClientManager _clientManager)
         {
             clientManager = _clientManager;
+            PocketHandler.onGameAction += HandleGameAction;
         }
 
         public void StartGame(List<int> idClients) // expecting 2 players // OK
@@ -50,13 +56,15 @@ namespace Server
                 world = (World)new BinaryFormatter().Deserialize(fs);
 
             Game game = new Game(world, new Player[] { new Player("0"), new Player("1") });
-            games.Add(game);
+            //games.Add(game);
             playerClients.Add(idClients[0], new PlayerClient()
             {
                 idClient = idClients[0],
                 idAponent = idClients[1],
                 game = game,
                 playerInGame = game.players[0],
+                cheatMode = false,
+                ready = false
             });
             playerClients.Add(idClients[1], new PlayerClient()
             {
@@ -64,6 +72,8 @@ namespace Server
                 idAponent = idClients[0],
                 game = game,
                 playerInGame = game.players[1],
+                cheatMode = false,
+                ready = false
             });
             clientManager.Send(idClients[0], new InitGamePocket(playerClients[idClients[0]].playerInGame));
             clientManager.Send(idClients[1], new InitGamePocket(playerClients[idClients[1]].playerInGame));
@@ -71,43 +81,90 @@ namespace Server
             clientManager.Send(idClients[1], new NextTurnPocket(playerClients[idClients[1]].game.currentPlayer));
             clientManager.Send(idClients[0], new PlayerResourcesPocket(game.players[0]));
             clientManager.Send(idClients[1], new PlayerResourcesPocket(game.players[1]));
-
         }
 
         public void HandleGameAction(GameActionPocket pocket, int id)
         {
+            PlayerClient client = playerClients[id];
+            Game game = client.game;
 
-            Game game = playerClients[id].game;
+            if (pocket.Button == Buttons.READY)
+            {
+                client.ready = true;
+                if (playerClients[client.idAponent].ready && client.ready)
+                {
+                    clientManager.Send(client.idClient, new ReadyToGamePocket());
+                    clientManager.Send(client.idAponent, new ReadyToGamePocket());
+                }
+                return;
+            }
+
+            if (!(playerClients[client.idAponent].ready && client.ready))
+            {
+                clientManager.Send(id, new ErrorPocket(228, "Your aponent is not ready"));
+                return;
+            }
+
+            if (client.playerInGame != game.currentPlayer)
+            {
+                clientManager.Send(id, new ErrorPocket(228, "NOT our turn!"));
+                return;
+            }
+
             try
             {
                 BasePocket data = null;
+                if (client.cheatMode)
+                {
+                    client.playerInGame.gold = 1000;
+                    client.playerInGame.wood = 1000;
+                    client.playerInGame.rock = 1000;
+                    client.playerInGame.crystall = 1000;
+                    client.playerInGame.town.level = 1000;
+                    if (client.playerInGame.selectUnit != null)
+                        client.playerInGame.selectUnit.actionPoints = 1000;
+                }
+
                 switch (pocket.Button)
                 {
+                    case Buttons.GiveUp:
+                        data = new EndGamePocket(playerClients[client.idAponent].playerInGame, 1);
+                        break;
+                    case Buttons.Cheats:
+                        client.cheatMode = !client.cheatMode;
+                        if (client.cheatMode) throw new Exception("CHEATS MOD ACTIVETED");
+                        else throw new Exception("CHEATS MOD DE-ACTIVETED");
+                        break;
                     case Buttons.SpawnUnit: // OK
                         data = new SpawnUnitPocket(game.SpawnUnit((Unit.typeUnit)pocket.Param));
-                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
+                        clientManager.Send(client.idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.UpgradeTown: // OK
                         game.UpgradeTown();
                         data = new UpgradeTownPocket(game.currentPlayer.town);
-                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
+                        clientManager.Send(client.idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.Market:
                         game.Market();
                         data = new MarketPocket(game.currentPlayer);
-                        clientManager.Send(playerClients[id].idClient, new PlayerResourcesPocket(game.currentPlayer));
+                        clientManager.Send(client.idClient, new PlayerResourcesPocket(game.currentPlayer));
                         break;
                     case Buttons.NextTurn: // OK
                         game.nextTurn();
                         data = new NextTurnPocket(game.currentPlayer);
-                        clientManager.Send(playerClients[id].idAponent, new PlayerResourcesPocket(game.currentPlayer));
+                        clientManager.Send(client.idAponent, new PlayerResourcesPocket(game.currentPlayer));
+                        if (game.currentPlayer.selectUnit != null)
+                            clientManager.Send(client.idAponent, new SelectUnitPocket(game.currentPlayer.selectUnit));
                         break;
                     case Buttons.Left:
                     case Buttons.Right:
                         switch (game.world.Map[pocket.Coord.X, pocket.Coord.Y].type)
                         {
                             case GameObj.typeObj.empty when pocket.Button == Buttons.Left: // OK
-                                data = new MoveUnitPocket(game.currentPlayer.selectUnit, game.MoveUnit(new Coord(pocket.Coord.X, pocket.Coord.Y)));
+                                Coord coord;
+                                Queue<int> path;
+                                (coord, path) = game.MoveUnit(new Coord(pocket.Coord.X, pocket.Coord.Y));
+                                data = new MoveUnitPocket(game.currentPlayer.selectUnit, path, coord);
                                 break;
                             case GameObj.typeObj.unit when pocket.Button == Buttons.Left:  // OK
                                 game.SelectUnit((Unit)game.world.Map[pocket.Coord.X, pocket.Coord.Y]);
@@ -129,7 +186,8 @@ namespace Server
                                     if (town.health == 0)
                                     {
                                         data = new EndGamePocket(game.currentPlayer, 1);
-                                        // END GAME... (below code, send packet on end game!!!)   
+                                        // END GAME... (below code, send packet on end game!!!)
+                                        endGame(new List<int>{ client.idClient, client.idAponent});
                                     }
                                     else
                                     {
@@ -147,13 +205,19 @@ namespace Server
                     default:
                         throw new Exception("undefined");
                 }
-                clientManager.Send(playerClients[id].idClient, data);  // 1
-                clientManager.Send(playerClients[id].idAponent, data); // 2
+                clientManager.Send(client.idClient, data);  // 1
+                clientManager.Send(client.idAponent, data); // 2
             }
             catch (Exception e)
             {
                 clientManager.Send(id, new ErrorPocket(228, e.Message)); // add type Exception
             }
+        }
+
+        public void endGame(List<int> idClients)
+        {
+            playerClients.Remove(idClients[0]);
+            playerClients.Remove(idClients[1]);
         }
 
         public void checkClient(int id)

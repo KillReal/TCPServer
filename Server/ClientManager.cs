@@ -179,6 +179,7 @@ namespace Server
                 if (Sessions[i].players.Count == 0)
                 {
                     Sessions.RemoveAt(i);
+                    // gameManager.endGame(Sessions[i].players)
                     DataManager.LogLine($"[SERVER]: Session '{i}' is ends up");
                 }
             }
@@ -406,7 +407,7 @@ namespace Server
 
         private void LaunchBackgroundWorkers(int id)
         {
-            //(new Task(() => ClientPinger(id))).Start();
+            (new Task(() => ClientPinger(id))).Start();
         }
 
         public void UpdateClientSocket(int id, Socket new_socket)

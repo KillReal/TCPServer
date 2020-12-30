@@ -25,36 +25,37 @@ namespace Server.GameLogic
             players[0].NextTurn += players[0].town.nextTurn;
             players[0].town.owner = players[0];
             players[0].town.level = 0;
-            players[0].town.health = 3;
+            players[0].town.health = 20;
             players[0].id = 0;
 
             players[1].town = world.towns[1];
             players[1].NextTurn += players[1].town.nextTurn;
             players[1].town.owner = players[1];
             players[1].town.level = 0;
-            players[1].town.health = 3;
+            players[1].town.health = 20;
             players[1].id = 1;
 
-            currentPlayer = players[0];
+            currentPlayer = players[1]; 
+            nextTurn(); // problem first turn... (player gold = 100!!)
         }
 
         public void SelectUnit(Unit unit) // click (Left) // OK
         {
-            mutexMap.WaitOne();
+            //mutexMap.WaitOne();
             if (unit.owner != currentPlayer) throw new Exception("This is enemy");
             currentPlayer.selectUnit = unit;
-            mutexMap.ReleaseMutex();
+            //mutexMap.ReleaseMutex();
         }
-        public Queue<int> MoveUnit(Coord A)  // click (Left) // OK
+        public (Coord, Queue<int>) MoveUnit(Coord A)  // click (Left) // OK
         {
-            mutexMap.WaitOne();
+            //mutexMap.WaitOne();
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
 
-
-            Queue<int> path = PathFinding(currentPlayer.selectUnit.Position, A);
             var unit = currentPlayer.selectUnit;
+            Coord start = unit.Position;
+            Queue<int> path = PathFinding(start, A);
             // for debug inf actionPoints, on release remove comment
-            //if (unit.actionPoints - path.Count < 0) throw new Exception("Not moving");
+            if (unit.actionPoints - path.Count < 0) throw new Exception("Not moving");
 
             unit.actionPoints -= path.Count;
 
@@ -63,25 +64,28 @@ namespace Server.GameLogic
             world.Map[A.X, A.Y] = unit;
             unit.Position = A;
 
-            mutexMap.ReleaseMutex();
-            return path;
+            //mutexMap.ReleaseMutex();
+            return (start, path);
         }
         public (Unit, Unit) Attack(Unit unit) // click (Right) // OK
         {
-            mutexMap.WaitOne();
+            //mutexMap.WaitOne();
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             if (unit.owner == currentPlayer) throw new Exception("your object");
 
             currentPlayer.selectUnit.atack(unit);
             if (unit.health <= 0)
             {
+                if (unit.owner.selectUnit == unit)
+                    unit.owner.selectUnit = null;
                 Coord p = unit.Position;
                 var o = new GameObj();
                 o.type = GameObj.typeObj.empty;
                 o.Position = p;
                 world.Map[p.X, p.Y] = o;
+
             }
-            mutexMap.ReleaseMutex();
+            //mutexMap.ReleaseMutex();
             return (currentPlayer.selectUnit, unit);
         }
         public (Unit, Town) Attack(Town town)
@@ -89,13 +93,15 @@ namespace Server.GameLogic
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             if (town.owner == currentPlayer) throw new Exception("your object");
 
-            currentPlayer.selectUnit.atack(town);
+            //currentPlayer.selectUnit.atack(town);
+            town.health--;
             return (currentPlayer.selectUnit, town);
         }
 
         public Unit SpawnUnit(Unit.typeUnit id) // interface buttons // OK
         {
-            mutexMap.WaitOne();
+            //mutexMap.WaitOne();
+            Coord pos = world.SpawnUnit(currentPlayer);
             Unit u;
             switch (id)
             {
@@ -127,10 +133,12 @@ namespace Server.GameLogic
                     u = new Scout(currentPlayer);
                     break;
             }
+            u.Position = pos;
+            u.type = GameObj.typeObj.unit;
             u.owner = currentPlayer;
-            world.SpawnUnit(u);
+            world.Map[pos.X, pos.Y] = u;
             currentPlayer.NextTurn += u.NextTurn;
-            mutexMap.ReleaseMutex();
+            //mutexMap.ReleaseMutex();
             return u;
         }
         public void UpgradeTown() // interface buttons // OK
@@ -146,6 +154,8 @@ namespace Server.GameLogic
             if (currentPlayer.selectUnit == null) throw new Exception("Not select unit");
             Coord c = (currentPlayer.selectUnit.Position - mine.Position).ABS;
             if (c > 1.5) throw new Exception("out of range");
+            if (mine.owner != null)
+                mine.owner.NextTurn -= mine.mining; 
             mine.owner = currentPlayer;
             currentPlayer.NextTurn += mine.mining;
             return mine;
