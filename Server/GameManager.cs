@@ -19,7 +19,7 @@ namespace Server
     public class GameManager
     {
         public ClientManager clientManager;
-        public List<Game> games;
+        //public List<Game> games;
         public Dictionary<int, PlayerClient> playerClients;
         //private const string map = @"..\..\..\Resources\Map.txt"; // path to the map file (for now one map)
         public enum Buttons
@@ -36,7 +36,7 @@ namespace Server
         
         public GameManager()
         {
-            games = new List<Game>();
+            //games = new List<Game>();
             playerClients = new Dictionary<int, PlayerClient>();
         }
 
@@ -54,7 +54,7 @@ namespace Server
                 world = (World)new BinaryFormatter().Deserialize(fs);
 
             Game game = new Game(world, new Player[] { new Player("0"), new Player("1") });
-            games.Add(game);
+            //games.Add(game);
             playerClients.Add(idClients[0], new PlayerClient()
             {
                 idClient = idClients[0],
@@ -159,7 +159,8 @@ namespace Server
                                     if (town.health == 0)
                                     {
                                         data = new EndGamePocket(game.currentPlayer, 1);
-                                        // END GAME... (below code, send packet on end game!!!)   
+                                        // END GAME... (below code, send packet on end game!!!)
+                                        endGame(new List<int>{ client.idClient, client.idAponent});
                                     }
                                     else
                                     {
@@ -188,7 +189,8 @@ namespace Server
 
         public void endGame(List<int> idClients)
         {
-
+            playerClients.Remove(idClients[0]);
+            playerClients.Remove(idClients[1]);
         }
 
         public void checkClient(int id)

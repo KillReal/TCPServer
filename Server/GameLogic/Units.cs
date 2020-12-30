@@ -86,6 +86,7 @@ namespace Server.GameLogic
 
             unit.health -= this.damage;
 
+
             //if (this.attack == unit.defense)
             //    unit.health -= this.damage;
             //else

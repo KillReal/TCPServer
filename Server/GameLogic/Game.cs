@@ -76,11 +76,14 @@ namespace Server.GameLogic
             currentPlayer.selectUnit.atack(unit);
             if (unit.health <= 0)
             {
+                if (unit.owner.selectUnit == unit)
+                    unit.owner.selectUnit = null;
                 Coord p = unit.Position;
                 var o = new GameObj();
                 o.type = GameObj.typeObj.empty;
                 o.Position = p;
                 world.Map[p.X, p.Y] = o;
+
             }
             //mutexMap.ReleaseMutex();
             return (currentPlayer.selectUnit, unit);
