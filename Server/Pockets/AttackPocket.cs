@@ -6,7 +6,7 @@ using Server.PocketFramework;
 
 namespace Server.Pockets
 {
-    class AttackPocket : BasePocket // CHANGED!!!
+    class AttackPocket : BasePocket 
     {
         public Unit attacking;
         public Unit defending;

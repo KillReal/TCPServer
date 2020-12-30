@@ -10,17 +10,21 @@ namespace Server.Pockets
     {
         public Unit unit;
         public Queue<int> path;
+        public Coord start;
 
-        public MoveUnitPocket(Unit unit, Queue<int> path)
+        public MoveUnitPocket(Unit unit, Queue<int> path, Coord start)
         {
             this.unit = unit;
             this.path = path;
+            this.start = start;
         }
 
         public override byte[] ToBytes()
         {
             PocketConstructor pc = new PocketConstructor();
             pc.WriteInt32(unit.owner.id);
+            pc.WriteInt32(start.X);
+            pc.WriteInt32(start.Y);
             pc.WriteInt32(unit.Position.X);
             pc.WriteInt32(unit.Position.Y);
             pc.WriteInt32(unit.actionPoints); 

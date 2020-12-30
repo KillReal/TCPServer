@@ -26,6 +26,7 @@ namespace Server.Pockets
             pc.WriteInt32(unit.owner.id);
             pc.WriteInt32(unit.Position.X);
             pc.WriteInt32(unit.Position.Y);
+            pc.WriteInt32(unit.actionPoints);
             return pc.GetBytes();
         }
 
