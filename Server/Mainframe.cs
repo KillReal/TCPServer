@@ -176,7 +176,7 @@ namespace Server
                 {
                     int session_id = clientManager.AddClientToSession(id);
                     if (session_id > -1)
-                        gameManager.StartGame(clientManager.Sessions[session_id].players);
+                        gameManager.StartGame(clientManager.Sessions[session_id]);
                 }
             }
             else if (pocket.State == (int)ClientStateEnum.Exiting)

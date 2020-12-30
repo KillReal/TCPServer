@@ -12,16 +12,24 @@ namespace Server
     {
         public int idClient;
         public int idAponent;
-        public Game game;
+        //public Game game;
         public Player playerInGame;
         public bool cheatMode;
         public bool ready;
     }
+    public class GameSession
+    {
+        public Dictionary<int, PlayerClient> playerClients;
+        public Game game;
+        public ClientManager.Session session;
+    }
+
     public class GameManager
     {
         public ClientManager clientManager;
+        private Dictionary<int, GameSession> GameSessions;
         //public List<Game> games;
-        public Dictionary<int, PlayerClient> playerClients;
+        //public Dictionary<int, PlayerClient> playerClients;
         //private const string map = @"..\..\..\Resources\Map.txt"; // path to the map file (for now one map)
         public enum Buttons
         {
@@ -35,11 +43,12 @@ namespace Server
             GiveUp = 8,
             READY = 9,
         }
-        
+
         public GameManager()
         {
-            //games = new List<Game>();
-            playerClients = new Dictionary<int, PlayerClient>();
+            //playerClients = new Dictionary<int, PlayerClient>();
+            GameSessions = new Dictionary<int, GameSession>();
+
         }
 
         public void Init(ClientManager _clientManager)
@@ -48,50 +57,58 @@ namespace Server
             PocketHandler.onGameAction += HandleGameAction;
         }
 
-        public void StartGame(List<int> idClients) // expecting 2 players // OK
+        public void StartGame(ClientManager.Session session) // expecting 2 players // OK
         {
-            if (idClients.Count != 2) throw new Exception("invalid number of clients");
+            if (session.players.Count != 2) throw new Exception("invalid number of clients");
             World world;
             using (FileStream fs = new FileStream(@"..\..\..\Resources\World", FileMode.OpenOrCreate))
                 world = (World)new BinaryFormatter().Deserialize(fs);
 
             Game game = new Game(world, new Player[] { new Player("0"), new Player("1") });
-            //games.Add(game);
-            playerClients.Add(idClients[0], new PlayerClient()
+
+            Dictionary<int, PlayerClient> playerClients = new Dictionary<int, PlayerClient>();
+            playerClients.Add(session.players[0], new PlayerClient()
             {
-                idClient = idClients[0],
-                idAponent = idClients[1],
-                game = game,
+                idClient = session.players[0],
+                idAponent = session.players[1],
                 playerInGame = game.players[0],
                 cheatMode = false,
                 ready = false
             });
-            playerClients.Add(idClients[1], new PlayerClient()
+            playerClients.Add(session.players[1], new PlayerClient()
             {
-                idClient = idClients[1],
-                idAponent = idClients[0],
-                game = game,
+                idClient = session.players[1],
+                idAponent = session.players[1],
                 playerInGame = game.players[1],
                 cheatMode = false,
                 ready = false
             });
-            clientManager.Send(idClients[0], new InitGamePocket(playerClients[idClients[0]].playerInGame));
-            clientManager.Send(idClients[1], new InitGamePocket(playerClients[idClients[1]].playerInGame));
-            clientManager.Send(idClients[0], new NextTurnPocket(playerClients[idClients[0]].game.currentPlayer));
-            clientManager.Send(idClients[1], new NextTurnPocket(playerClients[idClients[1]].game.currentPlayer));
-            clientManager.Send(idClients[0], new PlayerResourcesPocket(game.players[0]));
-            clientManager.Send(idClients[1], new PlayerResourcesPocket(game.players[1]));
+
+            GameSessions.Add(session.id, new GameSession()
+            {
+                playerClients = playerClients,
+                game = game,
+                session = session,
+            });
+
+            clientManager.Send(session.players[0], new InitGamePocket(playerClients[session.players[0]].playerInGame));
+            clientManager.Send(session.players[1], new InitGamePocket(playerClients[session.players[1]].playerInGame));
+            clientManager.Send(session.players[0], new NextTurnPocket(game.currentPlayer));
+            clientManager.Send(session.players[1], new NextTurnPocket(game.currentPlayer));
+            clientManager.Send(session.players[0], new PlayerResourcesPocket(game.players[0]));
+            clientManager.Send(session.players[1], new PlayerResourcesPocket(game.players[1]));
         }
 
-        public void HandleGameAction(GameActionPocket pocket, int id)
+        public void HandleGameAction(GameActionPocket pocket, int idSession, int idClient)
         {
-            PlayerClient client = playerClients[id];
-            Game game = client.game;
+            PlayerClient client = GameSessions[idSession].playerClients[idClient];
+            PlayerClient aponent = GameSessions[idSession].playerClients[client.idAponent];
+            Game game = GameSessions[idSession].game;
 
             if (pocket.Button == Buttons.READY)
             {
                 client.ready = true;
-                if (playerClients[client.idAponent].ready && client.ready)
+                if (aponent.ready && client.ready)
                 {
                     clientManager.Send(client.idClient, new ReadyToGamePocket());
                     clientManager.Send(client.idAponent, new ReadyToGamePocket());
@@ -99,15 +116,15 @@ namespace Server
                 return;
             }
 
-            if (!(playerClients[client.idAponent].ready && client.ready))
+            if (!(aponent.ready && client.ready))
             {
-                clientManager.Send(id, new ErrorPocket(228, "Your aponent is not ready"));
+                clientManager.Send(idClient, new ErrorPocket(228, "Your aponent is not ready"));
                 return;
             }
 
             if (client.playerInGame != game.currentPlayer)
             {
-                clientManager.Send(id, new ErrorPocket(228, "NOT our turn!"));
+                clientManager.Send(idClient, new ErrorPocket(228, "NOT our turn!"));
                 return;
             }
 
@@ -128,8 +145,8 @@ namespace Server
                 switch (pocket.Button)
                 {
                     case Buttons.GiveUp:
-                        data = new EndGamePocket(playerClients[client.idAponent].playerInGame, 1);
-                        break;
+                        EndGame(idSession, client.idAponent);
+                        return;
                     case Buttons.Cheats:
                         client.cheatMode = !client.cheatMode;
                         if (client.cheatMode) throw new Exception("CHEATS MOD ACTIVETED");
@@ -185,9 +202,8 @@ namespace Server
                                     (unit, town) = game.Attack((Town)game.world.Map[pocket.Coord.X, pocket.Coord.Y]);
                                     if (town.health == 0)
                                     {
-                                        data = new EndGamePocket(game.currentPlayer, 1);
-                                        // END GAME... (below code, send packet on end game!!!)
-                                        endGame(new List<int>{ client.idClient, client.idAponent});
+                                        EndGame(idSession, idClient);
+                                        return;
                                     }
                                     else
                                     {
@@ -210,14 +226,31 @@ namespace Server
             }
             catch (Exception e)
             {
-                clientManager.Send(id, new ErrorPocket(228, e.Message)); // add type Exception
+                clientManager.Send(idClient, new ErrorPocket(228, e.Message)); // add type Exception
             }
         }
 
-        public void endGame(List<int> idClients)
+        public void EndGameDisconnect(int idSession, int idClient)
         {
-            playerClients.Remove(idClients[0]);
-            playerClients.Remove(idClients[1]);
+            PlayerClient client = GameSessions[idSession].playerClients[idClient];
+            PlayerClient aponent = GameSessions[idSession].playerClients[client.idAponent];
+            clientManager.Send(idClient, new EndGamePocket(aponent.playerInGame, 1));
+            RemoveGame(idSession);
+        }
+
+        public void EndGame(int idSession, int idClientWin)
+        {
+            PlayerClient client = GameSessions[idSession].playerClients[idClientWin];
+
+            clientManager.Send(client.idClient, new EndGamePocket(client.playerInGame, 1));
+            clientManager.Send(client.idAponent, new EndGamePocket(client.playerInGame, 1));
+
+            RemoveGame(idSession);
+        }
+
+        public void RemoveGame(int idSession)
+        {
+            GameSessions.Remove(idSession);
         }
 
         public void checkClient(int id)
