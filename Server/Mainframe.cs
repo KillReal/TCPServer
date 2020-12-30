@@ -15,7 +15,6 @@ namespace Server
     {
         static ClientManager clientManager = new ClientManager();
         static Options options = new Options();
-        static GameManager gameManager = new GameManager();
         static void Main(string[] args)
         {
             PocketHandler.OnMessageAccepted += Client_OnAccept;
@@ -26,7 +25,6 @@ namespace Server
             PocketHandler.onPlayState += Client_OnPlayState;
             options = DataManager.Init(options);
             clientManager.Init(options);
-            gameManager.Init(clientManager);
             PocketListener pocketListener = new PocketListener(options);
             Encryption.Init(options);
             PocketHandler.Init(clientManager, options);
@@ -185,7 +183,7 @@ namespace Server
 
         static void Client_OnAccept(int id)
         {
-            //DataManager.LogMessage("[SERVER] <--- [Accepted] from [Client]: {0}", _clientManager.GetClientName(id));
+            //DataManager.LogLine($"[SERVER] <--- [Accepted] from [Client]: {clientManager.GetClientName(id)}");
             clientManager.UpdateAcceptState(id, true);
         }
 
@@ -208,10 +206,7 @@ namespace Server
             }
             if (id > -1 && id < clientManager.GetAvailibleID())
             {
-                if (clientManager.GetClientState(id) == ClientStateEnum.Disconnected)
-                    clientManager.ReplaceClient(client, id);
-                else
-                    clientManager.UpdateClientSocket(id, client);
+                clientManager.ReplaceClient(client, id);
                 DataManager.LogLine($"[SERVER]: '{pocket.Name}' reconnected"); // {pocket.Message}
                 DataManager.LogLine($"[CLIENT-INFO]: {clientManager.GetClientInfo(id)}", 1);
             }

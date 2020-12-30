@@ -23,6 +23,7 @@ namespace Server
         public struct Session
         {
             public int id;
+            public GameManager game;
             public List<int> players;
         };
 
@@ -179,7 +180,7 @@ namespace Server
                 if (Sessions[i].players.Count == 0)
                 {
                     Sessions.RemoveAt(i);
-                    // gameManager.endGame(Sessions[i].players)
+                    Sessions[i].game.endGame(Sessions[i].players);
                     DataManager.LogLine($"[SERVER]: Session '{i}' is ends up");
                 }
             }
@@ -220,8 +221,10 @@ namespace Server
                 Session new_session = new Session
                 {
                     id = Sessions.Count,
+                    game = new GameManager(),
                     players = new List<int> { id },
                 };
+                new_session.game.Init(this);
                 Sessions.Add(new_session);
                 MyClient client = GetClient(id);
                 client.sid = new_session.id;
@@ -346,6 +349,16 @@ namespace Server
                 (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
         }
 
+        public void SendRaw(Socket client, BasePocket pocket)
+        {
+            int data_id = (int)DateTime.Now.Ticks;
+            byte[] data = pocket.ToBytes();
+            byte[] header = new Header(data_id, pocket.GetType(), data.Length).ToBytes();
+            data = Utils.ConcatBytes(header, data);
+            data = Encryption.Encrypt(data);
+            client.Send(data);
+        }
+
         public void SendRawBytes(int id, byte[] data, bool wait_accept = false)
         {
             if (!ID_list.Contains(id))
@@ -419,7 +432,7 @@ namespace Server
             LaunchBackgroundWorkers(id);
         }
 
-        public void AddClient(Socket socket, string name)
+        public int AddClient(Socket socket, string name)
         {
             int id = GetAvailibleID();
             MyClient newClient = new MyClient
@@ -435,6 +448,7 @@ namespace Server
             _clients.TryAdd(id, newClient);
             ID_list.Add(id);
             LaunchBackgroundWorkers(id);
+            return id;
         }
 
         public void ReplaceClient(Socket socket, int id)

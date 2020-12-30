@@ -103,10 +103,18 @@ namespace Server
                 {
                     ConnectionPocket pocket = ConnectionPocket.FromBytes(data);
                     int rec_id = (int)clientManager.FindClient(pocket.Name);
-                    client_id = clientManager.GetAvailibleID();
-                    if (rec_id > -1)
-                        client_id = rec_id;
-                    OnConnection?.Invoke(pocket, client, client_id);
+                    if (clientManager.GetClientState(rec_id) >= ClientStateEnum.Connected)
+                    {
+                        clientManager.SendRaw(client, new ConnectionPocket("Server", "This client is already connected to server"));
+                        DataManager.LogLine($"[SERVER]: '{pocket.Name}' refused to connect due to same already exist client on server");
+                    }
+                    else
+                    {
+                        client_id = clientManager.GetAvailibleID();
+                        if (rec_id > -1)
+                            client_id = rec_id;
+                        OnConnection?.Invoke(pocket, client, client_id);
+                    }
                 }
                 else if (client_id > -1)
                 {
