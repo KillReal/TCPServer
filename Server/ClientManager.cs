@@ -180,7 +180,7 @@ namespace Server
                 if (Sessions[i].players.Count == 0)
                 {
                     Sessions.RemoveAt(i);
-                    Sessions[i].game.endGame(Sessions[i].players);
+                    //Sessions[i].game.endGame();
                     DataManager.LogLine($"[SERVER]: Session '{i}' is ends up");
                 }
             }
@@ -224,7 +224,7 @@ namespace Server
                     game = new GameManager(),
                     players = new List<int> { id },
                 };
-                new_session.game.Init(this);
+                new_session.game.Init(this, new_session);
                 Sessions.Add(new_session);
                 MyClient client = GetClient(id);
                 client.sid = new_session.id;

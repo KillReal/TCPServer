@@ -12,22 +12,25 @@ namespace Server
     {
         public int idClient;
         public int idAponent;
-        //public Game game;
         public Player playerInGame;
         public bool cheatMode;
         public bool ready;
     }
-    public class GameSession
-    {
-        public Dictionary<int, PlayerClient> playerClients;
-        public Game game;
-        public ClientManager.Session session;
-    }
+    //public class GameSession
+    //{
+    //    public Dictionary<int, PlayerClient> playerClients;
+    //    public Game game;
+    //    public ClientManager.Session session;
+    //}
 
     public class GameManager
     {
         public ClientManager clientManager;
-        private Dictionary<int, GameSession> GameSessions;
+        //private Dictionary<int, GameSession> GameSessions;
+        private Dictionary<int, PlayerClient> playerClients; // List? 
+        private Game game;
+        private ClientManager.Session session;
+
         //public List<Game> games;
         //public Dictionary<int, PlayerClient> playerClients;
         //private const string map = @"..\..\..\Resources\Map.txt"; // path to the map file (for now one map)
@@ -47,17 +50,18 @@ namespace Server
         public GameManager()
         {
             //playerClients = new Dictionary<int, PlayerClient>();
-            GameSessions = new Dictionary<int, GameSession>();
+            //GameSessions = new Dictionary<int, GameSession>();
 
         }
 
-        public void Init(ClientManager _clientManager)
+        public void Init(ClientManager _clientManager, ClientManager.Session session)
         {
             clientManager = _clientManager;
             PocketHandler.onGameAction += HandleGameAction;
+            this.session = session;
         }
 
-        public void StartGame(ClientManager.Session session) // expecting 2 players // OK
+        public void StartGame() // expecting 2 players 
         {
             if (session.players.Count != 2) throw new Exception("invalid number of clients");
             World world;
@@ -84,12 +88,8 @@ namespace Server
                 ready = false
             });
 
-            GameSessions.Add(session.id, new GameSession()
-            {
-                playerClients = playerClients,
-                game = game,
-                session = session,
-            });
+            this.playerClients = playerClients;
+            this.game = game;
 
             clientManager.Send(session.players[0], new InitGamePocket(playerClients[session.players[0]].playerInGame));
             clientManager.Send(session.players[1], new InitGamePocket(playerClients[session.players[1]].playerInGame));
@@ -99,11 +99,10 @@ namespace Server
             clientManager.Send(session.players[1], new PlayerResourcesPocket(game.players[1]));
         }
 
-        public void HandleGameAction(GameActionPocket pocket, int idSession, int idClient)
+        public void HandleGameAction(GameActionPocket pocket, int idClient)
         {
-            PlayerClient client = GameSessions[idSession].playerClients[idClient];
-            PlayerClient aponent = GameSessions[idSession].playerClients[client.idAponent];
-            Game game = GameSessions[idSession].game;
+            PlayerClient client = playerClients[idClient];
+            PlayerClient aponent = playerClients[client.idAponent];
 
             if (pocket.Button == Buttons.READY)
             {
@@ -145,7 +144,7 @@ namespace Server
                 switch (pocket.Button)
                 {
                     case Buttons.GiveUp:
-                        EndGame(idSession, client.idAponent);
+                        EndGame(client.idAponent);
                         return;
                     case Buttons.Cheats:
                         client.cheatMode = !client.cheatMode;
@@ -202,7 +201,7 @@ namespace Server
                                     (unit, town) = game.Attack((Town)game.world.Map[pocket.Coord.X, pocket.Coord.Y]);
                                     if (town.health == 0)
                                     {
-                                        EndGame(idSession, idClient);
+                                        EndGame(idClient);
                                         return;
                                     }
                                     else
@@ -230,27 +229,27 @@ namespace Server
             }
         }
 
-        public void EndGameDisconnect(int idSession, int idClient)
+        public void EndGameDisconnect(int idClient)
         {
-            PlayerClient client = GameSessions[idSession].playerClients[idClient];
-            PlayerClient aponent = GameSessions[idSession].playerClients[client.idAponent];
+            PlayerClient client = playerClients[idClient];
+            PlayerClient aponent =playerClients[client.idAponent];
             clientManager.Send(idClient, new EndGamePocket(aponent.playerInGame, 1));
-            RemoveGame(idSession);
+            //RemoveGame(idSession);
         }
 
-        public void EndGame(int idSession, int idClientWin)
+        public void EndGame(int idClientWin)
         {
-            PlayerClient client = GameSessions[idSession].playerClients[idClientWin];
+            PlayerClient client = playerClients[idClientWin];
 
             clientManager.Send(client.idClient, new EndGamePocket(client.playerInGame, 1));
             clientManager.Send(client.idAponent, new EndGamePocket(client.playerInGame, 1));
 
-            RemoveGame(idSession);
+            //RemoveGame(idSession);
         }
 
         public void RemoveGame(int idSession)
         {
-            GameSessions.Remove(idSession);
+            //GameSessions.Remove(idSession);
         }
 
         public void checkClient(int id)
