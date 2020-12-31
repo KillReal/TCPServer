@@ -170,6 +170,7 @@ namespace Server
                     client.state = (int)ClientStateEnum.Connected;
                     _clients[id] = client;
                     DataManager.LogLine($"[SERVER]: Player '{GetClientName(id)}' left from session '{i}'");
+
                     for (int j = 0; j < Sessions[i].players.Count; j++)
                     {
                         client = GetClient(Sessions[i].players[j]);
@@ -177,10 +178,10 @@ namespace Server
                         _clients[Sessions[i].players[j]] = client;
                     }
                 }
-                if (Sessions[i].players.Count == 0)
+                //if (Sessions[i].players.Count == 0)
                 {
                     Sessions.RemoveAt(i);
-                    //Sessions[i].game.endGame();
+                    Sessions[i].game.EndGame(Sessions[i].players[0]);
                     DataManager.LogLine($"[SERVER]: Session '{i}' is ends up");
                 }
             }

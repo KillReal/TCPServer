@@ -82,7 +82,7 @@ namespace Server
             playerClients.Add(session.players[1], new PlayerClient()
             {
                 idClient = session.players[1],
-                idAponent = session.players[1],
+                idAponent = session.players[0],
                 playerInGame = game.players[1],
                 cheatMode = false,
                 ready = false
@@ -150,7 +150,6 @@ namespace Server
                         client.cheatMode = !client.cheatMode;
                         if (client.cheatMode) throw new Exception("CHEATS MOD ACTIVETED");
                         else throw new Exception("CHEATS MOD DE-ACTIVETED");
-                        break;
                     case Buttons.SpawnUnit: // OK
                         data = new SpawnUnitPocket(game.SpawnUnit((Unit.typeUnit)pocket.Param));
                         clientManager.Send(client.idClient, new PlayerResourcesPocket(game.currentPlayer));
