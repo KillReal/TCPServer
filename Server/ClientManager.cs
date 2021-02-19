@@ -27,6 +27,13 @@ namespace Server
             public List<int> players;
         };
 
+        public struct Pocket
+        {
+            public int id;
+            public byte[] data;
+            public bool wait_accept;
+        }
+
         public void Init(Options _settings)
         {
             PocketHandler.onPingRecieved += PocketListener_OnPing;
@@ -46,6 +53,7 @@ namespace Server
             public int pocket_id;
             public byte[] buffer;
             public byte[] send_buffer;
+            public List<Pocket> send_queue;
             public int last_state;
             public int state;
             public int ping;
@@ -309,29 +317,31 @@ namespace Server
             Send(id, new AcceptPocket(pocket_id));
         }
 
-        private void SendTask(int id, byte[] data, int data_id, bool wait_accept)
+        private void ReleaseSendQueue(int id)
         {
-            while (GetClient(id).socket != null)
+            while (GetClientCallback(id))
             {
                 MyClient client = GetClient(id);
-                if (client.callback)
-                {   
-                    client.pocket_id = data_id;
-                    client.send_buffer = data;
+                if (client.send_queue.Count > 0)
+                {
+                    client.pocket_id = client.send_queue[0].id;
+                    client.send_buffer = client.send_queue[0].data;
                     _clients[id] = client;
-                    if (wait_accept)
+                    if (client.send_queue[0].wait_accept)
                         UpdateAcceptState(id, false);
                     try
-                    { 
-                        client.socket.Send(data);
+                    {
+                        client.socket.Send(client.send_buffer);
+                        client.send_queue.RemoveAt(0);
+                        _clients[id] = client;
                     }
                     catch
                     {
-                        DataManager.LogLine($"[ERROR]: Pocket send to '{client.name}' failed (pid: {data_id})", 3);
+                        DataManager.LogLine($"[ERROR]: Pocket send to '{client.name}' failed (pid: {client.pocket_id})", 3);
                     }
-                    return;
                 }
-                Thread.Sleep(5);
+                else
+                    return;
             }
         }
 
@@ -339,15 +349,26 @@ namespace Server
         {
             if (!ID_list.Contains(id))
                 return;
+            if (pocket.ToBytes().Length > options.MaxPocketSize)
+            {
+                SendSplittedPocket(id, pocket);
+                return;
+            }
             int data_id = (int)DateTime.Now.Ticks;
             byte[] data = pocket.ToBytes();
             byte[] header = new Header(data_id, pocket.GetType(), data.Length).ToBytes();
             data = Utils.ConcatBytes(header, data);
             data = Encryption.Encrypt(data);
-            //if (data.Length > _settings.MaxPocketSize)  //For client testing
-                //SendSplittedPocket(id, data);
-            //else
-                (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
+            MyClient client = GetClient(id);
+            var queue_pocket = new Pocket()
+            {
+                data = data,
+                id = data_id,
+                wait_accept = wait_accept
+            };
+            client.send_queue.Add(queue_pocket);
+            _clients[id] = client;
+            ReleaseSendQueue(id);
         }
 
         public void SendRaw(Socket client, BasePocket pocket)
@@ -366,10 +387,16 @@ namespace Server
                 return;
             int data_id = (int)DateTime.Now.Ticks;
             data = Encryption.Encrypt(data);
-            // if (data.Length > _settings.MaxPocketSize)  //For client testing
-            //SendSplittedPocket(id, data);
-            //else
-            (new Task(() => SendTask(id, data, data_id, wait_accept))).Start();
+            MyClient client = GetClient(id);
+            var queue_pocket = new Pocket()
+            {
+                data = data,
+                id = data_id,
+                wait_accept = wait_accept
+            };
+            client.send_queue.Add(queue_pocket);
+            _clients[id] = client;
+            ReleaseSendQueue(id);
         }
 
         public void SendToAll(BasePocket pocket, bool require_accept = true)
@@ -444,6 +471,7 @@ namespace Server
                 name = name,
                 socket = socket,
                 callback = true,
+                send_queue = new List<Pocket>(),
                 state = (int)ClientStateEnum.Connected
             };
             _clients.TryAdd(id, newClient);
@@ -457,6 +485,7 @@ namespace Server
             _clients.TryGetValue(id, out MyClient client);
             client.socket = socket;
             client.ip = ((IPEndPoint)socket.RemoteEndPoint).Address.ToString();
+            client.send_queue = new List<Pocket>();
             _clients[id] = client;
             ToggleConnectionState(id, true);
             LaunchBackgroundWorkers(id);
